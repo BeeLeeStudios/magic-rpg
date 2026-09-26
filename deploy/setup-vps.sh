@@ -25,7 +25,18 @@ KEY=/root/dvm-deploy-key
 
 IP=$(curl -4 -fsS --max-time 10 https://api.ipify.org || hostname -I | awk '{print $1}')
 DOMAIN="${1:-${IP//./-}.sslip.io}"
+# A real domain also answers on www. (point both DNS "A" records at this server)
+SITE_ADDRS="$DOMAIN"
+case "$DOMAIN" in *.sslip.io|www.*) ;; *) SITE_ADDRS="$DOMAIN, www.$DOMAIN" ;; esac
 echo "==> Website address will be: https://$DOMAIN"
+if [ -n "${1:-}" ]; then
+  RESOLVED=$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}')
+  if [ "$RESOLVED" != "$IP" ]; then
+    echo "!! $DOMAIN points to '${RESOLVED:-nothing}', not this server ($IP)."
+    echo "!! Add DNS A records for $DOMAIN and www.$DOMAIN -> $IP at your registrar, wait a few minutes, then run this again."
+    exit 1
+  fi
+fi
 
 # --- anything else already using the web ports? ----------------------
 BUSY=$(ss -ltnpH '( sport = :80 or sport = :443 )' 2>/dev/null | grep -v caddy || true)
@@ -88,7 +99,7 @@ fi
 awk -v s="$BLOCK_START" -v e="$BLOCK_END" '$0==s{skip=1;next} $0==e{skip=0;next} !skip' "$CADDYFILE" > "$CADDYFILE.tmp" && mv "$CADDYFILE.tmp" "$CADDYFILE"
 cat >> "$CADDYFILE" <<CADDY
 $BLOCK_START
-$DOMAIN {
+$SITE_ADDRS {
 	root * $SITE_DIR
 	file_server
 	encode zstd gzip
