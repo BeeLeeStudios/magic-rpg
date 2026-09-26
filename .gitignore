@@ -3,3 +3,7 @@ node_modules/
 *.keystore
 *.jks
 keystore.properties
+
+# Research notes and reports (sent to the owner directly, not part of the app)
+research_notes/
+reports/
