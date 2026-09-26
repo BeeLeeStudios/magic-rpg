@@ -231,9 +231,11 @@ const HD_BACK = (() => {
 const HD_RIDER_SCALE = 0.66;                            // rider size relative to the dragon
 const HD_RIDER_Y = 65.5;                                // rider's seat height (see drawHDRider)
 const HD_SADDLE_SCALE = HD_RIDER_SCALE / 1.3;           // saddle was drawn for a 1.3x rider
-const HD_SOLE = { x: 108 + (125 - 108) * HD_RIDER_SCALE, y: HD_RIDER_Y + (95 - 74) * HD_RIDER_SCALE };   // ball of the boot
+const HD_RIDER_FWD = 10;                                // how far forward (toward the neck) the rider sits
+const HD_SOLE = { x: 108 + HD_RIDER_FWD + (125 - 108) * HD_RIDER_SCALE, y: HD_RIDER_Y + (95 - 74) * HD_RIDER_SCALE };   // ball of the boot
 function drawHDSaddle(ctx, H) {
   const leather = "#6b3f22", leatherLo = "#3e2414";
+  ctx.save(); ctx.translate(HD_RIDER_FWD, HD_BACK(111 + HD_RIDER_FWD) - HD_BACK(111));   // slide along the back
   const cloth = H.saddle || hdShift(H.cape, -0.15);
   const B = HD_BACK;
   // girth strap from the saddle round the belly
@@ -272,7 +274,8 @@ function drawHDSaddle(ctx, H) {
   hdFill(ctx, (c) => { c.arc(126.5, B(126) - 12.5, 2.3, 0, Math.PI * 2); }, H.hilt, 1);
   ctx.restore();
   // stirrup leather from the seat down to the boot
-  hdFill(ctx, (c) => { c.moveTo(115.5, B(115) + 1); c.lineTo(117.5, B(117) + 1); c.lineTo(HD_SOLE.x + 1, HD_SOLE.y - 2); c.lineTo(HD_SOLE.x - 1, HD_SOLE.y - 2); }, leatherLo, 1);
+  hdFill(ctx, (c) => { c.moveTo(115.5, B(115) + 1); c.lineTo(117.5, B(117) + 1); c.lineTo(HD_SOLE.x - HD_RIDER_FWD + 1, HD_SOLE.y - 2); c.lineTo(HD_SOLE.x - HD_RIDER_FWD - 1, HD_SOLE.y - 2); }, leatherLo, 1);
+  ctx.restore();
 }
 /* Stirrup iron, drawn over the boot so the foot is IN the stirrup. */
 function drawHDStirrup(ctx, H) {
@@ -288,7 +291,7 @@ function drawHDStirrup(ctx, H) {
 function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
   drawHDSaddle(ctx, H);
   // drawn around its seat (108, 74), placed on the dragon's shoulders
-  ctx.save(); ctx.translate(108 + ox, HD_RIDER_Y + oy); ctx.scale(HD_RIDER_SCALE, HD_RIDER_SCALE); ctx.translate(-108, -74);   // seated in the saddle
+  ctx.save(); ctx.translate(108 + HD_RIDER_FWD + ox, HD_RIDER_Y + oy); ctx.scale(HD_RIDER_SCALE, HD_RIDER_SCALE); ctx.translate(-108, -74);   // seated in the saddle
   const girl = H.hero === "girl";
   const sway = Math.sin(t * Math.PI * 2) * 1.5;
   // Riders wear a short scarf that streams back from the neck instead of
