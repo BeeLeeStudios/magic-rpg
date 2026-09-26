@@ -1,0 +1,19 @@
+# Netlify hosts the website in site/ for free at https://dragonsvsmath.netlify.app
+# (see docs/WEBSITE.md). The Android app is built by GitHub Actions, not here.
+[build]
+  publish = "site"
+  command = "echo 'Static site: nothing to build'"
+  # Only redeploy when the website itself changed.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- site/ netlify.toml"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
