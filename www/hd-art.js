@@ -228,16 +228,19 @@ const HD_BACK = (() => {
    rider and a pommel horn in front, girth strap round the belly, and the
    stirrup leather down to the rider's boot. The stirrup iron is drawn
    after the rider so the boot sits IN it. */
-const HD_RIDER_SCALE = 1.1;                             // rider size relative to the dragon
-const HD_RIDER_Y = 66.5;                                // rider's seat height (see drawHDRider)
+const HD_RIDER_SCALE = 0.66;                            // rider size relative to the dragon
+const HD_RIDER_Y = 65.5;                                // rider's seat height (see drawHDRider)
+const HD_SADDLE_SCALE = HD_RIDER_SCALE / 1.3;           // saddle was drawn for a 1.3x rider
 const HD_SOLE = { x: 108 + (125 - 108) * HD_RIDER_SCALE, y: HD_RIDER_Y + (95 - 74) * HD_RIDER_SCALE };   // ball of the boot
 function drawHDSaddle(ctx, H) {
   const leather = "#6b3f22", leatherLo = "#3e2414";
   const cloth = H.saddle || hdShift(H.cape, -0.15);
   const B = HD_BACK;
   // girth strap from the saddle round the belly
-  hdFill(ctx, (c) => { c.moveTo(113, B(113)); c.lineTo(118, B(118)); c.lineTo(123, 110); c.lineTo(118, 111); }, hdGrad(ctx, 0, 62, 0, 111, [[0, leather], [1, leatherLo]]), 1.4);
+  hdFill(ctx, (c) => { c.moveTo(110.5, B(110)); c.lineTo(114, B(114)); c.lineTo(121, 110); c.lineTo(116, 111); }, hdGrad(ctx, 0, 62, 0, 111, [[0, leather], [1, leatherLo]]), 1.4);
   hdFill(ctx, (c) => { c.roundRect(116.5, 97, 7, 6, 1.2); }, H.hilt, 1.1);
+  ctx.save();
+  ctx.translate(111, B(111)); ctx.scale(HD_SADDLE_SCALE, HD_SADDLE_SCALE); ctx.translate(-111, -B(111));
   // blanket: follows the back, hangs ~19 units down the side, scalloped gold hem
   hdFill(ctx, (c) => {
     c.moveTo(92, B(92) - 1);
@@ -267,16 +270,19 @@ function drawHDSaddle(ctx, H) {
   ctx.strokeStyle = "#d09a68"; ctx.lineWidth = 1; ctx.setLineDash([2, 1.6]);
   ctx.beginPath(); ctx.moveTo(95, B(95) + 1); ctx.quadraticCurveTo(111, B(111) + 4.5, 128, B(128) + 1.5); ctx.stroke(); ctx.setLineDash([]);
   hdFill(ctx, (c) => { c.arc(126.5, B(126) - 12.5, 2.3, 0, Math.PI * 2); }, H.hilt, 1);
+  ctx.restore();
   // stirrup leather from the seat down to the boot
-  hdFill(ctx, (c) => { c.moveTo(120, B(120) + 2); c.lineTo(123, B(123) + 2); c.lineTo(HD_SOLE.x + 1.5, HD_SOLE.y - 3); c.lineTo(HD_SOLE.x - 1.5, HD_SOLE.y - 3); }, leatherLo, 1.1);
+  hdFill(ctx, (c) => { c.moveTo(115.5, B(115) + 1); c.lineTo(117.5, B(117) + 1); c.lineTo(HD_SOLE.x + 1, HD_SOLE.y - 2); c.lineTo(HD_SOLE.x - 1, HD_SOLE.y - 2); }, leatherLo, 1);
 }
 /* Stirrup iron, drawn over the boot so the foot is IN the stirrup. */
 function drawHDStirrup(ctx, H) {
   const x = HD_SOLE.x, y = HD_SOLE.y;
+  ctx.save(); ctx.translate(x, y); ctx.scale(HD_SADDLE_SCALE * 1.4, HD_SADDLE_SCALE * 1.4); ctx.translate(-x, -y);
   hdFill(ctx, (c) => {
     c.moveTo(x - 6.5, y - 4); c.quadraticCurveTo(x - 7, y + 4, x, y + 4); c.quadraticCurveTo(x + 7, y + 4, x + 6.5, y - 4);
     c.lineTo(x + 4.2, y - 4); c.quadraticCurveTo(x + 4.5, y + 1.6, x, y + 1.6); c.quadraticCurveTo(x - 4.5, y + 1.6, x - 4.2, y - 4);
   }, hdGrad(ctx, 0, y - 4, 0, y + 4, [[0, "#fff0b0"], [1, H.hilt]]), 1.2);
+  ctx.restore();
 }
 
 function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
