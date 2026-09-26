@@ -18,6 +18,7 @@ carrying and borrowing. Packaged as an Android app for Google Play with
 | `docs/PLAY_STORE_GUIDE.md` | **Start here to publish** — requirements, Play Console answers, release steps |
 | `docs/NAME_OPTIONS.md` | Name ideas to evaluate |
 | `docs/privacy-policy.html` | Privacy policy to host publicly |
+| `site/` | The dragonsvsmath.com website (see `docs/WEBSITE.md`) |
 | `.github/workflows/android.yml` | CI: builds a debug APK and a release `.aab` on every push |
 
 ## Play it locally

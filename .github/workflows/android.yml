@@ -9,7 +9,10 @@ name: Android build
 on:
   push:
     branches: [main, "claude/**"]
+    # Website and docs changes don't touch the app, so they don't rebuild it.
+    paths-ignore: ["site/**", "docs/**", "**/*.md", "scripts/build-site-assets.mjs"]
   pull_request:
+    paths-ignore: ["site/**", "docs/**", "**/*.md", "scripts/build-site-assets.mjs"]
   workflow_dispatch:
 
 jobs:
