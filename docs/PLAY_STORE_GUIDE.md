@@ -25,9 +25,10 @@ often, so re-check anything marked **(verify)** in Play Console before you submi
 
 ## 2. Things only you can do (TODOs before submitting)
 
-1. **Support email.** Replace `support@YOUR-DOMAIN.com` in `www/index.html`
-   (`PRIVACY_CONTACT_EMAIL`) and `docs/privacy-policy.html`. Use a dedicated
-   address — it is shown publicly on the store listing.
+1. **Support email.** A temporary personal Gmail is set in `www/index.html`
+   (`PRIVACY_CONTACT_EMAIL`), `docs/privacy-policy.html` and the website.
+   Swap in a dedicated address before launch if you can — it is shown
+   publicly on the store listing.
 2. **Publisher name.** The privacy policy says "published by BeeLee Studios".
    Change it if your Play developer name is different.
 3. **Pick the final name** — see `docs/NAME_OPTIONS.md`. If you change it,

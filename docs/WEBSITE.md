@@ -51,10 +51,9 @@ https://play.google.com/store/apps/details?id=com.beeleestudios.dragonsvsmath
 
 ## Support email
 
-The site lists `support@dragonsvsmath.com` as the contact. Change it (footer
-of `site/index.html`, `site/privacy.html`, `docs/privacy-policy.html`,
-`PRIVACY_CONTACT_EMAIL` in `www/index.html`) to an address you actually
-read, such as a free Gmail made for the game.
+The contact address is currently a temporary personal Gmail. To change it,
+update the footer of `site/index.html`, `site/privacy.html`,
+`docs/privacy-policy.html` and `PRIVACY_CONTACT_EMAIL` in `www/index.html`.
 
 ## Updating the pictures
 
