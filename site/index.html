@@ -5,15 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dragons vs Math – a dragon-riding math adventure for kids</title>
 <meta name="description" content="Dragons vs Math is a math battle game for kids ages 5–13. Every right answer is an attack! Adaptive addition and subtraction practice. No ads, no in-app purchases, no data collected, works offline.">
-<link rel="canonical" href="https://dragonsvsmath.com/">
 <link rel="icon" href="assets/icon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <meta name="theme-color" content="#140b24">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Dragons vs Math">
 <meta property="og:description" content="Every right answer is an attack! A dragon-riding math adventure for kids ages 5–13.">
-<meta property="og:image" content="https://dragonsvsmath.com/assets/og.png">
-<meta property="og:url" content="https://dragonsvsmath.com/">
+<meta property="og:image" content="assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
 <style>
@@ -100,6 +98,17 @@ nav a:hover { color: var(--text); }
 .soon { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 14px; background: #0006; box-shadow: 0 0 0 2px #ffffff22; color: var(--dim); font-weight: 800; font-size: 15px; }
 .soon b { color: var(--text); }
 .play-glyph { width: 22px; height: 22px; }
+/* The Google Play button (launch day) vs the "coming soon" label. */
+body[data-play="soon"] .when-live, body[data-play="live"] .when-soon { display: none !important; }
+.play-btn {
+  display: inline-flex; align-items: center; gap: 12px; text-decoration: none;
+  padding: 10px 22px 10px 16px; border-radius: 14px; color: #fff; background: #000;
+  box-shadow: 0 0 0 2px #a6a6a6; transition: transform .12s ease;
+}
+.play-btn:hover { transform: translateY(-2px); }
+.play-btn .play-glyph { width: 30px; height: 30px; }
+.play-btn span { display: flex; flex-direction: column; line-height: 1.05; font-weight: 800; font-size: 22px; }
+.play-btn small { font-size: 11px; letter-spacing: 1px; font-weight: 700; }
 .hero-art { position: relative; }
 .hero-art img { width: 100%; filter: drop-shadow(0 30px 30px #0008); animation: fly 4.5s ease-in-out infinite; }
 @keyframes fly { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-16px) rotate(1deg); } }
@@ -186,7 +195,14 @@ footer a:hover { color: var(--text); }
 }
 </style>
 </head>
-<body>
+<!-- ============================================================
+     LAUNCH DAY: when the app is live on Google Play, change
+     data-play="soon" to data-play="live" below. Every "Get it on
+     Google Play" button then links to the store listing
+     (package com.beeleestudios.dragonsvsmath) and the "coming soon"
+     labels disappear. Nothing else needs editing.
+     ============================================================ -->
+<body data-play="soon">
 
 <div class="sky">
   <div class="moon" aria-hidden="true"></div>
@@ -194,6 +210,7 @@ footer a:hover { color: var(--text); }
     <header class="top">
       <a class="brand" href="#"><img src="assets/icon-180.png" alt="" width="36" height="36">Dragons vs Math</a>
       <nav aria-label="Sections">
+        <a class="when-live" href="https://play.google.com/store/apps/details?id=com.beeleestudios.dragonsvsmath">Download</a>
         <a href="#screens">Screens</a>
         <a href="#math">The math</a>
         <a href="#parents">For parents</a>
@@ -210,7 +227,11 @@ footer a:hover { color: var(--text); }
         <p class="tagline">Every right answer is an attack!</p>
         <p class="sub">A dragon-riding math adventure for kids ages 5–13. Battle goblins, slimes and giant bosses with addition and subtraction that grows with your child.</p>
         <div class="cta">
-          <span class="soon">
+          <a class="play-btn when-live" href="https://play.google.com/store/apps/details?id=com.beeleestudios.dragonsvsmath">
+            <svg class="play-glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="#34d399" d="M4 3.5v17l9.2-8.5z"/><path fill="#60a5fa" d="M4 3.5l12.6 7.2-3.4 1.8z"/><path fill="#fbbf24" d="M16.6 10.7l3.1 1.8c.6.3.6 1.1 0 1.4l-3.1 1.8-3.4-3.2z"/><path fill="#f87171" d="M4 20.5l9.2-8.5 3.4 3.2z"/></svg>
+            <span><small>GET IT ON</small>Google Play</span>
+          </a>
+          <span class="soon when-soon">
             <svg class="play-glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="#34d399" d="M4 3.5v17l9.2-8.5z"/><path fill="#60a5fa" d="M4 3.5l12.6 7.2-3.4 1.8z"/><path fill="#fbbf24" d="M16.6 10.7l3.1 1.8c.6.3.6 1.1 0 1.4l-3.1 1.8-3.4-3.2z"/><path fill="#f87171" d="M4 20.5l9.2-8.5 3.4 3.2z"/></svg>
             <span><b>Coming soon</b> to Google Play</span>
           </span>
@@ -334,7 +355,12 @@ footer a:hover { color: var(--text); }
     <div class="wrap">
       <img class="pixel" src="assets/hero-boy-fire.png" width="1400" height="943" loading="lazy" alt="">
       <h2>Ready to ride?</h2>
-      <p class="lead" style="margin-left:auto;margin-right:auto">Dragons vs Math is coming soon to Google Play.</p>
+      <p class="lead when-soon" style="margin-left:auto;margin-right:auto">Dragons vs Math is coming soon to Google Play.</p>
+      <p class="lead when-live" style="margin-left:auto;margin-right:auto">Free to download. No ads, no in-app purchases.</p>
+      <a class="play-btn when-live" href="https://play.google.com/store/apps/details?id=com.beeleestudios.dragonsvsmath">
+        <svg class="play-glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill="#34d399" d="M4 3.5v17l9.2-8.5z"/><path fill="#60a5fa" d="M4 3.5l12.6 7.2-3.4 1.8z"/><path fill="#fbbf24" d="M16.6 10.7l3.1 1.8c.6.3.6 1.1 0 1.4l-3.1 1.8-3.4-3.2z"/><path fill="#f87171" d="M4 20.5l9.2-8.5 3.4 3.2z"/></svg>
+        <span><small>GET IT ON</small>Google Play</span>
+      </a>
     </div>
   </section>
 </main>
