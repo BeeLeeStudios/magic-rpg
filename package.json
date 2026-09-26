@@ -1,0 +1,23 @@
+{
+  "name": "dragons-vs-math",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dragons vs Math - a pixel-art math battle game for kids ages 5-13",
+  "scripts": {
+    "serve": "npx http-server www -p 8080 -c-1",
+    "sync": "npx cap sync android",
+    "open": "npx cap open android",
+    "assets": "node scripts/generate-store-assets.mjs && npx capacitor-assets generate --android --iconBackgroundColor '#1a0f2e' --splashBackgroundColor '#140b24'",
+    "build:aab": "npx cap sync android && cd android && ./gradlew bundleRelease",
+    "build:apk": "npx cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.2"
+  }
+}
