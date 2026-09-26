@@ -8037,7 +8037,7 @@ const BattleStage = {
 
   layout(w, h) {
     this.W = w; this.H = h;
-    this.unit = Math.max(1, (h * 0.6) / DRAGON_ART_GRID);
+    this.unit = Math.max(1, (h * 0.42) / DRAGON_ART_GRID);   // hero/dragon and enemies fill ~42% of the stage height
     this.ap = Math.max(2, Math.round(h / 84));          // CSS px per background art pixel
     this.bw = Math.ceil(w / this.ap); this.bh = Math.ceil(h / this.ap);
     this.groundArtY = Math.floor(this.bh * 0.8);
@@ -8048,7 +8048,7 @@ const BattleStage = {
     this.dragonOriginY = -(DRAGON_ART_GRID * this.unit) + this.unit * 5;
     this.playerLayer.x = this.playerBase.x; this.playerLayer.y = this.playerBase.y;
     this.enemyLayer.x = this.enemyBase.x; this.enemyLayer.y = this.enemyBase.y;
-    const enemyFont = Math.round(Math.min(w * 0.32, h * 0.62));
+    const enemyFont = Math.round(Math.min(w * 0.22, h * 0.43));
     this.enemyText.fontSize = enemyFont;
     this.playerAccessory.fontSize = Math.round(this.unit * 4);
     this.playerAccessory.x = DRAGON_ART_GRID * this.unit * 0.28;
