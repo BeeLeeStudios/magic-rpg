@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+// Release signing (upload key). Values come from android/keystore.properties
+// when building locally, or from environment variables in CI. Neither the
+// keystore nor its passwords are ever committed -- see docs/PLAY_STORE_GUIDE.md.
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file("keystore.properties")
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+def signingValue = { String key, String envKey -> keystoreProps.getProperty(key) ?: System.getenv(envKey) }
+def uploadStoreFile = signingValue("storeFile", "ANDROID_KEYSTORE_PATH")
+
 android {
     namespace = "com.beeleestudios.dragonsvsmath"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +18,9 @@ android {
         applicationId "com.beeleestudios.dragonsvsmath"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
+        // Bump versionCode by 1 for EVERY upload to Play Console.
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +28,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (uploadStoreFile) {
+                storeFile file(uploadStoreFile)
+                storePassword signingValue("storePassword", "ANDROID_KEYSTORE_PASSWORD")
+                keyAlias signingValue("keyAlias", "ANDROID_KEY_ALIAS")
+                keyPassword signingValue("keyPassword", "ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (uploadStoreFile) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
