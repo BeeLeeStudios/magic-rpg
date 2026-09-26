@@ -1427,6 +1427,7 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 </head>
 <body>
 <div id="root"></div>
+<script src="hd-art.js"></script>
 <script>
 /* ===================================================================
    FILE MAP -- search for these exact strings to jump straight to a
@@ -3574,7 +3575,7 @@ function heroSelectHTML() {
 function paintHeroPortraits() {
   document.querySelectorAll(".hero-portrait").forEach((cv) => {
     const hero = cv.dataset.hero;
-    paintSmoothInto(cv, `hero|${hero}`, () => spriteSource(heroSprite(hero, false), 0, heroPaletteForTier(0, hero)));
+    paintHDInto(cv, `hero|${hero}`, (ctx) => drawHDHeroStanding(ctx, hdHeroLook(hero, 0)), HD_HERO_FIT);
   });
 }
 
@@ -3763,10 +3764,12 @@ function titleRiderFrames(cache) {
   const pal = ELEMENT_PALETTES[creature ? creature.id : "creature_fire"] || ELEMENT_PALETTES.creature_fire;
   const key = (S.hero || "boy") + pal.body + getSwordTier();
   if (cache.riderKey === key) return cache.rider;
-  cache.rider = PIX_DRAGON.frames.map((_, f) => {
-    const src = riderSource(S.hero || "boy", pal, getSwordTier(), f);
-    return renderSprite(src, src.fill.width * cache.K, src.fill.height * cache.K);
-  });
+  // HD dragon rider, 84 art units wide, rendered at device pixels (K per unit)
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  const wU = 84, hU = wU * HD_DRAGON_FIT.h / HD_DRAGON_FIT.w;
+  const H = hdHeroLook(S.hero || "boy", getSwordTier());
+  cache.rider = [0, 0.25, 0.5, 0.75].map((t) => hdRender((ctx) => { drawHDDragon(ctx, pal, t); drawHDRider(ctx, H, t); },
+    HD_DRAGON_FIT, (wU * cache.K) / dpr, (hU * cache.K) / dpr, dpr, 1));
   cache.riderKey = key;
   return cache.rider;
 }
@@ -3801,9 +3804,9 @@ function runTitleScene() {
     scroll(T.far, 0.003);
     // the rider loops across between the far and mid layers
     const frames = titleRiderFrames(T);
-    const f = frames[Math.floor(now / 260) % frames.length];
+    const f = frames[Math.floor(now / 170) % frames.length];
     const period = 9000, t = (now % period) / period;
-    const x = -60 + t * (T.W + 90);
+    const x = -90 + t * (T.W + 120);
     const y = T.H * 0.46 - 20 + Math.sin(t * Math.PI * 4) * 5;
     ctx.drawImage(f, x * K, y * K);
     if (Math.random() < 0.5) embers.push({ x: x + 6, y: y + 30 + Math.random() * 6, vx: -0.02, vy: 0.01, life: 900, age: 0 });
@@ -7289,6 +7292,23 @@ function renderSprite(srcs, dw, dh) {
   return addVolumeLight(smoothEdges(out, px * 0.35));
 }
 
+/* Paints an HD drawing into a <canvas> element at its on-screen size x
+   device pixel ratio (cached per key and size). */
+const HD_ICON_CACHE = new Map();
+function paintHDInto(cv, key, draw, fit, pixel) {
+  const r = cv.getBoundingClientRect();
+  const cssW = r.width || cv.width, cssH = r.height || cv.height;
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  cv.style.width = `${cssW}px`; cv.style.height = `${cssH}px`;
+  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  const k = `${key}|${cssW}x${cssH}|${dpr}|${pixel || HD_PIXEL}`;
+  let img = HD_ICON_CACHE.get(k);
+  if (!img) { img = hdRender(draw, fit, cssW, cssH, dpr, pixel); HD_ICON_CACHE.set(k, img); }
+  const ctx = cv.getContext("2d");
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.drawImage(img, Math.round((cv.width - img.width) / 2), Math.round(cv.height - img.height));
+}
+
 /* Paints a smoothed source into a <canvas> element, sized to the canvas's
    on-screen size times the device pixel ratio so it stays sharp. */
 function paintSmoothInto(cv, key, makeSrc) {
@@ -7737,6 +7757,11 @@ function pixIconSpec(spec) {
 
 function paintPixIcons() {
   document.querySelectorAll("canvas[data-pix]").forEach((cv) => {
+    if (cv.dataset.pix.startsWith("mount:")) {
+      const id = cv.dataset.pix.slice(6);
+      paintHDInto(cv, `mount|${id}`, (ctx) => drawHDDragon(ctx, ELEMENT_PALETTES[id] || ELEMENT_PALETTES.starter, 0.15), HD_DRAGON_FIT, 1);
+      return;
+    }
     const spec = pixIconSpec(cv.dataset.pix);
     if (spec) paintSpriteInto(cv, spec.art, spec.palette, 0, cv.dataset.pix);
   });
@@ -8100,42 +8125,49 @@ const BattleStage = {
 
   /* Sprites are baked once per look (hero, mount, sword tier, enemy) as
      smooth textures at device resolution; the frame loop only blits them. */
+  /* The hero (and dragon mount) are HD vector drawings (hd-art.js),
+     rendered at the "medium pixel" grid into textures at device resolution.
+     Mounted: 4 wing-flap frames. On foot: 2 frames (cape sway). */
   bakePlayer() {
     const u = this.unit;
     if (!u || !isFinite(u)) return;
     this.dragonStrips = []; this.dragonFlash = [];
     const mounted = !!this._mountPalette;
     const hero = this._hero || "boy", tier = this._swordTier || 0;
-    const rider = heroSprite(hero, mounted);
+    const H = hdHeroLook(hero, tier);
     const targetH = DRAGON_ART_GRID * u;
-    const baseW = mounted ? PIX_DRAGON.w : rider.w;
-    const baseH = (mounted ? PIX_DRAGON.h : rider.h) + (mounted ? Math.max(0, -SADDLE_Y) : 0);
-    const scale = mounted ? targetH / PIX_DRAGON.h * 0.95 : (targetH * 0.8) / rider.h;
-    this._pixScale = scale;
-    const texW = (baseW + 2) * scale, texH = (baseH + 2) * scale;
+    const fit = mounted ? HD_DRAGON_FIT : HD_HERO_FIT;
+    const texH = mounted ? targetH * 0.9 : targetH * 0.86;
+    const texW = texH * fit.w / fit.h;
     const dpr = this.dpr || 1;
-    const frames = mounted ? PIX_DRAGON.frames.length : rider.frames.length;
-    const palKey = mounted ? JSON.stringify(this._mountPalette) : "foot";
+    const frames = mounted ? 4 : 2;
+    let meta = null;
     for (let f = 0; f < frames; f++) {
-      const key = `player|${hero}|${tier}|${palKey}|${f}`;
-      const tex = renderSmoothCached(key, () => (mounted
-        ? riderSource(hero, this._mountPalette, tier, f)
-        : spriteSource(rider, f, heroPaletteForTier(tier, hero))), texW * dpr, texH * dpr);
+      const t = f / frames;
+      const tex = hdRender((ctx) => {
+        if (mounted) { drawHDDragon(ctx, this._mountPalette, t); drawHDRider(ctx, H, t); }
+        else drawHDHeroStanding(ctx, H, t);
+      }, fit, texW, texH, dpr, 1);
+      meta = meta || tex;
       this.dragonStrips.push(makeSprite("image", { canvas: tex, dw: texW, dh: texH, originX: 0, originY: 0 }));
       this.dragonFlash.push(makeSprite("image", { canvas: makeFlashCanvas(tex), dw: texW, dh: texH, originX: 0, originY: 0 }));
     }
-    this._stripBaseX = Math.round(this.dragonOriginX + (targetH - texW) / 2);
-    this._stripBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH + scale);
-    // Where the blade pixels are (relative to the texture), so the sword's
-    // glow, embers and sparks come off the actual blade.
-    const ox = mounted ? SADDLE_X + 1 : 1, oy = mounted ? SADDLE_Y + Math.max(0, -SADDLE_Y) + 1 : 1;
+    this._pixScale = 2;
+    // flying mounts hover a little above the ground; heroes on foot stand on it
+    this._stripBaseX = Math.round(this.dragonOriginX + (targetH - texW) / 2 - (mounted ? u * 2 : 0));
+    this._stripBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH - (mounted ? u * 3 : 0));
+    // design-space -> texture CSS px, for the sword effects and the fireball
+    const k = meta._designScale, off = meta._designOffset;
+    const toTex = (x, y) => ({ x: (x + off.x) * k, y: (y + off.y) * k });
+    const R = (x, y) => mounted
+      ? toTex(108 + HD_RIDER_FWD + (x - 108) * HD_RIDER_SCALE, HD_RIDER_Y + (y - 74) * HD_RIDER_SCALE)
+      : toTex(x, y);
+    // blade: from the hilt to the tip, sampled along its length
+    const [h0, t0] = mounted ? [[130, 52], [157, 10]] : [[66, 50], [80, 4]];
     this._blade = [];
-    rider.frames[0].forEach((row, y) => row.match(/../g).forEach((c, x) => {
-      if (c[0] === "B") this._blade.push({ x: (ox + x + 0.5) * scale, y: (oy + y + 0.5) * scale });
-    }));
+    for (let i = 0; i <= 10; i++) this._blade.push(R(h0[0] + (t0[0] - h0[0]) * i / 10, h0[1] + (t0[1] - h0[1]) * i / 10));
     this._blade.sort((a, b) => a.y - b.y);   // [0] = tip
-    // Dragon's mouth (for the fireball) -- snout tip of PIX_DRAGON.
-    this._mouth = mounted ? { x: (1 + 47) * scale, y: (1 + 13) * scale } : (this._blade[0] || { x: texW, y: texH * 0.3 });
+    this._mouth = mounted ? toTex(180 + 40 * 1.15, 38 + 12 * 1.15) : this._blade[0];
     this._texW = texW; this._texH = texH;
   },
 
@@ -8397,7 +8429,7 @@ const BattleStage = {
     }
     const scale = this._pixScale || 1;
     const n = Math.max(1, this.dragonStrips.length);
-    const frame = Math.floor(now / 380) % n;
+    const frame = Math.floor(now / (n >= 4 ? 170 : 420)) % n;   // wing flaps / cape sway
     const bobPx = (Math.sin(now / 500) + 1) * 0.5;   // smooth breathing bob
     const flash = now < this.playerFlashUntil;
     const strips = flash ? this.dragonFlash : this.dragonStrips;
@@ -8731,6 +8763,18 @@ const BattleStage = {
     this.fx.push({ type: "star", x: B.cx, y: B.cy, color: side === "enemy" ? "#ffcf3a" : "#ff5a4a", t0: performance.now(), dur: 280 });
   },
 };
+
+/* Colours for the HD hero drawings, from the same per-hero palettes. */
+function hdHeroLook(hero, tier) {
+  const girl = hero === "girl";
+  const P = heroPaletteForTier(tier, hero);
+  return {
+    hero: girl ? "girl" : "boy", skin: "#f3c08e",
+    hair: girl ? P.hairF : "#3a2a20", armor: P.armor, cape: girl ? P.clothF : P.clothM,
+    leather: girl ? "#6a3a4e" : "#7a4a2a", blade: P.bladeColor, hilt: "#f2c440",
+    gem: girl ? "#ee5a9a" : SWORD_GEMS[Math.max(0, (tier || 1) - 1)],
+  };
+}
 
 /* The rider's palette with the sword recoloured to the owned DMG tier. */
 function heroPaletteForTier(tier, hero) {

@@ -55,7 +55,15 @@ async function drawArt(width, height, kind, file) {
       const img = renderSprite(srcs, srcs.fill.width * scale, srcs.fill.height * scale);
       ctx.drawImage(img, x, y);
     };
-    const rider = (scale, x, y, hero = 'boy') => drawSmooth(riderSource(hero, fire, 3, 0), scale, x, y);
+    // HD dragon rider (hd-art.js), centred on the box the old pixel sprite used.
+    // Pixel grid matches the game: ~220 art pixels across the dragon.
+    const rider = (scale, x, y, hero = 'boy') => {
+      const boxW = PIX_DRAGON.w * scale, boxH = PIX_DRAGON.h * scale;
+      const w = boxW * 1.25, h = w * HD_DRAGON_FIT.h / HD_DRAGON_FIT.w;
+      const img = hdRender((c) => { drawHDDragon(c, fire, 0.25); drawHDRider(c, hdHeroLook(hero, 3), 0.25); },
+        HD_DRAGON_FIT, w, h, 1, Math.max(1, w / 220));
+      ctx.drawImage(img, Math.round(x + (boxW - w) / 2), Math.round(y + boxH - h));
+    };
     const pixelText = (text, size, x, y, fill, align = 'center') => {
       ctx.font = `1000 ${size}px Nunito, sans-serif`;
       ctx.textAlign = align; ctx.textBaseline = 'middle';
@@ -87,9 +95,10 @@ async function drawArt(width, height, kind, file) {
         // capacitor-assets already insets the adaptive foreground into the
         // centre 66% safe zone, so the art can use most of its own canvas.
         const safe = kind === 'icon-fg' ? 0.92 : 0.86;
-        const scale = Math.floor((width * safe) / (PIX_DRAGON.w + 2));
-        const w = PIX_DRAGON.w * scale, h = (PIX_DRAGON.h + 3) * scale;
-        rider(scale, Math.round((width - w) / 2), Math.round((height - h) / 2 + height * 0.02));
+        // the HD dragon's wings span 1.25x the old sprite box, so fit that
+        const scale = (width * safe) / (PIX_DRAGON.w * 1.25);
+        const w = PIX_DRAGON.w * scale, h = PIX_DRAGON.h * scale;
+        rider(scale, Math.round((width - w) / 2), Math.round((height - h) / 2 + height * 0.06));
         // a chunky rounded "+" badge (maths!) in the corner
         const u = width / 40, s = kind === 'icon-fg' ? 0.06 : 0.1;
         const px = width * s, py = height * s, L = u * 3.2, T = u * 1.1;
