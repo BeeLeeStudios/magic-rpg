@@ -311,6 +311,8 @@ h1 {
   animation: bossFadeIn 0.55s ease forwards;
 }
 .boss-intro-inner { text-align: center; padding: 0 20px; }
+/* Any later re-render while the takeover is up must not replay its entrance. */
+.boss-intro.seen, .boss-intro.seen .boss-intro-lead, .boss-intro.seen .boss-intro-name { animation: none; }
 .boss-intro-warn {
   font-size: 54px;
   margin-bottom: 6px;
@@ -484,14 +486,6 @@ h1 {
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-}
-
-.accessory {
-  position: absolute;
-  top: -8px;
-  right: -4px;
-  font-size: 22px;
-  transform: rotate(8deg);
 }
 
 .pet-badge {
@@ -1382,9 +1376,16 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 
 /* ---------- shop ---------- */
 .shop-overlay { background: rgba(8,4,16,0.82); padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom)); }
+.shop-hint { margin: -4px 0 4px; font-size: 12.5px; font-weight: 800; color: var(--text-dim); }
 .shop-coins { font-family: var(--font-ui); font-size: 18px; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
 .shop-section-title { font-family: var(--font-ui); font-weight: 900; font-size: 17px; color: var(--gold); text-shadow: 0 2px 0 var(--ink); margin: 20px 0 12px; }
 .shop-item { margin: 0 3px; }
+.goal-star {
+  flex: 0 0 auto; width: 34px; height: 34px; margin-right: 6px; border: none; border-radius: 50%;
+  background: #1a1230; color: #8c7fb0; font-size: 20px; line-height: 1; cursor: pointer;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.goal-star.on { color: #ffd66e; background: #3a2a10; text-shadow: 0 0 8px rgba(255,214,110,0.8); }
 .shop-item-name { font-family: var(--font-ui); font-weight: 900; font-size: 15px; color: #fff; }
 .shop-item-type { color: var(--text-dim); font-weight: 900; }
 .shop-item-emoji { filter: drop-shadow(0 2px 0 var(--ink)); }
@@ -1417,6 +1418,68 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .info-card h3 { font-family: var(--font-ui); color: var(--gold); margin: 16px 0 6px; font-size: 17px; }
 .info-card p, .info-card li { font-size: 14px; line-height: 1.5; color: var(--text); font-weight: 600; }
 .info-card ul { padding-left: 20px; margin: 6px 0; }
+
+/* ---------- battle fits the phone: no page scroll ----------
+   The arena is a full-height column; the canvas stage takes whatever
+   height is left, so every phone shows the whole fight at once. Menus
+   (shop, settings) are overlays that still scroll inside themselves. */
+html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+.wrap.playing {
+  height: 100vh; height: 100dvh; min-height: 0; overflow: hidden;
+  align-items: stretch; justify-content: center;
+  padding: calc(8px + var(--safe-top)) calc(8px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(8px + var(--safe-left));
+}
+.arena.fit { display: flex; flex-direction: column; height: 100%; max-height: 100%; padding: 10px 10px 10px; overflow: hidden; }
+.arena.fit > * { flex: 0 0 auto; }
+.arena.fit .topbar { font-size: 15px; }
+.arena.fit .topbar.sub-row { margin-top: 3px; gap: 8px; min-height: 20px; }
+.arena.fit .rank-row { margin: 3px 0 0; }
+.arena.fit .rank-badge { font-size: 11px; padding: 2px 9px; }
+.arena.fit .xpbar-row { margin: 5px 0 4px; }
+.hp-duo { display: flex; gap: 12px; }
+.hp-duo .combatant { flex: 1 1 0; min-width: 0; margin: 0; }
+.hp-duo .name-row { margin: 4px 0 4px; display: flex; justify-content: space-between; gap: 6px; }
+.hp-duo .name-row .cname { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hp-duo .name-row .hp-num { font-size: 12px; white-space: nowrap; }
+.hp-duo .hpbar { height: 11px; }
+.foe-count { font-size: 11px; color: #ffb35c; }
+.arena.fit { justify-content: center; }
+.arena.fit .battlefield-anchor { flex: 1 1 auto; height: auto; min-height: 140px; max-height: 520px; margin: 10px 3px 8px; }
+.stage-banners { position: absolute; left: 6px; right: 6px; top: 6px; z-index: 5; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+.stage-banners .banner { margin: 0; font-size: 13px; padding: 5px 8px; text-align: center; opacity: 0.96; }
+.arena.fit .problem-card { margin: 6px 3px 3px; padding: 6px 10px 10px; }
+.arena.fit .streak { height: 16px; font-size: 13px; }
+.arena.fit .problem-card.on-fire .streak { font-size: 14px; }
+.arena.fit .problem { font-size: clamp(32px, 10vw, 44px); margin: 0 0 8px; }
+.arena.fit .choices { gap: 10px; margin: 0 3px 10px; }
+.arena.fit .choice { font-size: 26px; padding: 7px 0 9px; }
+.action-row { display: flex; gap: 8px; margin: 0 3px; }
+.action-row .btn { flex: 1 1 0; min-width: 0; margin: 0; width: auto; font-size: 12.5px; padding: 9px 2px; line-height: 1.2; white-space: nowrap; }
+.action-row .fireball-btn { flex: 1.2 1 0; }
+.action-row .potion-btn[data-action="use-potion-poison"] { flex: 1.15 1 0; }
+.action-row .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px 5px; }
+.action-row .charge-pips, .action-row .cd { margin: 0; gap: 3px; }
+.action-row .charge-pips i { width: 8px; height: 8px; }
+.charge-pips i.on.poison { background: #a78bfa; box-shadow: 0 0 0 2px var(--ink), inset 0 -2px 0 #6d28d9; }
+.action-row .cd { display: inline-block; min-width: 16px; line-height: 12px; border-radius: 8px; background: #0f0a18; color: var(--text-dim); font-size: 11px; padding: 0 4px; }
+.goal-chip {
+  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 58%; flex: 0 1 auto;
+  border: none; border-radius: 999px; padding: 2px 8px; cursor: pointer;
+  font-family: var(--font-ui); font-weight: 900; font-size: 11px; color: #ffe7a3;
+  background: #2a1d44; box-shadow: 0 0 0 2px var(--ink);
+  white-space: nowrap; overflow: hidden;
+}
+.lvl-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goal-chip .goal-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.goal-chip .goal-bar { position: relative; flex: 0 0 30px; height: 6px; border-radius: 999px; background: #0f0a18; overflow: hidden; }
+.goal-chip .goal-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #f2c440, #ffe7a3); border-radius: 999px; }
+.goal-chip.ready { background: #6b4a0a; color: #fff3c4; animation: pxPulse 0.9s ease-in-out infinite; }
+/* Short phones: squeeze the header before the stage gets too small. */
+@media (max-height: 700px) {
+  .arena.fit .rank-row { display: none; }
+  .arena.fit .problem { font-size: 34px; }
+  .arena.fit .choice { font-size: 24px; padding: 5px 0 7px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .logo, .journey-btn, .boss-portrait, .problem .q, .fireball-btn.ready, .player-fill.low,
@@ -1483,52 +1546,73 @@ const shuffle = (arr) => {
    build -- they can both be running a Lv.15 dragon on completely different
    math.
 
-   Every band is addition/subtraction. Multiplication deliberately lives at
-   the far end (band 9+) and is not reachable until every A/S band below it
-   is mastered, so it simply never shows up for a kid who isn't ready.
+   Every band is addition/subtraction. Multiplication, if added later,
+   belongs after rank 11 so it never shows up for a kid who isn't ready.
 
    `gen` returns { a, op, b, answer }. `errors` lists the characteristic
    wrong answers for that skill -- see makeChoices() for why. */
 const MATH_BANDS = [
+  // Ranks 1-7 grow the numbers a few at a time (1-4, then up to 8, 12,
+  // 16, 20, 25, 30) so no rank is a big jump from the one before it.
+  // Bigger place-value work only starts at rank 8.
   {
     id: 1,
-    name: "Apprentice",
-    desc: "Adding and subtracting within 10",
-    speedMs: 6000,
-    gen() {
-      if (Math.random() < 0.5) {
-        const a = randInt(1, 9);
-        const b = randInt(1, 10 - a);
-        return { a, op: "+", b, answer: a + b };
-      }
-      const a = randInt(2, 10);
-      const b = randInt(1, a);
-      return { a, op: "-", b, answer: a - b };
-    },
-    errors: (p) => [p.answer + 1, p.answer - 1, p.op === "+" ? p.a - p.b : p.a + p.b],
+    name: "Hatchling",
+    desc: "Numbers 1 to 4",
+    speedMs: 5000,
+    gen() { return smallFact(1, 4, 1, 4); },
+    errors: smallErrors,
   },
   {
     id: 2,
-    name: "Ten-Crosser",
-    desc: "Bridging over ten",
-    speedMs: 7000,
-    gen() {
-      if (Math.random() < 0.5) {
-        // Forced to cross the ten: a + b > 10 but both single digits.
-        const a = randInt(5, 9);
-        const b = randInt(11 - a, 9);
-        return { a, op: "+", b, answer: a + b };
-      }
-      // Teen minus a single digit, dropping below ten.
-      const a = randInt(11, 18);
-      const b = randInt(a - 9, 9);
-      return { a, op: "-", b, answer: a - b };
-    },
-    // Classic bridging mistakes: stopping at 10, or off by one either way.
-    errors: (p) => [10, p.answer + 1, p.answer - 1, p.answer + 10],
+    name: "Fledgling",
+    desc: "Numbers up to 8",
+    speedMs: 6000,
+    gen() { return smallFact(5, 8, 1, 8); },
+    errors: smallErrors,
   },
   {
     id: 3,
+    name: "Ember Scale",
+    desc: "Numbers up to 12",
+    speedMs: 6500,
+    gen() { return smallFact(9, 12, 1, 9); },
+    errors: smallErrors,
+  },
+  {
+    id: 4,
+    name: "Flame Wing",
+    desc: "Numbers up to 16",
+    speedMs: 7000,
+    gen() { return smallFact(13, 16, 1, 9); },
+    errors: teenErrors,
+  },
+  {
+    id: 5,
+    name: "Sky Rider",
+    desc: "Numbers up to 20",
+    speedMs: 7500,
+    gen() { return smallFact(17, 20, 1, 10); },
+    errors: teenErrors,
+  },
+  {
+    id: 6,
+    name: "Storm Rider",
+    desc: "Numbers up to 25",
+    speedMs: 8000,
+    gen() { return smallFact(21, 25, 1, 10); },
+    errors: teenErrors,
+  },
+  {
+    id: 7,
+    name: "Cloud Breaker",
+    desc: "Numbers up to 30",
+    speedMs: 8000,
+    gen() { return smallFact(26, 30, 1, 10); },
+    errors: teenErrors,
+  },
+  {
+    id: 8,
     name: "Ten-Stacker",
     desc: "Whole tens: 30 + 20",
     speedMs: 7000,
@@ -1546,55 +1630,31 @@ const MATH_BANDS = [
     errors: (p) => [p.answer / 10, p.answer + 10, p.answer - 10, p.a + p.b + 10],
   },
   {
-    id: 4,
+    id: 9,
     name: "Tens & Ones",
-    desc: "Two-digit plus one-digit",
-    speedMs: 8000,
+    desc: "Two-digit and one-digit",
+    speedMs: 8500,
     gen() {
-      if (Math.random() < 0.5) {
+      const r = Math.random();
+      if (r < 0.3) {
         // No regrouping: ones digit stays under 10.
         const tens = randInt(1, 8) * 10;
         const ones = randInt(1, 5);
         const b = randInt(1, 9 - ones);
         return { a: tens + ones, op: "+", b, answer: tens + ones + b };
       }
-      const tens = randInt(2, 9) * 10;
-      const ones = randInt(4, 9);
-      const b = randInt(1, ones);
-      return { a: tens + ones, op: "-", b, answer: tens + ones - b };
-    },
-    errors: (p) => [p.answer + 10, p.answer - 10, p.answer + 1, p.answer - 1],
-  },
-  {
-    id: 5,
-    name: "Ten-Jumper",
-    desc: "Two-digit plus a whole ten",
-    speedMs: 8000,
-    gen() {
-      if (Math.random() < 0.5) {
-        const a = randInt(11, 59);
-        const b = randInt(1, Math.min(4, Math.floor((99 - a) / 10))) * 10;
-        return { a, op: "+", b, answer: a + b };
-      }
-      const a = randInt(31, 99);
-      const b = randInt(1, Math.min(4, Math.floor(a / 10))) * 10;
-      return { a, op: "-", b, answer: a - b };
-    },
-    // Adding the ten to the ONES column is the signature mistake.
-    errors: (p) => [p.a + p.b / 10, p.answer + 10, p.answer - 10, p.answer + 1],
-  },
-  {
-    id: 6,
-    name: "Regrouper",
-    desc: "Carrying and borrowing",
-    speedMs: 9000,
-    gen() {
-      if (Math.random() < 0.5) {
-        // Ones digits MUST sum past 10, forcing a carry.
+      if (r < 0.55) {
+        // Carrying: ones digits sum past 10.
         const tens = randInt(1, 8) * 10;
         const ones = randInt(4, 9);
         const b = randInt(11 - ones, 9);
         return { a: tens + ones, op: "+", b, answer: tens + ones + b };
+      }
+      if (r < 0.8) {
+        const tens = randInt(1, 9) * 10;
+        const ones = randInt(2, 9);
+        const b = randInt(1, ones - 1);
+        return { a: tens + ones, op: "-", b, answer: tens + ones - b };
       }
       // Borrowing: subtrahend bigger than the ones digit.
       const tens = randInt(2, 9) * 10;
@@ -1606,7 +1666,7 @@ const MATH_BANDS = [
     errors: (p) => [p.answer - 10, p.answer + 10, p.answer + 1, p.answer - 1],
   },
   {
-    id: 7,
+    id: 10,
     name: "Double Digits",
     desc: "Two-digit sums, no regrouping",
     speedMs: 10000,
@@ -1623,7 +1683,7 @@ const MATH_BANDS = [
     errors: (p) => [p.answer + 10, p.answer - 10, p.answer + 9, p.answer - 9],
   },
   {
-    id: 8,
+    id: 11,
     name: "Dragon Mathematician",
     desc: "Two-digit sums with regrouping",
     speedMs: 11000,
@@ -1640,6 +1700,36 @@ const MATH_BANDS = [
     errors: (p) => [p.answer - 10, p.answer + 10, p.answer + 1, p.answer - 1],
   },
 ];
+
+/* Ranks 1-7: one number comes from this rank's new range [lo, hi], the
+   other from 1..otherMax, so every problem practises the new numbers.
+   Subtraction always starts from the bigger number and never gives 0. */
+function smallFact(lo, hi, otherMin, otherMax) {
+  const big = randInt(lo, hi);
+  if (Math.random() < 0.5) {
+    const other = randInt(otherMin, otherMax);
+    return Math.random() < 0.5
+      ? { a: big, op: "+", b: other, answer: big + other }
+      : { a: other, op: "+", b: big, answer: big + other };
+  }
+  if (big < 2) return { a: big, op: "+", b: 1, answer: big + 1 };
+  const b = randInt(1, Math.min(otherMax, big - 1));
+  return { a: big, op: "-", b, answer: big - b };
+}
+// Small facts: off-by-one counting slips, and adding when it said subtract.
+function smallErrors(p) {
+  return [p.answer + 1, p.answer - 1, p.answer + 2, p.answer - 2, p.op === "-" ? p.a + p.b : Math.abs(p.a - p.b)];
+}
+// Past 12, the ten is where kids slip: 10 off, or 1 off from counting.
+function teenErrors(p) {
+  return [p.answer + 10, p.answer - 10, p.answer + 1, p.answer - 1, p.op === "-" ? p.a + p.b : Math.abs(p.a - p.b)];
+}
+
+/* Saves from before the 11-rank ladder used 8 bigger ranks. Each old rank
+   maps to the new rank at or below the skill it proved, so nobody lands on
+   harder math than they were already doing. */
+const MATH_LADDER_VERSION = 2;
+const OLD_BAND_TO_NEW = { 1: 1, 2: 3, 3: 5, 4: 6, 5: 7, 6: 8, 7: 9, 8: 10 };
 
 const MAX_BAND = MATH_BANDS.length;
 function getBand(id) {
@@ -1721,8 +1811,8 @@ const MASTERY = {
   // two-digit REGROUPING -- the hardest arithmetic in the game -- in about
   // 90 answers, roughly one sitting. Mastery of a skill should take
   // sustained practice, not a lucky dozen problems.
-  minSeen: 24,        // never promote before this many problems in the band
-  window: 26,         // rolling window of recent attempts (>= minSeen, so
+  minSeen: 30,        // never promote before this many problems in the band
+  window: 32,         // rolling window of recent attempts (>= minSeen, so
                        // the accuracy check reflects the full requirement)
   promoteAcc: 0.85,
   demoteAcc: 0.55,
@@ -1884,8 +1974,10 @@ function evaluateBandChange(answeredBandId) {
   // how much evidence a double-jump requires -- a separate, higher gate
   // was tried and found to be unreachable (see comment history), since
   // promotion fires the instant the bar clears and resets the counter.
+  // The skip is only allowed through the tiny-number ranks (1-4), so an
+  // older kid isn't stuck on 2 + 1 but nobody skips past the teens.
   const clean = (st.demotions || 0) === 0;
-  const jump = (clean && acc >= MASTERY.fastTrackAcc && med <= budget * MASTERY.fastTrackSpeed) ? 2 : 1;
+  const jump = (clean && cur < 4 && acc >= MASTERY.fastTrackAcc && med <= budget * MASTERY.fastTrackSpeed) ? 2 : 1;
   const from = cur;
   S.mathBand = Math.min(MAX_BAND, cur + jump);
   // Fresh window for the new band, but preserve its demotion history so a
@@ -1943,7 +2035,7 @@ function getMaxHPForLevel(level) {
 const MIN_HITS_TO_DIE = 5;
 
 const BASE_HIT = 8;
-const BAND_HIT_BONUS = 1.5;   // per band above 1
+const BAND_HIT_BONUS = 1.05;  // per rank above 1 (11 ranks: same top damage as the old 8 x 1.5)
 const SPEED_HIT_BONUS = 6;    // max bonus for an instant answer
 
 function getProblemDamage(problem, elapsedMs) {
@@ -1960,7 +2052,7 @@ function getProblemDamage(problem, elapsedMs) {
    (so it stays threatening) and is capped at a share of max HP so it can
    never one-shot the player from full. */
 function getEnemyDamage() {
-  let raw = 4 + Math.floor(S.wave * 0.9) + Math.floor(getBand(S.mathBand).id * 0.5);
+  let raw = 4 + Math.floor(S.wave * 0.9) + Math.floor(getBand(S.mathBand).id * 0.35);
   // Every living minion piles on. Without this the spawn cost the player
   // nothing, so ignoring them was strictly faster than killing them -- the
   // exact opposite of what the summon mechanic is for.
@@ -2328,47 +2420,30 @@ const LEVEL_STYLES = [
 ];
 
 const COSMETICS = [
-  /* Accessories */
-  { id: "crown", name: "Golden Crown", emoji: "👑", cost: 20, type: "accessory" },
-  { id: "shades", name: "Cool Shades", emoji: "🕶️", cost: 15, type: "accessory" },
-  { id: "flower", name: "Flower Crown", emoji: "🌸", cost: 18, type: "accessory" },
-  { id: "bow", name: "Bow Tie", emoji: "🎀", cost: 12, type: "accessory" },
-  { id: "wizardhat", name: "Wizard's Hat", emoji: "🎩", cost: 22, type: "accessory" },
-  { id: "monocle", name: "Fancy Monocle", emoji: "🧐", cost: 16, type: "accessory" },
-  { id: "gradcap", name: "Graduation Cap", emoji: "🎓", cost: 18, type: "accessory" },
-  { id: "scarf", name: "Cozy Scarf", emoji: "🧣", cost: 14, type: "accessory" },
-  { id: "goggles", name: "Sky Goggles", emoji: "🥽", cost: 20, type: "accessory" },
-  { id: "gem", name: "Gem Necklace", emoji: "💎", cost: 30, type: "accessory" },
-
-  /* Auras */
-  { id: "aura", name: "Flame Aura", emoji: "🔥", cost: 40, type: "aura" },
-  { id: "sparkle", name: "Starlight Aura", emoji: "✨", cost: 40, type: "aura" },
-  { id: "frostaura", name: "Frost Aura", emoji: "❄️", cost: 40, type: "aura" },
-  { id: "rainbowaura", name: "Rainbow Aura", emoji: "🌈", cost: 45, type: "aura" },
-
   /* Dragon mounts. The hero starts on foot; buying one of these puts them
      in the saddle and swaps the mount's slot palette. 10 elemental dragons,
      unlocked in increasing rarity as the player levels up. */
-  { id: "creature_fire", name: "Fire Dragon", emoji: "🔥🐉", cost: 25, type: "creature", levelReq: 2 },
-  { id: "creature_earth", name: "Earth Dragon", emoji: "🌍🐉", cost: 35, type: "creature", levelReq: 5 },
-  { id: "creature_water", name: "Water Dragon", emoji: "💧🐉", cost: 45, type: "creature", levelReq: 8 },
-  { id: "creature_air", name: "Air Dragon", emoji: "💨🐉", cost: 60, type: "creature", levelReq: 12 },
-  { id: "creature_ice", name: "Ice Dragon", emoji: "❄️🐉", cost: 75, type: "creature", levelReq: 16 },
-  { id: "creature_storm", name: "Storm Dragon", emoji: "⛈️🐉", cost: 95, type: "creature", levelReq: 20 },
-  { id: "creature_crystal", name: "Crystal Dragon", emoji: "💎🐉", cost: 120, type: "creature", levelReq: 24 },
-  { id: "creature_onyx", name: "Onyx Dragon", emoji: "⚫🐉", cost: 150, type: "creature", levelReq: 28 },
-  { id: "creature_shadow", name: "Shadow Dragon", emoji: "🌑🐉", cost: 190, type: "creature", levelReq: 32 },
-  { id: "creature_skeleton", name: "Skeleton Dragon", emoji: "💀🐉", cost: 240, type: "creature", levelReq: 36 },
+  { id: "creature_fire", name: "Fire Dragon", emoji: "🔥🐉", cost: 80, type: "creature", levelReq: 2 },
+  { id: "creature_earth", name: "Earth Dragon", emoji: "🌍🐉", cost: 150, type: "creature", levelReq: 4 },
+  { id: "creature_water", name: "Water Dragon", emoji: "💧🐉", cost: 250, type: "creature", levelReq: 7 },
+  { id: "creature_air", name: "Air Dragon", emoji: "💨🐉", cost: 350, type: "creature", levelReq: 10 },
+  { id: "creature_ice", name: "Ice Dragon", emoji: "❄️🐉", cost: 450, type: "creature", levelReq: 13 },
+  { id: "creature_storm", name: "Storm Dragon", emoji: "⛈️🐉", cost: 600, type: "creature", levelReq: 16 },
+  { id: "creature_crystal", name: "Crystal Dragon", emoji: "💎🐉", cost: 750, type: "creature", levelReq: 19 },
+  { id: "creature_onyx", name: "Onyx Dragon", emoji: "⚫🐉", cost: 900, type: "creature", levelReq: 21 },
+  { id: "creature_shadow", name: "Shadow Dragon", emoji: "🌑🐉", cost: 1100, type: "creature", levelReq: 23 },
+  { id: "creature_skeleton", name: "Skeleton Dragon", emoji: "💀🐉", cost: 1400, type: "creature", levelReq: 25 },
 
-  /* Pets — one active at a time. Each fights alongside your dragon, dealing
-     bonus damage equal to a % of your attack every time you attack. Unlocks
-     every 5 levels up to Lv.25, where the strongest pet hits for 100%. */
-  { id: "pet_owl", name: "Owl", emoji: "🦉", cost: 20, type: "pet", levelReq: 1, dmgPercent: 50 },
-  { id: "pet_wolf", name: "Wolf", emoji: "🐺", cost: 50, type: "pet", levelReq: 5, dmgPercent: 60 },
-  { id: "pet_bear", name: "Bear", emoji: "🐻", cost: 90, type: "pet", levelReq: 10, dmgPercent: 70 },
-  { id: "pet_panther", name: "Panther", emoji: "🐆", cost: 140, type: "pet", levelReq: 15, dmgPercent: 80 },
-  { id: "pet_griffin", name: "Griffin", emoji: "🦅", cost: 200, type: "pet", levelReq: 20, dmgPercent: 90 },
-  { id: "pet_dragonwhelp", name: "Dragon Whelp", emoji: "🐉", cost: 270, type: "pet", levelReq: 25, dmgPercent: 100 },
+  /* Pets — one active at a time. Each fights alongside you with its own
+     attack when its stamina fills (about every other correct answer);
+     dmgPercent is its power relative to your sword hit. Unlocks every 5
+     levels up to Lv.25. */
+  { id: "pet_owl", name: "Owl", emoji: "🦉", cost: 75, type: "pet", levelReq: 1, dmgPercent: 50 },
+  { id: "pet_wolf", name: "Wolf", emoji: "🐺", cost: 200, type: "pet", levelReq: 5, dmgPercent: 60 },
+  { id: "pet_bear", name: "Bear", emoji: "🐻", cost: 350, type: "pet", levelReq: 10, dmgPercent: 70 },
+  { id: "pet_panther", name: "Panther", emoji: "🐆", cost: 550, type: "pet", levelReq: 15, dmgPercent: 80 },
+  { id: "pet_griffin", name: "Griffin", emoji: "🦅", cost: 800, type: "pet", levelReq: 20, dmgPercent: 90 },
+  { id: "pet_dragonwhelp", name: "Dragon Whelp", emoji: "🐉", cost: 1100, type: "pet", levelReq: 25, dmgPercent: 100 },
 ];
 
 /* Battle arena backdrops are painted pixel biomes now -- see BIOMES and
@@ -2391,11 +2466,11 @@ function seededRandom01(n) {
    last (+1, +2 ... +5 DMG) and you wield exactly one at a time -- the
    equipped sword sets both your bonus damage and the blade you see. */
 const DMG_UPGRADES = [
-  { id: "dmg1", name: "Iron Sword",       emoji: "🗡️", cost: 25,  levelReq: 1, type: "dmg", bonus: 1, perk: "Sturdy and sharp" },
-  { id: "dmg2", name: "Steel Sword",      emoji: "⚔️", cost: 60,  levelReq: 2, type: "dmg", bonus: 2, perk: "Polished steel shine" },
-  { id: "dmg3", name: "Flame Sword",      emoji: "🔥", cost: 110, levelReq: 3, type: "dmg", bonus: 3, perk: "Burns with living fire" },
-  { id: "dmg4", name: "Storm Sword",      emoji: "⚡", cost: 170, levelReq: 4, type: "dmg", bonus: 4, perk: "Crackles with lightning" },
-  { id: "dmg5", name: "Dragonfang Blade", emoji: "🐉", cost: 250, levelReq: 5, type: "dmg", bonus: 5, perk: "Forged from a dragon's fang" },
+  { id: "dmg1", name: "Iron Sword",       emoji: "🗡️", cost: 100,  levelReq: 1, type: "dmg", bonus: 1, perk: "Sturdy and sharp" },
+  { id: "dmg2", name: "Steel Sword",      emoji: "⚔️", cost: 250,  levelReq: 2, type: "dmg", bonus: 2, perk: "Polished steel shine" },
+  { id: "dmg3", name: "Flame Sword",      emoji: "🔥", cost: 450, levelReq: 3, type: "dmg", bonus: 3, perk: "Burns with living fire" },
+  { id: "dmg4", name: "Storm Sword",      emoji: "⚡", cost: 700, levelReq: 4, type: "dmg", bonus: 4, perk: "Crackles with lightning" },
+  { id: "dmg5", name: "Dragonfang Blade", emoji: "🐉", cost: 1000, levelReq: 5, type: "dmg", bonus: 5, perk: "Forged from a dragon's fang" },
 ];
 
 /* Blade/hilt colours for the rider's sword, keyed by how many DMG
@@ -2423,8 +2498,8 @@ function getSwordTier() {
    randomly-drawn cards (out of this pool of 5) to choose between -- pick
    one, get its effect immediately, and dive back into the fight. Two cards
    are instant one-offs (heal / gold), two are timed buffs that last for
-   the next 2 waves (double damage / XP boost), and one is a direct nuke
-   against every enemy currently on the field. */
+   the next 2 waves (double damage / XP boost), and one (Dragon Scales)
+   blocks the next 3 enemy hits. */
 const LEVEL_UP_CARDS = [
   {
     id: "heal", name: "Second Wind", icon: "❤️‍🔥",
@@ -2459,18 +2534,12 @@ const LEVEL_UP_CARDS = [
     },
   },
   {
-    id: "fireblast", name: "Dragonfire Nova", icon: "🌋",
-    desc: () => `Blast all enemies for 80% of their HP`,
+    // Defensive card: useful whatever monster the next wave brings.
+    id: "scales", name: "Dragon Scales", icon: "🛡️",
+    desc: () => `Block the next 3 enemy hits`,
     apply() {
-      let hitAny = false;
-      S.enemies.forEach((en) => {
-        if (en.hp <= 0) return;
-        const dmg = Math.max(1, Math.round(en.hp * 0.8));
-        en.hp = Math.max(0, en.hp - dmg);
-        hitAny = true;
-      });
-      if (hitAny) { addImpact("enemy"); BattleFX.enemyHit(); }
-      return hitAny ? `Blasted every enemy for 80% of their HP!` : `The field is already clear!`;
+      S.shieldHits = 3;
+      return `Dragon Scales! The next 3 hits are blocked.`;
     },
   },
   {
@@ -2586,7 +2655,7 @@ let popupIdCounter = 0;
 let impactIdCounter = 0;
 
 const S = {
-  screen: "saveselect",
+  screen: "title",   // the app opens on the flying-dragon title; START leads to the saves
   activeSaveId: null,
   confirmDeleteId: null,
   wave: 1,
@@ -2620,6 +2689,9 @@ const S = {
   enemyAttackThreshold: randInt(3, 5),
   shopOpen: false,
   doubleDmgWaves: 0,
+  shieldHits: 0,
+  dragonStamina: 0,
+  petStamina: 0,
   xpBoostWaves: 0,
   ownedCosmetics: {},
   ownedUpgrades: {},
@@ -2627,6 +2699,7 @@ const S = {
   equippedAura: null,
   equippedCreature: null,
   equippedPet: null,
+  goalId: null,
   equippedSword: null,
   levelUpData: null,
   pendingAdvance: null,
@@ -2731,6 +2804,29 @@ function getPetDmgPercent() {
   if (!S.equippedPet) return 0;
   const pet = COSMETICS.find((c) => c.id === S.equippedPet && c.type === "pet");
   return pet ? pet.dmgPercent : 0;
+}
+
+/* ---------- dragon breath & pets ----------
+   A dragon mount breathes on the enemy when its stamina bar fills; each
+   dragon has its own attack and a damage range that grows with rarity. */
+const DRAGON_BREATH = {
+  creature_fire:     { name: "Fireblast",      dmg: [1, 3],   style: "flame",  colors: ["#fff3b0", "#ffcf3a", "#ff7a1c", "#d8321f"] },
+  creature_earth:    { name: "Rock Hurl",      dmg: [2, 4],   style: "rock",   colors: ["#e8d0a0", "#c8a070", "#8a6a40", "#5a4028"] },
+  creature_water:    { name: "Water Jet",      dmg: [2, 5],   style: "stream", colors: ["#e0f8ff", "#7fd8ff", "#2f8fe0", "#1a5aa8"] },
+  creature_air:      { name: "Gust",           dmg: [3, 6],   style: "wind",   colors: ["#ffffff", "#e8f4ff", "#bcd8f0"] },
+  creature_ice:      { name: "Frost Breath",   dmg: [4, 7],   style: "shards", colors: ["#ffffff", "#d8f6ff", "#8fe0ff", "#4ab0e0"] },
+  creature_storm:    { name: "Lightning",      dmg: [5, 8],   style: "bolt",   colors: ["#ffffff", "#fff38a", "#b48aff", "#6a4ad8"] },
+  creature_crystal:  { name: "Crystal Shards", dmg: [6, 10],  style: "shards", colors: ["#fff0fb", "#ff9ae0", "#e060c8", "#9a3ab0"] },
+  creature_onyx:     { name: "Obsidian Blast", dmg: [7, 11],  style: "rock",   colors: ["#b48aff", "#6a5a88", "#2a2438", "#ff7a3c"] },
+  creature_shadow:   { name: "Shadow Flame",   dmg: [8, 13],  style: "flame",  colors: ["#e0b0ff", "#a060f0", "#5a2aa8", "#2a0a50"] },
+  creature_skeleton: { name: "Bone Fire",      dmg: [10, 15], style: "flame",  colors: ["#f0fff0", "#b6ff7a", "#4ac83a", "#1a6a2a"] },
+};
+const DRAGON_BREATH_HIT_MS = 720;    // rise, then the breath lands
+const DRAGON_BREATH_TOTAL_MS = 1150; // ...and back on the ground, sword next
+function getDragonBreath() { return (S.equippedCreature && DRAGON_BREATH[S.equippedCreature]) || null; }
+function getEquippedPet() {
+  if (!S.equippedPet) return null;
+  return COSMETICS.find((c) => c.id === S.equippedPet && c.type === "pet") || null;
 }
 
 /* ---------- multi-enemy helpers ---------- */
@@ -2943,18 +3039,28 @@ function selectSave(id) {
   S.xp = (d && d.xp) || 0;
   S.ownedCosmetics = (d && d.ownedCosmetics) || {};
   S.ownedUpgrades = (d && d.ownedUpgrades) || {};
-  S.equippedAccessory = (d && d.equippedAccessory) || null;
-  S.equippedAura = (d && d.equippedAura) || null;
+  // Accessories and auras were removed from the game; older saves may
+  // still name one, which is simply ignored.
+  S.equippedAccessory = null;
+  S.equippedAura = null;
   S.equippedCreature = (d && d.equippedCreature) || null;
   S.equippedPet = (d && d.equippedPet) || null;
+  S.goalId = (d && d.goalId) || null;
   // Saves from before swords were equippable wield the best one they own.
   S.equippedSword = (d && d.equippedSword !== undefined) ? d.equippedSword
     : ((DMG_UPGRADES.filter((u) => S.ownedUpgrades[u.id]).pop() || {}).id || null);
   // Each kid's math progression rides with their slot. Saves written
   // before bands existed have no mastery data and start at band 1.
   S.hero = (d && (d.hero === "girl" || d.hero === "boy")) ? d.hero : null;
-  S.mathBand = Math.max(1, Math.min(MAX_BAND, (d && d.mathBand) || 1));
-  S.mastery = ensureMastery(d && d.mastery);
+  if (d && d.mathBand && (d.mathLadder || 1) < MATH_LADDER_VERSION) {
+    // Old 8-rank save: move to the matching rank on the gentler ladder
+    // and start that rank's evidence fresh (old stats were for other math).
+    S.mathBand = OLD_BAND_TO_NEW[d.mathBand] || 1;
+    S.mastery = makeMastery();
+  } else {
+    S.mathBand = Math.max(1, Math.min(MAX_BAND, (d && d.mathBand) || 1));
+    S.mastery = ensureMastery(d && d.mastery);
+  }
   // Bug fix: the journey screen's "Wave X was your best" line reads
   // S.bestWave, but nothing ever set it -- it only lived in slot.data,
   // so returning players always saw "Wave 1". Hydrated here alongside
@@ -2994,6 +3100,9 @@ function selectSave(id) {
     S.enemyAttackCounter = battle.enemyAttackCounter || 0;
     S.enemyAttackThreshold = battle.enemyAttackThreshold || randInt(3, 5);
     S.doubleDmgWaves = battle.doubleDmgWaves || 0;
+    S.shieldHits = battle.shieldHits || 0;
+    S.dragonStamina = battle.dragonStamina || 0;
+    S.petStamina = battle.petStamina || 0;
     S.xpBoostWaves = battle.xpBoostWaves || 0;
     newProblem(levelFromXP(S.xp).level);
     S.locked = false;
@@ -3002,8 +3111,9 @@ function selectSave(id) {
     S.confirmDeleteId = null;
     S.screen = "playing";
   } else {
-    // A brand-new slot picks its hero before anything else.
-    S.screen = S.hero ? "title" : "heroselect";
+    // A brand-new slot picks its hero first; otherwise straight into battle.
+    if (!S.hero) S.screen = "heroselect";
+    else { startGame(); return; }
   }
   render();
 }
@@ -3022,6 +3132,7 @@ function saveActiveSlot() {
     // cost you the arithmetic you've learned.
     hero: S.hero,
     mathBand: S.mathBand,
+    mathLadder: MATH_LADDER_VERSION,
     mastery: S.mastery,
     ownedCosmetics: S.ownedCosmetics,
     ownedUpgrades: S.ownedUpgrades,
@@ -3030,6 +3141,7 @@ function saveActiveSlot() {
     equippedCreature: S.equippedCreature,
     equippedPet: S.equippedPet,
     equippedSword: S.equippedSword,
+    goalId: S.goalId,
     bestWave: Math.max(prevBestWave, S.wave),
     bestScore: Math.max(prevBestScore, S.score),
     // Snapshot of the battle in progress (current wave, monster(s), HP,
@@ -3058,6 +3170,9 @@ function saveActiveSlot() {
       enemyAttackCounter: S.enemyAttackCounter,
       enemyAttackThreshold: S.enemyAttackThreshold,
       doubleDmgWaves: S.doubleDmgWaves,
+      shieldHits: S.shieldHits,
+      dragonStamina: S.dragonStamina,
+      petStamina: S.petStamina,
       xpBoostWaves: S.xpBoostWaves,
     } : null,
   };
@@ -3142,6 +3257,9 @@ function startGame() {
   S.enemyAttackCounter = 0;
   S.enemyAttackThreshold = randInt(3, 5);
   S.doubleDmgWaves = 0;
+  S.shieldHits = 0;
+  S.dragonStamina = 0;
+  S.petStamina = 0;
   S.xpBoostWaves = 0;
   S.banner = null;
   S.bandBanner = null;
@@ -3175,7 +3293,7 @@ function nextWave(currentPlayerHP, currentMaxHP, currentLevel) {
 }
 
 /* Applies the chosen level-up reward card. The new wave's enemies are
-   spawned FIRST (via nextWave) so that Dragonfire Nova has live targets to
+   spawned FIRST (via nextWave) so that any card that targets enemies has live targets to
    hit rather than the already-dead enemies from the wave just cleared;
    Second Wind then heals off the dragon's current HP so it carries in. */
 function chooseLevelUpCard(cardId) {
@@ -3217,89 +3335,159 @@ function handleAnswer(val) {
     S.fireballCharge = Math.min(3, S.fireballCharge + 1);
     if (S.fireballCharge >= 3) S.fireballReady = true;
     S.potionCharge = Math.min(3, S.potionCharge + 1);
-    S.dragonAnim = "lunge-right";
-    BattleFX.playerAttack();
-    render();
-    setTimeout(() => {
-      if (S.runId !== rid) return;
-      // Damage comes from problem difficulty + answer speed, NOT from how
-      // large the answer happened to be. See getProblemDamage().
-      const hit = getProblemDamage(answeredProblem, elapsed);
-      const baseDmg = hit.dmg + getDmgBonus();
-      const eff = getActiveBuffs();
-      let dmgPct = eff.dmgPct;
-      if (S.streak >= 3) dmgPct += eff.momentumDmgPct;
-      let skillDmg = Math.round(baseDmg * (1 + dmgPct / 100));
-      const isCrit = eff.critChance > 0 && Math.random() * 100 < eff.critChance;
-      if (isCrit) skillDmg = Math.round(skillDmg * (1.5 + eff.critMultAdd / 100));
-      // Equipped pet adds bonus damage equal to a % of the attack, every attack.
-      const petDmg = Math.round(skillDmg * getPetDmgPercent() / 100);
-      const target = getActiveEnemy();
-      // Elemental-style weakness: this boss splits, so subtraction hurts it.
-      const weakMult = getWeaknessMult(target, answeredProblem);
-      const armorMult = getArmorMult(target, elapsed, answeredProblem);
-      const dmg = Math.max(1, Math.round((skillDmg + petDmg) * weakMult * armorMult));
-      if (weakMult > 1) addPopup("WEAK!", "enemy", "crit");
-      // Armour has to announce itself or it just reads as the game being
-      // broken -- the player needs to know WHY the hit barely landed.
-      if (armorMult < 1) { addPopup("🛡️ FROZEN!", "enemy", "dmg"); Sound.play("clink"); }
-      if (hit.fast && !isCrit) addPopup("⚡ FAST!", "player", "heal");
-      addPopup(`-${dmg}${isCrit ? "!" : ""}`, "enemy", isCrit ? "crit" : "dmg");
-      addImpact("enemy");
-      S.enemyAnim = "hit";
-      BattleFX.enemyHit();
-      S.score += dmg;
-      if (target) target.hp = Math.max(0, target.hp - dmg);
-      // Boss phase check: dropping past a threshold splits off minions.
-      const summonLine = checkBossSummon(target);
-      if (summonLine) {
-        Sound.play("split");
-        S.bossBanner = summonLine;
-        BattleFX.enemyHit();
-        const sMsg = summonLine;
-        setTimeout(() => {
-          if (S.runId === rid && S.bossBanner === sMsg) { S.bossBanner = null; render(); }
-        }, 2000);
-      }
-      if (eff.lifestealPct > 0) {
-        const lifestealAmt = Math.round(dmg * eff.lifestealPct / 100);
-        if (lifestealAmt > 0 && S.playerHP < S.playerMaxHP) {
-          S.playerHP = Math.min(S.playerMaxHP, S.playerHP + lifestealAmt);
-          addPopup(`+${lifestealAmt}`, "player", "heal");
-        }
-      }
-      if (eff.regenPct > 0) {
-        const regenAmt = Math.round(S.playerMaxHP * eff.regenPct / 100);
-        if (regenAmt > 0 && S.playerHP < S.playerMaxHP) {
-          S.playerHP = Math.min(S.playerMaxHP, S.playerHP + regenAmt);
-          addPopup(`+${regenAmt}`, "player", "heal");
-        }
-      }
-      render();
 
+    // Helpers charge up on correct answers only. Random fill per answer, so
+    // the dragon breathes about every 3-5 answers and a pet pounces about
+    // every 2 -- never every turn, and not predictable to the exact answer.
+    const breath = getDragonBreath();
+    let dragonGo = false;
+    if (breath) {
+      S.dragonStamina = Math.min(100, (S.dragonStamina || 0) + randInt(22, 36));
+      dragonGo = S.dragonStamina >= 100;
+    }
+    const pet = getEquippedPet();
+    let petGo = false;
+    if (pet) {
+      S.petStamina = Math.min(100, (S.petStamina || 0) + randInt(40, 62));
+      petGo = S.petStamina >= 100;
+    }
+
+    // Poison ticks, the monster's occasional free strike, then next problem.
+    const endRound = () => {
+      if (S.runId !== rid) return;
+      applyPoisonTicks();
+      // Even on a correct answer, the monster gets an unprovoked strike
+      // every 3-5 rounds (as long as it's still alive). Treasure chests
+      // never attack, so they're exempt.
+      const isChestWave = S.currentWaveMeta && S.currentWaveMeta.isChest;
+      S.enemyAttackCounter += 1;
+      if (!isChestWave && S.enemyAttackCounter >= S.enemyAttackThreshold && !allEnemiesDead()) {
+        S.enemyAttackCounter = 0;
+        S.enemyAttackThreshold = randInt(3, 5);
+        setTimeout(() => {
+          if (S.runId !== rid) return;
+          enemyStrikePlayer(getEnemyDamage(), finishRound);
+        }, 250);
+      } else {
+        finishRound();
+      }
+    };
+
+    // The pet follows the sword in; its hit is sized so that, attacking
+    // about every other answer, it adds what the old every-hit bonus did.
+    const petPhase = (swordDmg) => {
+      if (S.runId !== rid) return;
+      const target = getActiveEnemy();
+      if (!petGo || !target || target.hp <= 0) { setTimeout(endRound, 150); return; }
+      S.petStamina = 0;
+      const petDmg = Math.max(1, Math.round(swordDmg * pet.dmgPercent / 100 * 1.9));
+      BattleFX.petAttack(pet.id);
       setTimeout(() => {
         if (S.runId !== rid) return;
-        // No more healing on every attack — the dragon only heals for
-        // winning the wave (see handleWaveClear).
-        applyPoisonTicks();
-
-        // Even on a correct answer, the monster gets an unprovoked strike
-        // every 3-5 rounds (as long as it's still alive). Treasure chests
-        // never attack, so they're exempt.
-        const isChestWave = S.currentWaveMeta && S.currentWaveMeta.isChest;
-        S.enemyAttackCounter += 1;
-        if (!isChestWave && S.enemyAttackCounter >= S.enemyAttackThreshold && !allEnemiesDead()) {
-          S.enemyAttackCounter = 0;
-          S.enemyAttackThreshold = randInt(3, 5);
-          setTimeout(() => {
-            if (S.runId !== rid) return;
-            enemyStrikePlayer(getEnemyDamage(), finishRound);
-          }, 250);
-        } else {
-          finishRound();
+        const t2 = getActiveEnemy();
+        if (t2 && t2.hp > 0) {
+          t2.hp = Math.max(0, t2.hp - petDmg);
+          S.score += petDmg;
+          addPopup(`-${petDmg}`, "enemy", "pet");
+          BattleFX.enemyHit();
         }
-      }, 150);
-    }, 350);
+        render();
+        setTimeout(endRound, 250);
+      }, 330);
+    };
+
+    const swordPhase = () => {
+      if (S.runId !== rid) return;
+      S.dragonAnim = "lunge-right";
+      BattleFX.playerAttack();
+      render();
+      setTimeout(() => {
+        if (S.runId !== rid) return;
+        // Damage comes from problem difficulty + answer speed, NOT from how
+        // large the answer happened to be. See getProblemDamage().
+        const hit = getProblemDamage(answeredProblem, elapsed);
+        const baseDmg = hit.dmg + getDmgBonus();
+        const eff = getActiveBuffs();
+        let dmgPct = eff.dmgPct;
+        if (S.streak >= 3) dmgPct += eff.momentumDmgPct;
+        let skillDmg = Math.round(baseDmg * (1 + dmgPct / 100));
+        const isCrit = eff.critChance > 0 && Math.random() * 100 < eff.critChance;
+        if (isCrit) skillDmg = Math.round(skillDmg * (1.5 + eff.critMultAdd / 100));
+        const target = getActiveEnemy();
+        // Elemental-style weakness: this boss splits, so subtraction hurts it.
+        const weakMult = getWeaknessMult(target, answeredProblem);
+        const armorMult = getArmorMult(target, elapsed, answeredProblem);
+        const dmg = Math.max(1, Math.round(skillDmg * weakMult * armorMult));
+        if (weakMult > 1) addPopup("WEAK!", "enemy", "crit");
+        // Armour has to announce itself or it just reads as the game being
+        // broken -- the player needs to know WHY the hit barely landed.
+        if (armorMult < 1) { addPopup("🛡️ FROZEN!", "enemy", "dmg"); Sound.play("clink"); }
+        if (hit.fast && !isCrit) addPopup("⚡ FAST!", "player", "heal");
+        addPopup(`-${dmg}${isCrit ? "!" : ""}`, "enemy", isCrit ? "crit" : "dmg");
+        addImpact("enemy");
+        S.enemyAnim = "hit";
+        BattleFX.enemyHit();
+        S.score += dmg;
+        if (target) target.hp = Math.max(0, target.hp - dmg);
+        // Boss phase check: dropping past a threshold splits off minions.
+        const summonLine = checkBossSummon(target);
+        if (summonLine) {
+          Sound.play("split");
+          S.bossBanner = summonLine;
+          BattleFX.enemyHit();
+          const sMsg = summonLine;
+          setTimeout(() => {
+            if (S.runId === rid && S.bossBanner === sMsg) { S.bossBanner = null; render(); }
+          }, 2000);
+        }
+        if (eff.lifestealPct > 0) {
+          const lifestealAmt = Math.round(dmg * eff.lifestealPct / 100);
+          if (lifestealAmt > 0 && S.playerHP < S.playerMaxHP) {
+            S.playerHP = Math.min(S.playerMaxHP, S.playerHP + lifestealAmt);
+            addPopup(`+${lifestealAmt}`, "player", "heal");
+          }
+        }
+        if (eff.regenPct > 0) {
+          const regenAmt = Math.round(S.playerMaxHP * eff.regenPct / 100);
+          if (regenAmt > 0 && S.playerHP < S.playerMaxHP) {
+            S.playerHP = Math.min(S.playerMaxHP, S.playerHP + regenAmt);
+            addPopup(`+${regenAmt}`, "player", "heal");
+          }
+        }
+        render();
+        setTimeout(() => petPhase(skillDmg), petGo ? 250 : 0);
+      }, 350);
+    };
+
+    if (dragonGo) {
+      // Dragon first: it rises, breathes on the enemy and lands; then the
+      // rider swings. If the breath finishes this foe, the sword goes to the
+      // next one in line (or straight to the wave clear if none are left).
+      S.dragonStamina = 0;
+      render();
+      BattleFX.dragonBreath(breath);
+      setTimeout(() => {
+        if (S.runId !== rid) return;
+        const target = getActiveEnemy();
+        if (target && target.hp > 0) {
+          const bd = randInt(breath.dmg[0], breath.dmg[1]);
+          target.hp = Math.max(0, target.hp - bd);
+          S.score += bd;
+          addPopup(`-${bd}`, "enemy", "breath");
+          BattleFX.enemyHit();
+        }
+        const cur = getActiveEnemy();
+        if (cur && cur.hp <= 0 && !allEnemiesDead()) advanceActiveEnemy();
+        render();
+      }, DRAGON_BREATH_HIT_MS);
+      setTimeout(() => {
+        if (S.runId !== rid) return;
+        if (allEnemiesDead()) endRound(); else swordPhase();
+      }, DRAGON_BREATH_TOTAL_MS);
+    } else {
+      render();
+      swordPhase();
+    }
   } else {
     S.streak = 0;
     S.fireballCharge = 0;
@@ -3328,6 +3516,15 @@ function enemyStrikePlayer(rawDmg, onSurvive) {
   BattleFX.enemyAttack();
   render();
   setTimeout(() => {
+    if (S.shieldHits > 0) {
+      // Dragon Scales soaks the whole hit.
+      S.shieldHits -= 1;
+      S.shake = false;
+      BattleFX.playerBlock(S.shieldHits);
+      render();
+      setTimeout(() => { S.dragonAnim = ""; S.enemyAnim = ""; onSurvive(); }, 600);
+      return;
+    }
     const eff = getActiveBuffs();
     const dmg = Math.max(1, Math.round(rawDmg * (1 - eff.dmgReductionPct / 100)));
     addPopup(`-${dmg}`, "player", "dmg");
@@ -3429,12 +3626,26 @@ function usePotionPoison() {
   if (S.potionCharge < 3 || S.potionCooldown > 0) return;
   const target = getActiveEnemy();
   if (target) target.poisonTurns = 3;
-  Sound.play("poison");
   S.potionCharge = 0;
   S.potionCooldown = 10;
-  addPopup("☠️", "enemy", "dmg");
+  BattleFX.poisonThrow();   // vial arcs over and splashes; sounds + popup land with it
   saveActiveSlot();
   render();
+}
+
+/* The saving goal: one shop item the kid is saving up for, shown as a
+   progress chip in the battle HUD. Cleared once it's bought. */
+function goalItem() {
+  if (!S.goalId) return null;
+  const item = DMG_UPGRADES.find((u) => u.id === S.goalId) || COSMETICS.find((c) => c.id === S.goalId);
+  if (!item) return null;
+  if (item.type === "dmg" ? isUpgradeOwned(item.id) : isOwned(item.id)) return null;
+  return item;
+}
+function goalStarHTML(item, owned) {
+  if (owned) return "";
+  const on = S.goalId === item.id;
+  return `<button class="goal-star${on ? " on" : ""}" data-action="set-goal" data-id="${item.id}" aria-label="${on ? "Stop saving for" : "Save up for"} ${esc(item.name)}">${on ? "★" : "☆"}</button>`;
 }
 
 function buyItem(item) {
@@ -3445,6 +3656,7 @@ function buyItem(item) {
     S.coins -= item.cost;
     S.ownedUpgrades[item.id] = true;
     S.equippedSword = item.id;          // a new sword goes straight into your hand
+    if (S.goalId === item.id) S.goalId = null;
     saveActiveSlot();
     render();
     return;
@@ -3454,9 +3666,8 @@ function buyItem(item) {
   Sound.play("buy");
   S.coins -= item.cost;
   S.ownedCosmetics[item.id] = true;
-  if (item.type === "accessory") S.equippedAccessory = item.id;
-  else if (item.type === "aura") S.equippedAura = item.id;
-  else if (item.type === "creature") S.equippedCreature = item.id;
+  if (S.goalId === item.id) S.goalId = null;
+  if (item.type === "creature") S.equippedCreature = item.id;
   else if (item.type === "pet") S.equippedPet = item.id;
   saveActiveSlot();
   render();
@@ -3471,11 +3682,7 @@ function toggleEquip(item) {
     return;
   }
   if (!isOwned(item.id)) return;
-  if (item.type === "accessory") {
-    S.equippedAccessory = S.equippedAccessory === item.id ? null : item.id;
-  } else if (item.type === "aura") {
-    S.equippedAura = S.equippedAura === item.id ? null : item.id;
-  } else if (item.type === "creature") {
+  if (item.type === "creature") {
     S.equippedCreature = S.equippedCreature === item.id ? null : item.id;
   } else if (item.type === "pet") {
     S.equippedPet = S.equippedPet === item.id ? null : item.id;
@@ -3527,7 +3734,7 @@ function saveSelectHTML() {
     <p class="sub">Select a save file to continue your saga, or begin a new one.</p>
     <div class="save-list">${items}</div>
     <button class="btn ghost" data-action="add-save" ${SAVES.slots.length >= 12 ? "disabled" : ""}>➕ New Save Slot</button>
-    <button class="btn ghost" data-action="open-settings">⚙️ Settings</button>
+    <button class="btn ghost" data-action="to-title">◀ Back</button>
     <button class="parent-link" data-action="open-info">For Parents · Privacy</button>
   </div>`;
 }
@@ -3536,7 +3743,7 @@ function saveSelectHTML() {
    no text entry, since the youngest players can't reliably type. */
 function bossIntroHTML() {
   return `
-    <div class="boss-intro">
+    <div class="boss-intro${S.bossIntro.seen ? " seen" : ""}">
       <div class="boss-intro-inner">
         <div class="boss-intro-warn">\u2620\uFE0F</div>
         <div class="boss-intro-lead">A BOSS APPROACHES</div>
@@ -3596,8 +3803,7 @@ function pickHero(which) {
   S.hero = which === "girl" ? "girl" : "boy";
   saveActiveSlot();
   flushSaves();
-  S.screen = "title";
-  render();
+  startGame();
 }
 
 /* The game's display name lives here and in capacitor.config.json /
@@ -3613,11 +3819,8 @@ const PRIVACY_UPDATED = "September 26, 2026";
    audience is 5-13 -- they press the big button. The scene is painted by
    runTitleScene() below; this just lays the logo and buttons over it. */
 function titleHTML() {
-  const returning = (S.xp > 0 || S.coins > 0);
-  const lead = returning ? "CONTINUE YOUR JOURNEY" : "BEGIN YOUR JOURNEY";
-  const sub = returning
-    ? `Wave ${Math.max(1, S.bestWave || 1)} was your best so far`
-    : "A dragon waits somewhere ahead";
+  const lead = "BEGIN YOUR JOURNEY";
+  const sub = "Every right answer is an attack!";
   return `
     <div class="journey">
       <canvas class="journey-bg" width="${160 * TITLE_K}" height="${titleSceneHeight() * TITLE_K}"></canvas>
@@ -3630,11 +3833,9 @@ function titleHTML() {
         <div class="journey-bottom">
           <div class="journey-lead">${lead}</div>
           <div class="journey-sub">${sub}</div>
-          <button class="journey-btn" data-action="start-game">START</button>
+          <button class="journey-btn" data-action="open-saves">START</button>
           <div class="journey-links">
-            <button class="btn ghost" data-action="open-settings" aria-label="Settings">⚙️</button>
-            <button class="btn ghost" data-action="open-shop">🛒 Shop</button>
-            <button class="btn ghost" data-action="switch-save">💾 Saves</button>
+            <button class="btn ghost" data-action="open-settings">⚙️ Settings</button>
           </div>
         </div>
       </div>
@@ -3835,19 +4036,8 @@ function playingHTML() {
   const meta = S.currentWaveMeta || { isBoss: false, count: 1 };
   const healReady = S.healCooldown <= 0;
   const poisonReady = S.potionCharge >= 3 && S.potionCooldown <= 0;
-  const playerFilter = `hue-rotate(${lvlStyle.hue}deg) saturate(1.3)`;
-  const equippedAccessoryItem = COSMETICS.find((c) => c.id === S.equippedAccessory);
-  const equippedAuraItem = COSMETICS.find((c) => c.id === S.equippedAura);
-  const equippedCreatureItem = COSMETICS.find((c) => c.id === S.equippedCreature);
-  const equippedPetItem = COSMETICS.find((c) => c.id === S.equippedPet);
-  const playerEmoji = equippedCreatureItem ? equippedCreatureItem.emoji : "🐲";
   const xpLabel = levelInfo.maxed ? "MAX LEVEL" : `${levelInfo.remaining}/${levelInfo.needed} XP`;
   const xpFillPct = levelInfo.maxed ? 100 : Math.round((levelInfo.remaining / levelInfo.needed) * 100);
-
-  const enemyImpacts = S.impacts.filter((i) => i.side === "enemy")
-    .map(() => `<div class="impact-burst">💥</div>`).join("");
-  const playerImpacts = S.impacts.filter((i) => i.side === "player")
-    .map(() => `<div class="impact-burst">💥</div>`).join("");
 
   const fireballPips = [0, 1, 2].map((i) => `<i class="${i < S.fireballCharge ? "on" : ""}"></i>`).join("");
 
@@ -3860,19 +4050,25 @@ function playingHTML() {
     ? "Top rank!"
     : `${Math.min(rankStat.seen, MASTERY.minSeen)}/${MASTERY.minSeen} to next`;
 
+  const goal = goalItem();
+  const goalHtml = goal
+    ? `<button class="goal-chip${S.coins >= goal.cost ? " ready" : ""}" data-action="open-shop">⭐ <span class="goal-name">${esc(goal.name)}</span> <span class="goal-bar"><i style="width:${Math.min(100, Math.round(S.coins / goal.cost * 100))}%"></i></span> ${S.coins >= goal.cost ? "Ready!" : `${S.coins}/${goal.cost}`}</button>`
+    : "";
+  const foes = S.enemies.filter((en) => en.hp > 0).length;
+
   return `
-  <div class="arena">
+  <div class="arena fit">
     <div class="topbar">
       <span class="wave-chip">Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</span>
       <span class="topbar-actions">
         <button class="icon-btn" data-action="open-settings" aria-label="Settings">⚙️</button>
-        <button class="icon-btn" data-action="switch-save">💾</button>
+        <button class="icon-btn" data-action="switch-save" aria-label="Saves">💾</button>
         <button class="icon-btn" data-action="open-shop">🪙 ${S.coins} · 🛒</button>
       </span>
     </div>
     <div class="topbar sub-row">
-      <span>Lv.${level} ${lvlStyle.name}</span>
-      <span>Score ${S.score}</span>
+      <span class="lvl-line">Lv.${level}${goal ? "" : ` ${lvlStyle.name}`} · ${S.score} pts</span>
+      ${goalHtml}
     </div>
     <div class="rank-row">
       <span class="rank-badge">🎓 Rank ${rankBand.id}: ${rankBand.name}</span>
@@ -3883,45 +4079,36 @@ function playingHTML() {
       <span class="xptext">${xpLabel}</span>
     </div>
 
-    <div class="combatant enemy-row">
-      ${isMulti ? `
-      <div class="enemy-multi-row">
-        ${S.enemies.map((en, i) => `
-          <div class="enemy-mini ${i === S.activeEnemyIdx ? "active" : ""} ${en.hp <= 0 ? "defeated" : ""}">
-            ${PIX_ENEMY_ART[en.name]
-              ? `<canvas class="mini-icon" data-pix="enemy:${esc(en.name)}" width="64" height="56"></canvas>`
-              : `<div class="enemy-mini-emoji" style="display:block">${en.hp > 0 ? en.emoji : "💀"}</div>`}
-            <div class="mini-hpbar"><div class="mini-hpfill" style="width:${Math.max(0, Math.round((en.hp / en.maxHP) * 100))}%; background:${en.glow}"></div></div>
-            ${en.poisonTurns > 0 ? `<div class="poison-tag">☠️</div>` : ""}
-          </div>
-        `).join("")}
-      </div>` : ""}
-      <div class="name-row">
-        <span class="cname">${activeEnemy.name}${activeEnemy.poisonTurns > 0 ? " ☠️" : ""}</span>
-        <span class="hp-num">${Math.max(0, activeEnemy.hp)}/${activeEnemy.maxHP}</span>
+    <div class="hp-duo">
+      <div class="combatant player-row">
+        <div class="name-row">
+          <span class="cname">${esc(playerName())}</span>
+          <span class="hp-num">${Math.max(0, S.playerHP)}/${S.playerMaxHP}</span>
+        </div>
+        <div class="hpbar" data-bar="player"><div class="hpghost" style="width:${pPct}%"></div><div class="hpfill player-fill${pPct <= 30 ? " low" : ""}" style="width:${pPct}%"></div></div>
       </div>
-      <div class="hpbar" data-bar="enemy"><div class="hpghost" style="width:${ePct}%"></div><div class="hpfill enemy-fill" style="width:${ePct}%; background:${activeEnemy.glow}"></div></div>
+      <div class="combatant enemy-row">
+        <div class="name-row">
+          <span class="cname">${activeEnemy.name}${activeEnemy.poisonTurns > 0 ? " ☠️" : ""}${isMulti && foes > 1 ? ` <span class="foe-count">+${foes - 1}</span>` : ""}</span>
+          <span class="hp-num">${Math.max(0, activeEnemy.hp)}/${activeEnemy.maxHP}</span>
+        </div>
+        <div class="hpbar" data-bar="enemy"><div class="hpghost" style="width:${ePct}%"></div><div class="hpfill enemy-fill" style="width:${ePct}%; background:${activeEnemy.glow}"></div></div>
+      </div>
     </div>
 
-    <!-- Big Phaser-rendered battle stage (dragon + monster) overlays this
-         anchor -- see syncBattleStage(). No portrait frames anymore, just
-         large combatants standing directly in the arena, AQ-style. -->
-    <div id="battlefield-anchor" class="battlefield-anchor"></div>
-
-    ${S.banner ? `<div class="banner">${S.banner}</div>` : ""}
-    ${S.bandBanner ? `<div class="banner rank-banner">${S.bandBanner}</div>` : ""}
-    ${S.bossBanner ? `<div class="banner boss-banner">${S.bossBanner}</div>` : ""}
-
-    <div class="combatant player-row">
-      <div class="name-row">
-        <span class="cname">${esc(playerName())}</span>
-        <span class="hp-num">${Math.max(0, S.playerHP)}/${S.playerMaxHP}</span>
+    <!-- The canvas battle stage overlays this anchor (see syncBattleStage);
+         it stretches to fill whatever height the phone has left, so the
+         battle never scrolls. Banners float over the bottom of it. -->
+    <div id="battlefield-anchor" class="battlefield-anchor">
+      <div class="stage-banners">
+        ${S.banner ? `<div class="banner">${S.banner}</div>` : ""}
+        ${S.bandBanner ? `<div class="banner rank-banner">${S.bandBanner}</div>` : ""}
+        ${S.bossBanner ? `<div class="banner boss-banner">${S.bossBanner}</div>` : ""}
       </div>
-      <div class="hpbar" data-bar="player"><div class="hpghost" style="width:${pPct}%"></div><div class="hpfill player-fill${pPct <= 30 ? " low" : ""}" style="width:${pPct}%"></div></div>
     </div>
 
-    <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 6 ? " blazing" : ""}">
-      <div class="streak">${S.streak >= 6 ? `🔥 UNSTOPPABLE! ${S.streak} in a row 🔥` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
+    <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}">
+      <div class="streak">${S.streak >= 10 ? `⚡ LEGENDARY! ${S.streak} in a row` : S.streak >= 7 ? `🔥 UNSTOPPABLE! ${S.streak} in a row` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
       <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span></div>
       <div class="choices">
         ${S.choices.map((c) => `
@@ -3929,18 +4116,17 @@ function playingHTML() {
             data-action="answer" data-value="${c}" ${S.locked ? "disabled" : ""}>${c}</button>
         `).join("")}
       </div>
-      <button class="btn fireball-btn ${S.fireballReady ? "ready" : ""}" data-action="cast-fireball" ${(!S.fireballReady || S.locked) ? "disabled" : ""}>
-        🔥 Fireball <span class="charge-pips">${fireballPips}</span>
-      </button>
-      <div class="potion-row">
+      <div class="action-row">
+        <button class="btn fireball-btn ${S.fireballReady ? "ready" : ""}" data-action="cast-fireball" ${(!S.fireballReady || S.locked) ? "disabled" : ""}>
+          <span>🔥 Fireball</span><span class="charge-pips">${fireballPips}</span>
+        </button>
         <button class="btn potion-btn ${healReady ? "ready hp-ready" : ""}" data-action="use-potion-hp" ${(!healReady || S.locked || S.coins < 5) ? "disabled" : ""}>
-          🧪 HP · 🪙5${S.healCooldown > 0 ? ` (${S.healCooldown})` : ""}
+          <span>🧪 HP · 🪙5</span>${S.healCooldown > 0 ? `<span class="cd">wait ${S.healCooldown}</span>` : `<span class="cd">ready</span>`}
         </button>
         <button class="btn potion-btn ${poisonReady ? "ready poison-ready" : ""}" data-action="use-potion-poison" ${(!poisonReady || S.locked) ? "disabled" : ""}>
-          ☠️ Poison${S.potionCooldown > 0 ? ` (${S.potionCooldown})` : ""}
+          <span>☠️ Poison</span>${S.potionCooldown > 0 ? `<span class="cd">wait ${S.potionCooldown}</span>` : `<span class="charge-pips">${[0, 1, 2].map((i) => `<i class="${i < S.potionCharge ? "on poison" : ""}"></i>`).join("")}</span>`}
         </button>
       </div>
-      <div class="potion-charge-note">🧪 HP: ${S.healCooldown > 0 ? `ready in ${S.healCooldown}` : "ready"} &nbsp;·&nbsp; ☠️ Poison: ${S.potionCooldown > 0 ? `cooling down (${S.potionCooldown})` : `charge ${Math.min(3, S.potionCharge)}/3`}</div>
     </div>
   </div>`;
 }
@@ -3977,20 +4163,17 @@ function upgradeItemHTML(item) {
         <div class="shop-item-name">${item.name}</div>
         <div class="shop-item-type"><strong class="dmg-plus">+${item.bonus} DMG</strong> · ${item.perk}${owned ? "" : ` · Lv.${item.levelReq}`}</div>
       </div>
+      ${goalStarHTML(item, owned)}
       ${actionBtn}
     </div>`;
 }
 
 function equippedIdForType(type) {
-  if (type === "accessory") return S.equippedAccessory;
-  if (type === "aura") return S.equippedAura;
   if (type === "creature") return S.equippedCreature;
   return S.equippedPet;
 }
 
 const COSMETIC_TYPE_LABEL = {
-  accessory: "Accessory",
-  aura: "Aura effect",
   creature: "Dragon mount",
   pet: "Pet",
 };
@@ -4008,9 +4191,10 @@ function cosmeticItemHTML(item) {
   } else {
     actionBtn = `<button class="btn shop-btn buy" data-action="buy-item" data-kind="cosmetic" data-id="${item.id}" ${S.coins < item.cost ? "disabled" : ""}>🪙${item.cost}</button>`;
   }
+  const breath = DRAGON_BREATH[item.id];
   const typeLine = item.type === "pet"
-    ? `Pet · +${item.dmgPercent}% ATK on attack${item.levelReq ? ` · Requires Lv.${item.levelReq}` : ""}`
-    : `${COSMETIC_TYPE_LABEL[item.type]}${item.levelReq ? ` · Requires Lv.${item.levelReq}` : ""}`;
+    ? `Pet · Attacks with you (power ${item.dmgPercent}%)${item.levelReq ? ` · Lv.${item.levelReq}` : ""}`
+    : `${COSMETIC_TYPE_LABEL[item.type]}${breath ? ` · ${breath.name} ${breath.dmg[0]}–${breath.dmg[1]} DMG` : ""}${item.levelReq ? ` · Lv.${item.levelReq}` : ""}`;
   const iconHtml = ELEMENT_PALETTES[item.id]
     ? `<div class="shop-item-emoji px-icon"><canvas data-pix="mount:${item.id}" width="${PIX_DRAGON.w + 2}" height="${PIX_DRAGON.h + 2}"></canvas></div>`
     : `<div class="shop-item-emoji">${item.emoji}</div>`;
@@ -4021,16 +4205,16 @@ function cosmeticItemHTML(item) {
         <div class="shop-item-name">${item.name}</div>
         <div class="shop-item-type">${typeLine}</div>
       </div>
+      ${goalStarHTML(item, owned)}
       ${actionBtn}
     </div>`;
 }
 
 function shopHTML() {
   const creatureItems = COSMETICS.filter((c) => c.type === "creature").map(cosmeticItemHTML).join("");
-  const cosmeticItems = COSMETICS.filter((c) => c.type === "accessory" || c.type === "aura").map(cosmeticItemHTML).join("");
   const petItems = COSMETICS.filter((c) => c.type === "pet").map(cosmeticItemHTML).join("");
   const upgradeItems = DMG_UPGRADES.map(upgradeItemHTML).join("");
-  const petBonus = getPetDmgPercent();
+  const activePet = getEquippedPet();
 
   return `
   <div class="shop-overlay">
@@ -4040,14 +4224,13 @@ function shopHTML() {
         <button class="close-btn" data-action="close-shop">✕</button>
       </div>
       <p class="shop-coins">🪙 ${S.coins} coins</p>
+      <p class="shop-hint">Tap ☆ to save up for something. You'll see your progress while you battle.</p>
       <div class="shop-section-title">⚔️ Swords <span class="dmg-total">(equipped: +${getDmgBonus()} DMG · one sword at a time)</span></div>
       <div class="shop-list">${upgradeItems}</div>
-      <div class="shop-section-title">🐾 Pets <span class="dmg-total">${petBonus > 0 ? `(+${petBonus}% ATK active)` : "(none active)"}</span></div>
+      <div class="shop-section-title">🐾 Pets <span class="dmg-total">${activePet ? `(${activePet.name} is with you)` : "(none active)"}</span></div>
       <div class="shop-list">${petItems}</div>
       <div class="shop-section-title">🐉 Dragon Mounts</div>
       <div class="shop-list">${creatureItems}</div>
-      <div class="shop-section-title">✨ Cosmetics</div>
-      <div class="shop-list">${cosmeticItems}</div>
     </div>
   </div>`;
 }
@@ -4107,7 +4290,9 @@ function render() {
 }
 
 function renderNow() {
-  let html = '<div class="wrap">';
+  const fit = S.screen === "playing";
+  document.documentElement.classList.toggle("battle-fit", fit);
+  let html = `<div class="wrap${fit ? " playing" : ""}">`;
   if (S.screen === "saveselect") html += saveSelectHTML();
   else if (S.screen === "heroselect") html += heroSelectHTML();
   else if (S.screen === "title") html += titleHTML();
@@ -4118,7 +4303,7 @@ function renderNow() {
   if (S.settingsOpen) html += settingsHTML();
   if (S.levelUpData) html += levelUpHTML();
   html += "</div>";
-  if (S.bossIntro) html += bossIntroHTML();
+  if (S.bossIntro) { html += bossIntroHTML(); S.bossIntro.seen = true; }
   const bars = captureBars();
   root.innerHTML = html;
   animateBars(bars);
@@ -4201,6 +4386,11 @@ root.addEventListener("click", (e) => {
     const item = btn.dataset.kind === "dmg" ? DMG_UPGRADES.find((u) => u.id === btn.dataset.id) : COSMETICS.find((c) => c.id === btn.dataset.id);
     if (item) toggleEquip(item);
   }
+  else if (action === "set-goal") {
+    S.goalId = S.goalId === btn.dataset.id ? null : btn.dataset.id;
+    saveActiveSlot();
+    render();
+  }
   else if (action === "choose-levelup-card") chooseLevelUpCard(btn.dataset.id);
   else if (action === "select-save") selectSave(btn.dataset.id);
   else if (action === "rename-save") renameSave(btn.dataset.id);
@@ -4209,6 +4399,8 @@ root.addEventListener("click", (e) => {
   else if (action === "cancel-delete-save") cancelDeleteSave();
   else if (action === "add-save") addSave();
   else if (action === "switch-save") switchSave();
+  else if (action === "open-saves") { S.screen = "saveselect"; render(); }
+  else if (action === "to-title") { S.screen = "title"; render(); }
   else if (action === "toggle-sound") { Sound.toggle(); render(); }
   else if (action === "open-settings") { S.settingsOpen = true; render(); }
   else if (action === "close-settings") { S.settingsOpen = false; render(); }
@@ -4228,7 +4420,7 @@ document.addEventListener("visibilitychange", () => {
 /* Android system Back button (Capacitor App plugin; absent in a plain
    browser, where this is a no-op). Without a handler Back would quit the
    app from any screen. Instead it steps back one layer at a time:
-   overlay -> title -> save list -> exit. Mid-battle it goes to the save
+   overlay -> save list -> title -> exit. Mid-battle it goes to the save
    list, which saves the fight so it resumes exactly where it was. */
 (function wireAndroidBack() {
   const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
@@ -4238,7 +4430,8 @@ document.addEventListener("visibilitychange", () => {
     if (S.settingsOpen) { S.settingsOpen = false; render(); return; }
     if (S.shopOpen) { S.shopOpen = false; render(); return; }
     if (S.screen === "info") { S.screen = "saveselect"; render(); return; }
-    if (S.screen === "saveselect") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
+    if (S.screen === "title") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
+    if (S.screen === "saveselect") { S.screen = "title"; render(); return; }
     if (S.screen === "heroselect") { S.screen = "saveselect"; render(); return; }
     switchSave();
   });
@@ -7648,6 +7841,17 @@ const Sound = {
         case "rankup": [659, 831, 988, 1319].forEach((f, i) => this.tone(f, 0.12, { at: i * 0.08, type: "triangle", vol: 0.45 })); break;
         case "boss": this.tone(110, 0.9, { type: "sawtooth", to: 55, vol: 0.35 }); this.noise(0.9, { vol: 0.3, from: 600, to: 80 }); break;
         case "fire": this.noise(0.3, { vol: 0.25, from: 1200, to: 3500 }); [392, 523, 659].forEach((f, i) => this.tone(f, 0.08, { at: i * 0.05, vol: 0.2 })); break;
+        // dragon takes off: two low wing beats
+        case "wings": this.noise(0.14, { vol: 0.35, from: 700, to: 180 }); this.noise(0.14, { at: 0.17, vol: 0.3, from: 700, to: 180 }); break;
+        // dragon breath, one per element style
+        case "breath_flame": this.noise(0.5, { vol: 0.4, from: 600, to: 3000 }); this.tone(150, 0.45, { type: "sawtooth", to: 320, vol: 0.12 }); break;
+        case "breath_rock": this.tone(120, 0.18, { type: "triangle", to: 70, vol: 0.5 }); this.noise(0.22, { at: 0.05, vol: 0.4, from: 900, to: 120 }); break;
+        case "breath_stream": this.noise(0.5, { vol: 0.3, from: 2500, to: 5000 }); this.tone(500, 0.4, { type: "sine", to: 300, vol: 0.12 }); break;
+        case "breath_wind": this.noise(0.55, { vol: 0.35, from: 400, to: 2200 }); break;
+        case "breath_shards": this.noise(0.3, { vol: 0.3, from: 6000, to: 3000 }); [2093, 2637, 3136].forEach((f, i) => this.tone(f, 0.06, { at: 0.05 + i * 0.05, type: "triangle", vol: 0.18 })); break;
+        case "breath_bolt": this.noise(0.08, { vol: 0.6, from: 9000, to: 5000 }); this.noise(0.35, { at: 0.06, vol: 0.45, from: 1500, to: 80 }); break;
+        // pet attacks: a quick pounce
+        case "pet": this.noise(0.1, { vol: 0.25, from: 3000, to: 900 }); this.tone(520, 0.08, { at: 0.02, type: "triangle", to: 780, vol: 0.2 }); break;
       }
     } catch (e) { /* audio is decoration; never let it break the game */ }
   },
@@ -8000,12 +8204,11 @@ function makeVignette(w, h, rgb = "8,4,16", strength = 0.6) {
   return c;
 }
 
-const AURA_FX = {
-  aura: { colors: ["#ffd08a", "#ff7a2c", "#ff3b1a"], vy: -0.05, glow: "#ff7a2c" },
-  sparkle: { colors: ["#ffffff", "#fff3a8", "#ffd76b"], vy: -0.015, glow: "#fff3a8", twinkle: true },
-  frostaura: { colors: ["#ffffff", "#bff4ff", "#7fd8ff"], vy: 0.02, glow: "#7fd8ff" },
-  rainbowaura: { colors: null, vy: -0.03, glow: "#ff8aff" },
-};
+/* Older Android WebViews (before Chrome 99) lack roundRect; a plain
+   rectangle is a fine stand-in there. */
+if (typeof CanvasRenderingContext2D !== "undefined" && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
+}
 
 /* ---------- the stage ---------- */
 const BattleStage = {
@@ -8023,12 +8226,10 @@ const BattleStage = {
     this._chestEnemyRef = null; this._chestWasOpen = false;
     this._trackRef = null; this._trackHp = 0; this._deadRef = null;
     this._biome = -1; this._bg = null; this._bgPrev = null; this._bgFadeStart = 0;
-    this._aura = null; this._enemyGlow = "#ffffff"; this._isBoss = false; this._poisoned = false; this._charging = false;
+    this._enemyGlow = "#ffffff"; this._isBoss = false; this._poisoned = false; this._charging = false;
     this.playerLayer = { x: 0, y: 0, scale: 1, alpha: 1 };
     this.enemyLayer = { x: 0, y: 0, scale: 1, alpha: 1 };
     this.enemyText = makeSprite("text", { text: "", fontSize: 40, color: "#ffffff", originY: 1, baseline: "bottom" });
-    this.playerAccessory = makeSprite("text", { text: "", fontSize: 20 });
-    this.playerPet = makeSprite("text", { text: "", fontSize: 20 });
     this.shakeUntil = 0; this.shakeMag = 0; this.flashUntil = 0; this.whiteUntil = 0;
     this.enemyFlashUntil = 0; this.playerFlashUntil = 0;
     this._last = 0; this._spawnAcc = 0;
@@ -8037,7 +8238,9 @@ const BattleStage = {
 
   layout(w, h) {
     this.W = w; this.H = h;
-    this.unit = Math.max(1, (h * 0.42) / DRAGON_ART_GRID);   // hero/dragon and enemies fill ~42% of the stage height
+    // Sprite scale follows the stage WIDTH (capped by height), so a tall
+    // phone shows more sky instead of blowing the fighters up.
+    this.unit = Math.max(1, (Math.min(h, w * 0.73) * 0.42) / DRAGON_ART_GRID);
     this.ap = Math.max(2, Math.round(h / 84));          // CSS px per background art pixel
     this.bw = Math.ceil(w / this.ap); this.bh = Math.ceil(h / this.ap);
     this.groundArtY = Math.floor(this.bh * 0.8);
@@ -8050,12 +8253,6 @@ const BattleStage = {
     this.enemyLayer.x = this.enemyBase.x; this.enemyLayer.y = this.enemyBase.y;
     const enemyFont = Math.round(Math.min(w * 0.22, h * 0.43));
     this.enemyText.fontSize = enemyFont;
-    this.playerAccessory.fontSize = Math.round(this.unit * 4);
-    this.playerAccessory.x = DRAGON_ART_GRID * this.unit * 0.28;
-    this.playerAccessory.y = this.dragonOriginY - this.unit;
-    this.playerPet.fontSize = Math.round(this.unit * 4);
-    this.playerPet.x = this.dragonOriginX - this.unit;
-    this.playerPet.y = -this.unit;
     this.vignette = makeVignette(w, h);
     this.bossVignette = makeVignette(w, h, "255,30,10", 0.85);
     this._cachedPaletteKey = null; this._enemySpriteKey = null; this._biome = -1; this._bgPrev = null;
@@ -8113,6 +8310,8 @@ const BattleStage = {
       ? `${this._mountPalette.body}|${this._mountPalette.dark}|${this._mountPalette.belly}|${this._mountPalette.wing}|${this._mountPalette.horn}`
       : "onfoot") + `|${this._swordTier || 0}`;
     if (paletteKey !== this._cachedPaletteKey) { this._cachedPaletteKey = paletteKey; this.bakePlayer(); }
+    const petKey = `${this._petId || ""}|${this.unit}`;
+    if (petKey !== this._cachedPetKey) { this._cachedPetKey = petKey; this.bakePet(); }
     let wantKey = null, wantSprite = null;
     if (this._enemyKind === "chest") {
       wantKey = "__chest_" + this._chestMode;
@@ -8268,13 +8467,7 @@ const BattleStage = {
       else if (B.fx === "sparkle") this.spawn({ ambient: true, x: Math.random() * W, y: this.groundY * (0.74 + Math.random() * 0.2), life: 900, color: "#ffffff", twinkle: true, seed: Math.random() * 999, fadeIn: true, shape: Math.random() < 0.3 ? "plus" : null });
       else if (B.fx === "stars") this.spawn({ ambient: true, x: Math.random() * W, y: Math.random() * this.groundY * 0.4, vx: -0.35, vy: 0.12, life: 420, color: "#ffffff", drag: 1 });
     }
-    // Effect-driven ambient: aura, poison bubbles, boss wind-up.
-    if (this._aura && Math.random() < dt / 70) {
-      const A = AURA_FX[this._aura];
-      const x = this.playerLayer.x + (Math.random() - 0.5) * this.unit * 30;
-      const y = this.playerLayer.y + this.dragonOriginY * (0.1 + Math.random() * 0.8);
-      this.spawn({ x, y, vx: (Math.random() - 0.5) * 0.02, vy: A.vy - Math.random() * 0.02, life: 1100, color: A.colors ? A.colors[(Math.random() * A.colors.length) | 0] : "#fff", hue: A.colors ? undefined : Math.random() * 360, twinkle: !!A.twinkle, seed: Math.random() * 999, fadeIn: true, shape: A.twinkle && Math.random() < 0.4 ? "plus" : null });
-    }
+    // Effect-driven ambient: poison bubbles, boss wind-up.
     // Sword effects by tier: glints (1-2), embers (3), sparks (4), dragon aura (5).
     const tier = this._swordTier || 0;
     if (this._blade && this._blade.length && tier > 0) {
@@ -8288,15 +8481,11 @@ const BattleStage = {
         else this.spawn({ x: bx + pt.x + (Math.random() - 0.5) * this.unit * 3, y: by + pt.y, vy: -0.03, life: 900, color: Math.random() < 0.6 ? "#ff2a4a" : "#f2c440", twinkle: true, seed: Math.random() * 999, fadeIn: true, front: true });
       }
     }
-    // Answer streak: flames lick up around the hero (bigger at 6+).
-    if (this._fire && Math.random() < dt / (this._fire > 1 ? 14 : 30)) {
-      const spread = this.unit * (this._fire > 1 ? 26 : 18);
-      this.spawn({
-        x: this.playerLayer.x + (Math.random() - 0.5) * spread, y: this.playerLayer.y - Math.random() * this.unit * 4,
-        vx: (Math.random() - 0.5) * 0.02, vy: -0.06 - Math.random() * 0.07, life: 650 + Math.random() * 400,
-        color: ["#fff3b0", "#ffcf3a", "#ff7a1c", "#d8321f"][(Math.random() * 4) | 0], wobble: 0.0008, seed: Math.random() * 999,
-        size: this.ap * (Math.random() < 0.35 ? 2 : 1),
-      });
+    // Answer streak 7+: sparks crackle along the blade.
+    if (this._fire >= 3 && this._blade && this._blade.length && Math.random() < dt / (this._fire >= 4 ? 18 : 30)) {
+      const pt = this._blade[(Math.random() * this._blade.length) | 0];
+      const bx = this.playerLayer.x + this._stripBaseX, by = this.playerLayer.y + this._stripBaseY;
+      this.spawn({ x: bx + pt.x, y: by + pt.y, vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22, life: 200, color: this._fire >= 4 ? "#ffffff" : (Math.random() < 0.5 ? "#fff3a8" : "#ffcf3a"), drag: 0.9, front: true, size: this.ap * 0.8 });
     }
     if (this._poisoned && Math.random() < dt / 160) {
       this.spawn({ x: this.enemyLayer.x + (Math.random() - 0.5) * this.unit * 20, y: this.enemyLayer.y - this.unit * 6, vy: -0.04, life: 1300, color: Math.random() < 0.5 ? "#7cff5a" : "#b06aff", wobble: 0.0005, seed: Math.random() * 999, shape: "ring", front: true });
@@ -8325,11 +8514,15 @@ const BattleStage = {
     ctx.save(); ctx.translate(sx, sy);
     this.drawBackground(ctx, now);
     this.drawParticles(ctx, now, false);
+    this.drawQueue(ctx, now);
     this.drawPlayer(ctx, now);
+    this.drawPet(ctx, now);
+    this.drawShield(ctx, now);
     this.drawEnemy(ctx, now);
     for (const e of this.effects) drawSprite(ctx, e);
     this.drawFx(ctx, now);
     this.drawParticles(ctx, now, true);
+    this.drawStaminaBars(ctx, now);
     for (const p of this.popups) drawSprite(ctx, p);
     ctx.restore();
     if (this.vignette) ctx.drawImage(this.vignette, 0, 0, this.W, this.H);
@@ -8348,6 +8541,281 @@ const BattleStage = {
       ctx.fillStyle = `rgba(255,255,240,${0.55 * (this.whiteUntil - now) / 140})`;
       ctx.fillRect(0, 0, this.W, this.H);
     }
+  },
+
+  /* ---------- pet: stands by the dragon's tail, pounces on its turn ---------- */
+  bakePet() {
+    this.petStrips = [];
+    const id = this._petId, u = this.unit;
+    if (!id || !u || !isFinite(u) || typeof drawHDPet !== "function") return;
+    const h = DRAGON_ART_GRID * u * 0.32, w = h * HD_PET_FIT.w / HD_PET_FIT.h;
+    for (let f = 0; f < 4; f++) this.petStrips.push(hdRender((c) => drawHDPet(c, id, f / 4), HD_PET_FIT, w, h, this.dpr || 1, 1));
+    this._petW = w; this._petH = h;
+  },
+  petHome() {
+    const w = this._petW, h = this._petH;
+    const mounted = !!this._mountPalette;
+    const left = this.playerBase.x + (this._stripBaseX || 0);
+    const x = Math.max(2, mounted ? left - w * 0.1 : left - w * 0.85);
+    return { x, y: this.playerBase.y - h + this.unit * 0.5, w, h };
+  },
+  drawPet(ctx, now) {
+    if (!this.petStrips || !this.petStrips.length) return;
+    const H = this.petHome();
+    let x = H.x, y = H.y;
+    const A = this._petAnim;
+    if (A) {
+      const e = now - A.t0, go = 330, back = 380;
+      const fly = A.kind === "pet_owl" || A.kind === "pet_griffin";
+      if (e < go) {
+        const p = EASE.cubicIn(e / go);
+        x = H.x + (A.tx - H.x) * p; y = H.y + (A.ty - H.y) * p - Math.sin(p * Math.PI) * this.unit * (fly ? 16 : 9);
+      } else if (e < go + back) {
+        const p = EASE.quadOut((e - go) / back);
+        x = A.tx + (H.x - A.tx) * p; y = A.ty + (H.y - A.ty) * p - Math.sin(p * Math.PI) * this.unit * 6;
+      } else this._petAnim = null;
+    } else {
+      y -= Math.max(0, Math.sin(now / 330)) * this.unit * 0.4;   // little idle hop
+    }
+    const n = this.petStrips.length;
+    const img = this.petStrips[Math.floor(now / (A ? 80 : 240)) % n];
+    ctx.drawImage(img, x, y, H.w, H.h);
+    this._petDrawn = { x, y, w: H.w, h: H.h };
+  },
+  petAttack(kind) {
+    if (!this.petStrips || !this.petStrips.length) return;
+    const now = performance.now(), E = this.enemyBox(), H = this.petHome();
+    this._petFullUntil = now + 260;
+    Sound.play("pet");
+    this._petAnim = { kind, t0: now, tx: E.x !== undefined ? E.x + E.w * 0.15 - H.w * 0.5 : E.cx - H.w, ty: Math.min(H.y, E.cy - H.h * 0.6) };
+    setTimeout(() => {
+      const E2 = this.enemyBox();
+      this.fx.push({ type: "star", x: E2.cx - (E2.w || 0) * 0.15, y: E2.cy, color: "#ffe7a3", t0: performance.now(), dur: 260 });
+      this.burst(E2.cx - (E2.w || 0) * 0.15, E2.cy, ["#ffffff", "#ffe7a3", "#ffcf3a"], 12, 0.22, { life: 380, extra: { front: true } });
+    }, 330);
+  },
+
+  /* ---------- stamina bars over the dragon and the pet ---------- */
+  staminaBar(ctx, cx, y, w, value, color, full, now) {
+    const h = Math.max(3, this.unit * 1.2), x = cx - w / 2;
+    ctx.save();
+    if (full) { ctx.shadowColor = color; ctx.shadowBlur = this.unit * (3 + 2 * Math.sin(now / 60)); }
+    ctx.fillStyle = "#140d10"; ctx.fillRect(x - 1.5, y - 1.5, w + 3, h + 3);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#2a2138"; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = full ? "#ffffff" : color; ctx.fillRect(x, y, w * Math.max(0, Math.min(1, value / 100)), h);
+    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.fillRect(x, y, w * Math.max(0, Math.min(1, value / 100)), Math.max(1, h * 0.35));
+    ctx.fillStyle = "#140d10";
+    for (let i = 1; i < 4; i++) ctx.fillRect(x + (w * i) / 4 - 0.5, y, 1, h);
+    ctx.restore();
+  },
+  drawStaminaBars(ctx, now) {
+    if (S.screen !== "playing") return;
+    const ease = (cur, target) => cur + (target - cur) * 0.12;
+    if (this._breath && this._mouth) {
+      const fullD = now < (this._dragonFullUntil || 0);
+      this._dShown = fullD ? 100 : ease(this._dShown || 0, S.dragonStamina || 0);
+      const cx = this.playerLayer.x + this._stripBaseX + this._mouth.x - this.unit * 6;
+      const y = this.playerLayer.y + this._stripBaseY + this._mouth.y - this.unit * 12;
+      this.staminaBar(ctx, cx, y, this.unit * 13, this._dShown, this._breath.colors[1], fullD || this._dShown >= 99, now);
+    }
+    if (this._petDrawn && this.petStrips && this.petStrips.length && !this._petAnim) {
+      const fullP = now < (this._petFullUntil || 0);
+      this._pShown = fullP ? 100 : ease(this._pShown || 0, S.petStamina || 0);
+      const d = this._petDrawn;
+      this.staminaBar(ctx, d.x + d.w * 0.5, d.y - this.unit * 1.5, this.unit * 8, this._pShown, "#ffcf3a", fullP, now);
+    }
+  },
+
+  /* ---------- dragon breath: rise, breathe, land ---------- */
+  dragonBreath(b) {
+    const now = performance.now();
+    this._dragonFullUntil = now + 380;
+    this._flapFastUntil = now + 1150;
+    Sound.play("wings");
+    killTweensOf(this.playerLayer);
+    this.playerLayer.x = this.playerBase.x;
+    tweenTo(this.playerLayer, { y: this.playerBase.y - this.unit * 26 }, { duration: 330, ease: "quadOut" });
+    setTimeout(() => {
+      Sound.play("breath_" + b.style);
+      const m = this._mouth || { x: this._texW || 0, y: 0 };
+      const E = this.enemyBox();
+      const x0 = this.playerLayer.x + this._stripBaseX + m.x, y0 = this.playerLayer.y + this._stripBaseY + m.y;
+      this.fx.push({ type: "breath", style: b.style, colors: b.colors, x0, y0, x1: E.cx, y1: E.cy, t0: performance.now(), dur: 380 });
+    }, 340);
+    setTimeout(() => {
+      const E = this.enemyBox(), t = performance.now();
+      this.fx.push({ type: "ring", x: E.cx, y: E.cy, r: 24, color: b.colors[1], t0: t, dur: 420 });
+      this.burst(E.cx, E.cy, b.colors, 40, 0.34, { up: 0.08, g: 0.0008, life: 650, extra: { front: true, shape: b.style === "shards" ? "plus" : null } });
+      this.shakeUntil = t + 220; this.shakeMag = 0.8;
+      if (b.style === "bolt") this.whiteUntil = t + 120;
+    }, 715);
+    setTimeout(() => {
+      tweenTo(this.playerLayer, { y: this.playerBase.y }, { duration: 360, ease: "sineInOut", onComplete: () => {
+        const P = this.playerBox();
+        this.burst(P.cx, this.playerBase.y - this.unit, BIOMES[this._biome] ? BIOMES[this._biome].ground : ["#aaa"], 12, 0.12, { up: 0.06, g: 0.0008, life: 450 });
+      } });
+    }, 760);
+  },
+  drawBreath(ctx, f, t, now) {
+    const e = Math.min(1, t);
+    const C = f.colors, u = this.unit;
+    const hx = f.x0 + (f.x1 - f.x0) * e, hy = f.y0 + (f.y1 - f.y0) * e;
+    const ang = Math.atan2(f.y1 - f.y0, f.x1 - f.x0);
+    const len = Math.hypot(hx - f.x0, hy - f.y0);
+    if (f.style === "flame" || f.style === "stream") {
+      ctx.translate(f.x0, f.y0); ctx.rotate(ang);
+      const layers = f.style === "flame" ? [[C[3], 1], [C[2], 0.78], [C[1], 0.55], [C[0], 0.3]] : [[C[3], 0.75], [C[2], 0.6], [C[1], 0.4], [C[0], 0.2]];
+      for (const [col, k] of layers) {
+        const w0 = u * 1.2 * k, w1 = u * (f.style === "flame" ? 5.5 : 3.2) * k;
+        const wob = f.style === "stream" ? Math.sin(now / 40) * u * 0.6 : 0;
+        ctx.fillStyle = col; ctx.globalAlpha = 0.92;
+        ctx.beginPath();
+        ctx.moveTo(0, -w0);
+        ctx.quadraticCurveTo(len * 0.55, -w1 * 0.9 + wob, len, -w1);
+        ctx.arc(len, 0, w1, -Math.PI / 2, Math.PI / 2);
+        ctx.quadraticCurveTo(len * 0.55, w1 * 0.9 + wob, 0, w0);
+        ctx.closePath(); ctx.fill();
+      }
+      for (let k = 0; k < 3; k++) this.spawn({ x: hx, y: hy + (Math.random() - 0.5) * u * 4, vx: Math.cos(ang) * 0.05 + (Math.random() - 0.5) * 0.06, vy: (Math.random() - 0.5) * 0.06 - (f.style === "flame" ? 0.03 : -0.02), life: 380, color: C[(Math.random() * C.length) | 0], front: true });
+    } else if (f.style === "rock" || f.style === "shards") {
+      const count = f.style === "rock" ? 3 : 5;
+      for (let k = 0; k < count; k++) {
+        const ek = Math.max(0, Math.min(1, e * 1.25 - k * 0.07));
+        if (ek <= 0) continue;
+        const off = (k - (count - 1) / 2) * u * 2.4 * (1 - ek);
+        const x = f.x0 + (f.x1 - f.x0) * ek, y = f.y0 + (f.y1 - f.y0) * ek - Math.sin(ek * Math.PI) * u * (f.style === "rock" ? 7 : 2) + off;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(ek * (f.style === "rock" ? 7 : 0) + (f.style === "shards" ? ang : 0));
+        ctx.lineWidth = Math.max(1, u * 0.45); ctx.strokeStyle = "#140d10"; ctx.lineJoin = "round";
+        ctx.beginPath();
+        if (f.style === "rock") {
+          const r = u * (3.8 - k * 0.5);
+          [[1, 0.1], [0.5, 0.9], [-0.6, 0.8], [-1, -0.1], [-0.3, -0.95], [0.7, -0.7]].forEach(([a, b2], i) => (i ? ctx.lineTo(a * r, b2 * r) : ctx.moveTo(a * r, b2 * r)));
+          ctx.closePath(); ctx.fillStyle = C[k % 2 ? 2 : 1]; ctx.fill(); ctx.stroke();
+          ctx.fillStyle = C[0]; ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.3, r * 0.28, 0, Math.PI * 2); ctx.fill();
+        } else {
+          const r = u * 3.2;
+          ctx.moveTo(r * 1.6, 0); ctx.lineTo(0, r * 0.5); ctx.lineTo(-r * 0.9, 0); ctx.lineTo(0, -r * 0.5); ctx.closePath();
+          ctx.fillStyle = C[1 + (k % 2)]; ctx.fill(); ctx.stroke();
+          ctx.fillStyle = C[0]; ctx.beginPath(); ctx.moveTo(r * 1.2, 0); ctx.lineTo(0, -r * 0.3); ctx.lineTo(-r * 0.2, 0); ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+      }
+    } else if (f.style === "wind") {
+      for (let k = 0; k < 3; k++) {
+        const ek = Math.max(0, e - k * 0.12);
+        const x = f.x0 + (f.x1 - f.x0) * ek, y = f.y0 + (f.y1 - f.y0) * ek;
+        const r = u * (4.5 + k * 1.8);
+        ctx.strokeStyle = C[k % C.length]; ctx.globalAlpha = 0.9 - k * 0.2; ctx.lineWidth = Math.max(2, u * 1.1); ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(x, y, r, now / 60 + k, now / 60 + k + Math.PI * 1.3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - r * 2.2, y + r * 0.4 * (k - 1)); ctx.lineTo(x - r * 0.8, y + r * 0.4 * (k - 1)); ctx.stroke();
+      }
+    } else if (f.style === "bolt") {
+      if (e < 0.35) return;
+      const pts = [[f.x0, f.y0]];
+      const segs = 7;
+      for (let i = 1; i < segs; i++) {
+        const k = i / segs;
+        pts.push([f.x0 + (f.x1 - f.x0) * k + (Math.random() - 0.5) * u * 2, f.y0 + (f.y1 - f.y0) * k + (Math.random() - 0.5) * u * 5]);
+      }
+      pts.push([f.x1, f.y1]);
+      ctx.lineJoin = "round"; ctx.lineCap = "round";
+      [[C[3], u * 2.4], [C[2], u * 1.4], [C[0], u * 0.6]].forEach(([col, w]) => {
+        ctx.strokeStyle = col; ctx.lineWidth = w; ctx.shadowColor = C[2]; ctx.shadowBlur = u * 3;
+        ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+      });
+    }
+  },
+
+  /* ---------- answer streak, drawn on the rider's sword ---------- */
+  streakPoints(dy) {
+    const b = this._blade;
+    if (!b || !b.length) return null;
+    return { tip: { x: this._stripBaseX + b[0].x, y: this._stripBaseY + b[0].y + dy }, hilt: { x: this._stripBaseX + b[b.length - 1].x, y: this._stripBaseY + b[b.length - 1].y + dy } };
+  },
+  drawStreakBlade(ctx, now, dy) {
+    const lv = this._fire, pts = this.streakPoints(dy);
+    if (!pts) return;
+    const pulse = 0.75 + 0.25 * Math.sin(now / (lv >= 4 ? 90 : 160));
+    const core = lv >= 4 ? "#ffffff" : "#fff3b0", halo = lv >= 4 ? "#fff8d8" : "#ffcf3a";
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+    ctx.shadowColor = halo; ctx.shadowBlur = this.unit * (2.5 + lv * 1.4);
+    ctx.globalAlpha = (0.45 + lv * 0.1) * pulse;
+    ctx.strokeStyle = halo; ctx.lineWidth = this.unit * (0.9 + lv * 0.35);
+    ctx.beginPath(); ctx.moveTo(pts.hilt.x, pts.hilt.y); ctx.lineTo(pts.tip.x, pts.tip.y); ctx.stroke();
+    ctx.globalAlpha = 0.8 * pulse; ctx.strokeStyle = core; ctx.lineWidth = this.unit * 0.45;
+    ctx.beginPath(); ctx.moveTo(pts.hilt.x, pts.hilt.y); ctx.lineTo(pts.tip.x, pts.tip.y); ctx.stroke();
+    ctx.restore();
+    // "🔥 N" badge floating above the sword tip
+    const n = this._streak || 0, fs = Math.max(10, Math.round(this.unit * 4.2));
+    const label = `🔥${n}`;
+    ctx.save();
+    ctx.font = `900 ${fs}px Nunito, sans-serif`;
+    const tw = ctx.measureText(label).width, bw = tw + fs * 0.8, bh = fs * 1.35;
+    const bx = Math.min(this.W - this.playerLayer.x - bw - 2, pts.tip.x - bw / 2), by = pts.tip.y - bh - this.unit * 2 + Math.sin(now / 300) * this.unit * 0.5;
+    ctx.fillStyle = "#140d10"; ctx.beginPath(); ctx.roundRect(bx - 2, by - 2, bw + 4, bh + 4, bh / 2 + 2); ctx.fill();
+    ctx.fillStyle = lv >= 4 ? "#fff3c4" : lv >= 3 ? "#ffcf3a" : lv >= 2 ? "#ff9a3c" : "#e0701c";
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, bh / 2); ctx.fill();
+    ctx.fillStyle = "#2a0f04"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(label, bx + bw / 2, by + bh / 2 + 1);
+    ctx.restore();
+  },
+  drawSpeedLines(ctx, now) {
+    const w = this._texW || this.unit * 30, h = this._texH || this.unit * 30;
+    ctx.save();
+    ctx.strokeStyle = this._fire >= 4 ? "#fff8d8" : "#ffe7a3"; ctx.lineCap = "round";
+    for (let i = 0; i < 7; i++) {
+      const span = w * 1.4;
+      const x = this._stripBaseX + w * 0.95 - ((now * 0.45 + i * 131) % span);
+      const y = this._stripBaseY + h * (0.2 + 0.1 * i);
+      const len = this.unit * (5 + (i % 3) * 3);
+      ctx.globalAlpha = 0.28 * Math.min(1, (x - this._stripBaseX + w * 0.45) / (w * 0.4));
+      if (ctx.globalAlpha <= 0) continue;
+      ctx.lineWidth = Math.max(1, this.unit * 0.5);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - len, y); ctx.stroke();
+    }
+    ctx.restore();
+  },
+  streakFlare(lv) {
+    const pts = this.streakPoints(0);
+    if (!pts) return;
+    const x = this.playerLayer.x + pts.tip.x, y = this.playerLayer.y + pts.tip.y;
+    this.burst(x, y, lv >= 4 ? ["#ffffff", "#fff3c4"] : ["#fff3a8", "#ffcf3a", "#ff9a3c"], 14 + lv * 4, 0.2, { life: 520, g: 0.0004, extra: { front: true, shape: "plus" } });
+    this.fx.push({ type: "ring", x, y, r: this.unit * 3, color: "#ffe7a3", t0: performance.now(), dur: 380 });
+  },
+  streakLost() {
+    const pts = this.streakPoints(0);
+    if (!pts) return;
+    const x = this.playerLayer.x + pts.tip.x, y = this.playerLayer.y + pts.tip.y;
+    for (let i = 0; i < 10; i++) this.spawn({ x: x + (Math.random() - 0.5) * this.unit * 4, y, vx: (Math.random() - 0.5) * 0.03, vy: -0.03 - Math.random() * 0.03, life: 700, color: Math.random() < 0.5 ? "#8a8494" : "#5c5666", fadeIn: true, front: true, size: this.ap * 1.5 });
+  },
+
+  /* Dragon Scales: a faint shimmering bubble plus one pip per hit left. */
+  drawShield(ctx, now) {
+    const n = S.shieldHits || 0;
+    if (n <= 0 || S.screen !== "playing") return;
+    const P = this.playerBox();
+    const cx = this.playerLayer.x - this.playerBase.x + P.cx, cy = P.cy;
+    const rx = P.w * 0.56, ry = P.h * 0.62;
+    ctx.save();
+    ctx.globalAlpha = 0.16 + 0.06 * Math.sin(now / 260);
+    ctx.fillStyle = "#9fd8ff";
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.55 + 0.2 * Math.sin(now / 260);
+    ctx.strokeStyle = "#cfeeff"; ctx.lineWidth = Math.max(1.5, this.unit * 0.6);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    const s = this.unit * 2.2, gap = s * 1.5;
+    for (let i = 0; i < n; i++) {
+      const x = cx - (n - 1) * gap / 2 + i * gap, y = P.y - s * 0.8;
+      ctx.fillStyle = "#140d10";
+      ctx.beginPath(); ctx.moveTo(x - s * 0.62, y - s * 0.62); ctx.lineTo(x + s * 0.62, y - s * 0.62); ctx.lineTo(x + s * 0.62, y); ctx.quadraticCurveTo(x + s * 0.5, y + s * 0.6, x, y + s * 0.85); ctx.quadraticCurveTo(x - s * 0.5, y + s * 0.6, x - s * 0.62, y); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#7cc4f2";
+      ctx.beginPath(); ctx.moveTo(x - s * 0.45, y - s * 0.45); ctx.lineTo(x + s * 0.45, y - s * 0.45); ctx.lineTo(x + s * 0.45, y); ctx.quadraticCurveTo(x + s * 0.36, y + s * 0.42, x, y + s * 0.62); ctx.quadraticCurveTo(x - s * 0.36, y + s * 0.42, x - s * 0.45, y); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
   },
 
   drawBackground(ctx, now) {
@@ -8408,17 +8876,7 @@ const BattleStage = {
     ctx.save();
     ctx.translate(this.playerLayer.x, this.playerLayer.y);
     if (this.playerLayer.scale !== 1) ctx.scale(this.playerLayer.scale, this.playerLayer.scale);
-    const aura = this._aura ? AURA_FX[this._aura] : null;
-    this.groundShadow(ctx, 15, 2.6, aura ? (aura.glow) : null);
-    if (aura) {
-      const cy = this.dragonOriginY * 0.45;
-      const g = ctx.createRadialGradient(0, cy, 0, 0, cy, this.unit * 26);
-      const col = this._aura === "rainbowaura" ? `hsl(${(now / 6) % 360},90%,65%)` : aura.glow;
-      g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.globalAlpha = 0.28 + 0.08 * Math.sin(now / 400);
-      ctx.fillStyle = g; ctx.fillRect(-this.unit * 28, cy - this.unit * 28, this.unit * 56, this.unit * 56);
-      ctx.globalAlpha = 1;
-    }
+    this.groundShadow(ctx, 15, 2.6, null);
     const tierGlow = [null, null, null, "255,122,28", "143,233,255", "255,42,74"][this._swordTier || 0];
     if (tierGlow && this._blade && this._blade.length) {
       const mid = this._blade[Math.floor(this._blade.length / 2)];
@@ -8429,19 +8887,53 @@ const BattleStage = {
     }
     const scale = this._pixScale || 1;
     const n = Math.max(1, this.dragonStrips.length);
-    const frame = Math.floor(now / (n >= 4 ? 170 : 420)) % n;   // wing flaps / cape sway
+    const frame = Math.floor(now / (n >= 4 ? (now < (this._flapFastUntil || 0) ? 85 : 170) : 420)) % n;   // wing flaps / cape sway
     const bobPx = (Math.sin(now / 500) + 1) * 0.5;   // smooth breathing bob
     const flash = now < this.playerFlashUntil;
     const strips = flash ? this.dragonFlash : this.dragonStrips;
     const img = strips[frame];
+    if ((this._fire || 0) >= 3) this.drawSpeedLines(ctx, now);
     if (img) {
       img.visible = true; img.alpha = this.playerLayer.alpha;
       img.x = this._stripBaseX; img.y = this._stripBaseY - bobPx * scale;
       drawSprite(ctx, img);
     }
-    drawSprite(ctx, this.playerAccessory);
-    drawSprite(ctx, this.playerPet);
+    if ((this._fire || 0) >= 1) this.drawStreakBlade(ctx, now, -bobPx * scale);
     ctx.restore();
+  },
+
+  /* Multi-enemy waves: the foes still waiting line up behind the one being
+     fought -- smaller, higher and dimmer, each with a tiny HP bar -- so it
+     reads at a glance that this is a group fight. */
+  queueSlot(k) {
+    const sc = Math.pow(0.76, k);
+    const w = this._eTexW * sc, h = this._eTexH * sc;
+    const frontCx = this.enemyBase.x + this._enemyBaseX + this._eTexW / 2;
+    const cx = Math.min(this.W - w / 2 - 2, frontCx + k * this._eTexW * 0.42);
+    const bottom = this.enemyBase.y + this._enemyBaseY + this._eTexH - k * this.unit * 5;
+    return { x: cx - w / 2, y: bottom - h, w, h, sc, cx };
+  },
+  drawQueue(ctx, now) {
+    const active = getActiveEnemy();
+    if (!active || active.isChest || !this.enemyStrips.length || !this._eTexW) return;
+    const waiting = S.enemies.filter((e) => e !== active && e.hp > 0);
+    if (!waiting.length) return;
+    const n = this.enemyStrips.length;
+    for (let k = waiting.length; k >= 1; k--) {
+      const img = this.enemyStrips[(Math.floor(now / 420) + k) % n];
+      const q = this.queueSlot(k);
+      const bob = (Math.sin(now / 560 + k * 1.7) + 1) * 0.5 * this.unit * 0.4;
+      ctx.save();
+      ctx.filter = "brightness(0.55) saturate(0.75)";
+      ctx.drawImage(img.canvas, q.x, q.y - bob, q.w, q.h);
+      ctx.restore();
+      const en = waiting[k - 1];
+      const bw = Math.max(18, q.w * 0.5), bh = Math.max(3, this.unit * 1.1);
+      const bx = q.cx - bw / 2, by = q.y + q.h * 0.08 - bh * 2;
+      ctx.fillStyle = "#140d10"; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+      ctx.fillStyle = "#3a2d4a"; ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = en.glow || "#ff6b5b"; ctx.fillRect(bx, by, bw * Math.max(0, en.hp / en.maxHP), bh);
+    }
   },
 
   drawEnemy(ctx, now) {
@@ -8490,17 +8982,19 @@ const BattleStage = {
       ctx.save();
       if (f.type === "slash") {
         // a bright crescent that sweeps across the target
-        const r = this.unit * 16;
-        const a0 = -2.4, a1 = 0.5;
+        const r = this.unit * (f.big ? 20 : 16);
+        const a0 = f.big ? 0.8 : -2.4, a1 = f.big ? -2.2 : 0.5;
         const head = a0 + (a1 - a0) * Math.min(1, t * 1.8);
         const tail = a0 + (a1 - a0) * Math.max(0, t * 1.8 - 0.6);
         ctx.translate(f.x, f.y); ctx.scale(1, 0.8);
         ctx.globalAlpha = 1 - t * 0.6;
         ctx.lineCap = "round";
-        ctx.shadowColor = "#ffcf3a"; ctx.shadowBlur = this.unit * 3;
-        [["#ffb04a", this.unit * 3.2], ["#fff3a8", this.unit * 1.8], ["#ffffff", this.unit * 0.8]].forEach(([col, w]) => {
+        ctx.shadowColor = f.white ? "#ffffff" : "#ffcf3a"; ctx.shadowBlur = this.unit * (f.big ? 5 : 3);
+        const cols = f.white ? [["#fff3c4", this.unit * 3.6], ["#ffffff", this.unit * 2], ["#ffffff", this.unit * 0.9]]
+          : [["#ffb04a", this.unit * 3.2], ["#fff3a8", this.unit * 1.8], ["#ffffff", this.unit * 0.8]];
+        cols.forEach(([col, w]) => {
           ctx.strokeStyle = col; ctx.lineWidth = w;
-          ctx.beginPath(); ctx.arc(0, 0, r, tail, head); ctx.stroke();
+          ctx.beginPath(); ctx.arc(0, 0, r, tail, head, a1 < a0); ctx.stroke();
         });
       } else if (f.type === "star") {
         const len = this.unit * (4 + 10 * Math.sin(Math.min(1, t * 1.6) * Math.PI));
@@ -8521,6 +9015,24 @@ const BattleStage = {
         ctx.strokeStyle = f.color; ctx.lineWidth = this.unit * 1.4 * (1 - t) + 1;
         ctx.shadowColor = f.color; ctx.shadowBlur = this.unit * 3;
         ctx.beginPath(); ctx.ellipse(f.x, f.y, r, r * 0.75, 0, 0, Math.PI * 2); ctx.stroke();
+      } else if (f.type === "breath") {
+        this.drawBreath(ctx, f, t, now);
+      } else if (f.type === "vial") {
+        // tumbling glass flask on a high arc
+        const e = Math.min(1, t);
+        const x = f.x0 + (f.x1 - f.x0) * e;
+        const y = f.y0 + (f.y1 - f.y0) * e - Math.sin(e * Math.PI) * this.unit * 18;
+        const u = this.unit * 1.9;
+        ctx.translate(x, y); ctx.rotate(-0.4 + e * Math.PI * 2.5);
+        ctx.lineWidth = Math.max(1.5, u * 0.5); ctx.strokeStyle = "#140d10";
+        ctx.fillStyle = "#cfe9f0";
+        ctx.beginPath(); ctx.rect(-u * 0.7, -u * 3.6, u * 1.4, u * 1.6); ctx.fill(); ctx.stroke();           // neck
+        ctx.fillStyle = "#8a5a2a"; ctx.beginPath(); ctx.rect(-u * 0.9, -u * 4.4, u * 1.8, u * 1); ctx.fill(); ctx.stroke(); // cork
+        ctx.fillStyle = "#dff4f8"; ctx.beginPath(); ctx.arc(0, 0, u * 2.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // bulb
+        ctx.fillStyle = "#56d63a"; ctx.beginPath(); ctx.arc(0, 0, u * 1.9, -0.25, Math.PI + 0.25); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#9cff6a"; ctx.beginPath(); ctx.ellipse(0, u * 0.35, u * 1.5, u * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#ffffff"; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.arc(-u * 0.9, -u * 0.9, u * 0.5, 0, Math.PI * 2); ctx.fill();
+        if (Math.random() < 0.6) this.spawn({ x: x, y: y, vx: (Math.random() - 0.5) * 0.02, vy: 0.01, life: 380, color: Math.random() < 0.5 ? "#9cff6a" : "#56d63a", front: true });
       } else if (f.type === "fireball") {
         const e = EASE.cubicIn(Math.min(1, t));
         const x = f.x0 + (f.x1 - f.x0) * e;
@@ -8543,8 +9055,6 @@ const BattleStage = {
     const lvlStyle = LEVEL_STYLES[(levelInfo.level - 1) % LEVEL_STYLES.length];
     this._hue = lvlStyle.hue;
     const creature = COSMETICS.find((c) => c.id === S.equippedCreature);
-    const aura = COSMETICS.find((c) => c.id === S.equippedAura);
-    const accessory = COSMETICS.find((c) => c.id === S.equippedAccessory);
     const pet = COSMETICS.find((c) => c.id === S.equippedPet);
     this._hero = S.hero || "boy";
     this._swordTier = getSwordTier();
@@ -8552,17 +9062,20 @@ const BattleStage = {
       ? ELEMENT_PALETTES[creature.id] : (creature ? ELEMENT_PALETTES.starter : null);
     this._palette = creature && ELEMENT_PALETTES[creature.id]
       ? ELEMENT_PALETTES[creature.id] : hueRotatePalette(ELEMENT_PALETTES.starter, this._hue);
-    this._aura = aura ? aura.id : null;
-    this.playerAccessory.text = accessory ? accessory.emoji : "";
-    this.playerPet.text = pet ? pet.emoji : "";
+    this._petId = pet ? pet.id : null;
+    this._breath = getDragonBreath();
     this.setBiome(arenaBiomeForWave(S.wave));
     const activeEnemy = getActiveEnemy();
     this._isBoss = !!(activeEnemy && activeEnemy.isBoss && activeEnemy.hp > 0);
     this._poisoned = !!(activeEnemy && activeEnemy.poisonTurns > 0 && activeEnemy.hp > 0);
     this._charging = !!(activeEnemy && activeEnemy.charging > 0);
-    const fireLevel = S.streak >= 6 ? 2 : S.streak >= 3 ? 1 : 0;
-    if (fireLevel > (this._fire || 0)) Sound.play("fire");
+    // Streak tiers: 3 glow + badge, 5 slash trails, 7 speed lines + sparks,
+    // 10 white-gold blade and heavier hits. Built on the sword, not the ground.
+    const fireLevel = S.streak >= 10 ? 4 : S.streak >= 7 ? 3 : S.streak >= 5 ? 2 : S.streak >= 3 ? 1 : 0;
+    if (fireLevel > (this._fire || 0)) { Sound.play("fire"); this.streakFlare(fireLevel); }
+    else if (fireLevel === 0 && (this._fire || 0) > 0) this.streakLost();
     this._fire = fireLevel;
+    this._streak = S.streak;
     if (activeEnemy) {
       this._enemyGlow = activeEnemy.glow || "#ffffff";
       if (activeEnemy.isChest) {
@@ -8597,16 +9110,27 @@ const BattleStage = {
     if (!active) return;
     if (active !== this._trackRef) {
       const first = this._trackRef === null;
+      const sameWave = !first && S.enemies.includes(this._trackRef);
       this._trackRef = active; this._trackHp = active.hp;
-      if (!first && active.hp > 0) this.enemyEnter(active);
+      if (!first && active.hp > 0) this.enemyEnter(active, sameWave);
       return;
     }
     if (this._trackHp > 0 && active.hp <= 0 && !active.isChest) this.enemyDie();
     this._trackHp = active.hp;
   },
 
-  enemyEnter(enemy) {
+  enemyEnter(enemy, fromQueue) {
     killTweensOf(this.enemyLayer);
+    if (fromQueue && this._eTexW) {
+      // The next foe in line steps forward from its spot in the queue.
+      const q = this.queueSlot(1);
+      tweenTo(this.enemyLayer, {
+        y: { from: this.enemyBase.y - this.unit * 5, to: this.enemyBase.y },
+        x: { from: this.enemyBase.x + (q.cx - (this.enemyBase.x + this._enemyBaseX + this._eTexW / 2)), to: this.enemyBase.x },
+        scale: { from: q.sc, to: 1 }, alpha: { from: 0.6, to: 1 },
+      }, { duration: 420, ease: "quadOut" });
+      return;
+    }
     this.enemyLayer.x = this.enemyBase.x;
     tweenTo(this.enemyLayer, { y: { from: this.enemyBase.y - this.H * 0.6, to: this.enemyBase.y }, alpha: { from: 0, to: 1 } }, {
       duration: 380, ease: "cubicIn",
@@ -8680,6 +9204,9 @@ const BattleStage = {
     });
     const now = performance.now();
     this.fx.push({ type: "slash", x: E.cx, y: E.cy, t0: now + 250, dur: 280 });
+    const lv = this._fire || 0;
+    if (lv >= 2) this.fx.push({ type: "slash", x: E.cx, y: E.cy - this.unit * 2, t0: now + 290, dur: 320, big: true, white: lv >= 4 });
+    if (lv >= 4) setTimeout(() => { const t = performance.now(); this.whiteUntil = t + 110; this.shakeUntil = t + 220; this.shakeMag = 1; }, 330);
     for (let k = 0; k < 8; k++) this.spawn({ x: P.x + P.w * 0.2, y: P.y + P.h * (0.75 + Math.random() * 0.2), vx: -0.04 - Math.random() * 0.05, vy: -0.02, life: 300, color: "#e8e0f0" });
   },
   playerHit() {
@@ -8735,14 +9262,17 @@ const BattleStage = {
   },
   showPopup(text, side, kind) {
     const B = side === "enemy" ? this.enemyBox() : this.playerBox();
-    const colors = { dmg: "#ff6b5b", heal: "#6ee7a8", poison: "#9cff6a", crit: "#ffd700" };
+    const colors = { dmg: "#ff6b5b", heal: "#6ee7a8", poison: "#9cff6a", crit: "#ffd700", block: "#9fd8ff", pet: "#ffd66e", breath: (this._breath && this._breath.colors[1]) || "#ffcf3a" };
     const color = colors[kind] || "#fff0e0";
     const fontSize = kind === "crit" ? Math.round(this.unit * 9) : Math.round(this.unit * 7.2);
     // Stagger popups that land at the same moment so "WEAK!" and the damage
     // number don't print on top of each other; keep them inside the stage.
     const stack = this.popups.filter((q) => q._side === side && q._age < 400).length;
-    const x = Math.min(this.W - fontSize * 1.6, Math.max(fontSize * 1.6, B.cx + (stack % 2 ? this.unit * 7 : 0)));
-    const y = Math.max(fontSize * 0.8, B.top - stack * fontSize * 0.9);
+    // Pet and dragon-breath numbers sit to the left, so they never print
+    // over the sword's number that lands at nearly the same moment.
+    const side2 = kind === "pet" || kind === "breath" ? -this.unit * 9 : 0;
+    const x = Math.min(this.W - fontSize * 1.6, Math.max(fontSize * 1.6, B.cx + side2 + (stack % 2 ? this.unit * 7 : 0)));
+    const y = Math.max(fontSize * 0.8, B.top - stack * fontSize * 0.9 + (side2 ? fontSize * 0.9 : 0));
     const p = makeSprite("text", {
       text, fontSize, color, x, y,
       stroke: "#140d10", strokeWidth: Math.max(3, Math.round(this.unit * 1.3)),
@@ -8757,6 +9287,34 @@ const BattleStage = {
     tweenTo(p, { alpha: { from: 1, to: 0 } }, { delay: 1100, duration: 1400 });
     if (kind === "crit") { Sound.play("crit"); const now = performance.now(); this.whiteUntil = now + 120; this.shakeUntil = now + 260; this.shakeMag = 1.1; }
     if (kind === "heal") this.burst(B.cx, B.cy, ["#6ee7a8", "#c8ffe0"], 12, 0.08, { up: 0.08, g: -0.00005, life: 900, extra: { shape: "plus", front: true } });
+  },
+  /* Poison potion: a green vial tumbles from the rider's hand in an arc and
+     shatters on the enemy in a green splash. */
+  poisonThrow() {
+    Sound.play("swing");
+    const P = this.playerBox(), E = this.enemyBox();
+    const hilt = this._blade && this._blade.length ? this._blade[this._blade.length - 1] : { x: P.w * 0.6, y: P.h * 0.4 };
+    const x0 = this.playerLayer.x - this.playerBase.x + P.x + hilt.x, y0 = P.y + hilt.y;
+    const dur = 560;
+    this.fx.push({ type: "vial", x0, y0, x1: E.cx, y1: E.cy, t0: performance.now(), dur });
+    setTimeout(() => {
+      const t = performance.now(), E2 = this.enemyBox();
+      Sound.play("shatter"); Sound.play("poison");
+      this.fx.push({ type: "ring", x: E2.cx, y: E2.cy, r: 22, color: "#7dff5a", t0: t, dur: 460 });
+      this.burst(E2.cx, E2.cy, ["#b6ff7a", "#6ee04a", "#2f9a2a", "#e8ffd0"], 46, 0.34, { up: 0.12, g: 0.0012, life: 820, extra: { front: true } });
+      this.burst(E2.cx, E2.cy, ["#e8f6ff", "#bfe9d0"], 10, 0.3, { up: 0.08, g: 0.0012, life: 520, extra: { front: true, shape: "plus" } });
+      for (let k = 0; k < 10; k++) this.spawn({ x: E2.cx + (Math.random() - 0.5) * E2.w * 0.5, y: E2.cy - E2.h * 0.1 + Math.random() * E2.h * 0.3, vy: 0.02 + Math.random() * 0.03, g: 0.0004, life: 900 + Math.random() * 500, color: Math.random() < 0.5 ? "#6ee04a" : "#2f9a2a", front: true });
+      this.enemyFlashUntil = t + 90;
+      this.showPopup("POISONED!", "enemy", "poison");
+    }, dur);
+  },
+  playerBlock(left) {
+    Sound.play("clink");
+    const P = this.playerBox(), now = performance.now();
+    this.fx.push({ type: "ring", x: P.cx, y: P.cy, r: Math.max(P.w, P.h) * 0.42, color: "#9fd8ff", t0: now, dur: 420 });
+    this.burst(P.x + P.w * 0.85, P.cy, ["#e8f6ff", "#9fd8ff", "#f2c440"], 18, 0.22, { life: 420, extra: { front: true, shape: "plus" } });
+    this.showPopup(left > 0 ? `BLOCKED! (${left} left)` : "BLOCKED!", "player", "block");
+    this.shakeUntil = now + 120; this.shakeMag = 0.3;
   },
   showImpact(side) {
     const B = side === "enemy" ? this.enemyBox() : this.playerBox();
@@ -8851,6 +9409,10 @@ const BattleFX = {
   fireballCast() { if (BattleStage.ready) BattleStage.fireballCast(); },
   showPopup(text, side, kind) { if (BattleStage.ready) BattleStage.showPopup(text, side, kind); },
   showImpact(side) { if (BattleStage.ready) BattleStage.showImpact(side); },
+  playerBlock(left) { if (BattleStage.ready) BattleStage.playerBlock(left); },
+  poisonThrow() { if (BattleStage.ready) BattleStage.poisonThrow(); else Sound.play("poison"); },
+  dragonBreath(b) { if (BattleStage.ready) BattleStage.dragonBreath(b); else Sound.play("breath_" + b.style); },
+  petAttack(kind) { if (BattleStage.ready) BattleStage.petAttack(kind); else Sound.play("pet"); },
 };
 
 render();

@@ -1,7 +1,7 @@
 # Dragons vs Math
 
 A pixel-art math battle game for kids ages 5–13. Every correct answer is an
-attack; the math adapts to each child, from adding within 10 up to two-digit
+attack; the math adapts to each child, from numbers 1 to 4 up to two-digit
 carrying and borrowing. Packaged as an Android app for Google Play with
 [Capacitor](https://capacitorjs.com).
 

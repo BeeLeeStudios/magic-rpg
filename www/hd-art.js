@@ -449,3 +449,122 @@ function hdRender(draw, fit, cssW, cssH, dpr, pixel = HD_PIXEL) {
 
 const HD_DRAGON_FIT = { x: -26, y: -40, w: 262, h: 176 };
 const HD_HERO_FIT = { x: 10, y: 0, w: 70, h: 98 };
+
+/* ---------------------------------------------------------------------
+   Pets, standing on the ground facing right (toward the enemy).
+   Design box 64 x 52, feet on y = 50. t: 0..1 idle phase (wag, flutter).
+   --------------------------------------------------------------------- */
+const HD_PET_FIT = { x: -2, y: -2, w: 68, h: 54 };
+
+function drawHDPet(ctx, kind, t = 0) {
+  const s = Math.sin(t * Math.PI * 2);
+  const lw = 1.6;
+  const ell = (x, y, rx, ry, rot = 0) => (c) => c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
+  const tube = (pts, w0, w1, fill) => hdFill(ctx, (c) => hdPoly(c, hdTube(pts, w0, w1).poly), fill, lw);
+  const eye = (x, y, r, iris = "#1a0f1e") => {
+    hdFill(ctx, ell(x, y, r, r), "#ffffff", 1);
+    hdFill(ctx, ell(x + r * 0.25, y, r * 0.6, r * 0.7), iris, 0);
+    hdFill(ctx, ell(x + r * 0.05, y - r * 0.35, r * 0.28, r * 0.28), "#ffffff", 0);
+  };
+  const leg = (x0, y0, x1, w, fill, paw) => {
+    tube([[x0, y0], [x0 + (x1 - x0) * 0.5, (y0 + 50) / 2], [x1, 48]], w, w * 0.85, fill);
+    hdFill(ctx, ell(x1 + 1, 48.5, w * 0.72, 2), paw || hdShift(fill, -0.35), lw);
+  };
+
+  if (kind === "pet_wolf") {
+    const B = "#8f96a3", D = "#5f6672", L = "#d6dae1";
+    tube(hdBez([15, 30], [6, 28], [2, 20 + s * 3], [3, 12 + s * 4], 8), 6, 3.5, B);                // bushy tail
+    leg(18, 32, 16, 5, D); leg(38, 34, 37, 4.5, D);
+    hdFill(ctx, ell(28, 31, 16, 8.5), hdGrad(ctx, 0, 23, 0, 40, [[0, hdShift(B, 0.12)], [1, D]]), lw);
+    leg(24, 34, 24, 5, B); leg(43, 33, 44, 4.5, B);
+    hdFill(ctx, (c) => { c.moveTo(38, 27); c.quadraticCurveTo(45, 36, 41, 40); c.quadraticCurveTo(36, 36, 36, 30); c.closePath(); }, L, lw);  // chest ruff
+    hdFill(ctx, (c) => { c.moveTo(42, 16); c.lineTo(44, 6); c.lineTo(48, 14); c.closePath(); }, D, lw);   // ears
+    hdFill(ctx, ell(47, 20, 8.5, 7), B, lw);
+    hdFill(ctx, (c) => { c.moveTo(51, 17); c.lineTo(50, 7); c.lineTo(55, 15); c.closePath(); }, B, lw);
+    hdFill(ctx, (c) => { c.moveTo(51, 19); c.quadraticCurveTo(60, 19, 62, 23); c.quadraticCurveTo(58, 27, 50, 26); c.closePath(); }, L, lw);   // snout
+    hdFill(ctx, ell(61.5, 22, 1.8, 1.4), HD_INK, 0);
+    eye(51, 18, 2);
+    return;
+  }
+  if (kind === "pet_bear") {
+    const B = "#7a4a2a", D = "#4e2c16", L = "#c99a6a";
+    leg(18, 34, 17, 7, D); leg(40, 34, 40, 7, D);
+    hdFill(ctx, ell(30, 31, 18, 13), hdGrad(ctx, 0, 18, 0, 44, [[0, hdShift(B, 0.15)], [1, D]]), lw);
+    leg(25, 38, 25, 7.5, B); leg(44, 36, 46, 7.5, B);
+    hdFill(ctx, ell(45, 13, 3.5, 3.5), B, lw); hdFill(ctx, ell(54, 13, 3.5, 3.5), B, lw);
+    hdFill(ctx, ell(50, 21, 9.5, 8.5), B, lw);
+    hdFill(ctx, ell(57, 25, 5.5, 4), L, lw);
+    hdFill(ctx, ell(61, 23.5, 1.9, 1.5), HD_INK, 0);
+    eye(52, 18.5, 1.7);
+    return;
+  }
+  if (kind === "pet_panther") {
+    const B = "#2e2840", D = "#1a1628", L = "#5a4f78";
+    tube(hdBez([15, 31], [6, 34], [0, 26], [4, 14 + s * 3], 10), 3.4, 2.2, B);                   // long tail
+    leg(19, 33, 17, 4, D); leg(38, 33, 36, 4, D);
+    hdFill(ctx, ell(29, 31, 16, 7), hdGrad(ctx, 0, 24, 0, 38, [[0, L], [0.45, B], [1, D]]), lw);
+    leg(24, 34, 25, 4.3, B); leg(42, 33, 44, 4.3, B);
+    hdFill(ctx, (c) => { c.moveTo(44, 21); c.lineTo(45, 14); c.lineTo(49, 19); c.closePath(); }, B, lw);
+    hdFill(ctx, ell(50, 24, 7.5, 6), B, lw);
+    hdFill(ctx, (c) => { c.moveTo(51, 21); c.lineTo(53, 14); c.lineTo(56, 20); c.closePath(); }, B, lw);
+    hdFill(ctx, (c) => { c.moveTo(54, 23); c.quadraticCurveTo(60, 24, 60, 27); c.quadraticCurveTo(56, 30, 52, 28); c.closePath(); }, L, lw);
+    hdFill(ctx, ell(59.5, 25.5, 1.4, 1.1), "#e28aa8", 0);
+    hdFill(ctx, ell(53.5, 22.5, 2, 1.4), "#ffd23a", 1);
+    hdFill(ctx, ell(54, 22.5, 0.6, 1.2), HD_INK, 0);
+    return;
+  }
+  if (kind === "pet_griffin") {
+    const B = "#c89a52", D = "#8a6430", W = "#f4f0e6", F = "#a8763a";
+    tube(hdBez([14, 32], [6, 36], [3, 28], [4, 22], 8), 3, 2, B);
+    hdFill(ctx, ell(4, 20, 3.2, 4), D, lw);                                                          // tail tuft
+    leg(19, 34, 18, 5, D); leg(37, 34, 36, 4.5, D, "#e0a830");
+    hdFill(ctx, ell(28, 32, 15, 8.5), hdGrad(ctx, 0, 24, 0, 41, [[0, hdShift(B, 0.15)], [1, D]]), lw);
+    leg(24, 36, 25, 5, B); leg(42, 34, 43, 4.2, "#e0a830", "#c8861a");
+    const up = 6 * s;
+    hdFill(ctx, (c) => {                                                                              // wing
+      c.moveTo(24, 27); c.quadraticCurveTo(14, 12 - up, 6, 2 - up); c.lineTo(10, 10 - up * 0.6); c.lineTo(8, 14 - up * 0.4);
+      c.lineTo(13, 18 - up * 0.3); c.lineTo(12, 22); c.quadraticCurveTo(22, 30, 34, 27); c.closePath();
+    }, hdGrad(ctx, 0, 0, 0, 30, [[0, W], [1, F]]), lw);
+    hdFill(ctx, (c) => { c.moveTo(38, 30); c.quadraticCurveTo(38, 16, 46, 14); c.quadraticCurveTo(54, 14, 54, 22); c.quadraticCurveTo(50, 30, 42, 33); c.closePath(); }, W, lw);  // eagle head + neck
+    hdFill(ctx, (c) => { c.moveTo(52, 18); c.quadraticCurveTo(61, 18, 61, 24); c.quadraticCurveTo(58, 22, 53, 23); c.closePath(); }, "#f2c440", lw);                                // hooked beak
+    hdFill(ctx, ell(49, 18.5, 1.9, 1.9), "#ffb020", 1);
+    hdFill(ctx, ell(49.4, 18.5, 0.8, 1), HD_INK, 0);
+    return;
+  }
+  if (kind === "pet_dragonwhelp") {
+    const B = "#4caf50", D = "#2e7d32", L = "#e8e2a0", Wg = "#8fd694";
+    tube(hdBez([16, 36], [6, 40], [2, 30], [6, 24 + s * 2], 10), 5, 2, B);
+    hdFill(ctx, (c) => { c.moveTo(6, 22 + s * 2); c.lineTo(2, 18 + s * 2); c.lineTo(10, 21 + s * 2); c.closePath(); }, D, lw);   // tail spade
+    const up = 5 * s;
+    hdFill(ctx, (c) => { c.moveTo(26, 28); c.lineTo(18, 8 - up); c.lineTo(22, 16 - up * 0.5); c.lineTo(28, 12 - up); c.lineTo(30, 20); c.lineTo(36, 18 - up * 0.6); c.lineTo(34, 29); c.closePath(); }, Wg, lw);  // little wing
+    leg(20, 38, 19, 5, D); leg(34, 38, 34, 5, D);
+    hdFill(ctx, ell(27, 37, 12, 8.5), hdGrad(ctx, 0, 28, 0, 46, [[0, hdShift(B, 0.15)], [1, D]]), lw);
+    hdFill(ctx, ell(29, 41, 8, 4), L, 1);
+    leg(25, 40, 25, 5.2, B); leg(38, 38, 39, 5, B);
+    tube([[36, 34], [40, 28], [42, 24]], 7, 6, B);
+    hdFill(ctx, (c) => { c.moveTo(42, 15); c.lineTo(40, 7); c.lineTo(45, 13); c.closePath(); }, "#f0e0b0", lw);    // horns
+    hdFill(ctx, (c) => { c.moveTo(47, 14); c.lineTo(47, 6); c.lineTo(50, 13); c.closePath(); }, "#f0e0b0", lw);
+    hdFill(ctx, ell(46, 21, 9, 7.5), B, lw);
+    hdFill(ctx, (c) => { c.moveTo(51, 20); c.quadraticCurveTo(60, 20, 61, 24); c.quadraticCurveTo(58, 28, 50, 27); c.closePath(); }, B, lw);   // snout
+    hdFill(ctx, ell(59, 22, 0.9, 0.9), HD_INK, 0);
+    eye(48, 19, 2.6, "#2a1a08");
+    return;
+  }
+  // pet_owl (default)
+  const B = "#8a5a36", D = "#5a3620", L = "#ecd6a8", F = "#f3e2bc";
+  const flap = 0.25 * s;
+  hdFill(ctx, ell(21, 35, 5.5, 11, 0.25 + flap), D, lw);                                           // far wing
+  hdFill(ctx, ell(32, 35, 12.5, 14), hdGrad(ctx, 0, 21, 0, 49, [[0, hdShift(B, 0.12)], [1, D]]), lw);
+  hdFill(ctx, ell(33, 38, 8, 9.5), L, 1);
+  ctx.strokeStyle = hdShift(B, -0.1); ctx.lineWidth = 1;
+  for (const [x, y] of [[30, 34], [36, 34], [33, 38], [30, 42], [36, 42]]) { ctx.beginPath(); ctx.moveTo(x - 1.6, y - 1); ctx.lineTo(x, y + 0.6); ctx.lineTo(x + 1.6, y - 1); ctx.stroke(); }
+  hdFill(ctx, (c) => { c.moveTo(22, 14); c.lineTo(21, 4); c.lineTo(27, 11); c.closePath(); }, D, lw);   // ear tufts
+  hdFill(ctx, (c) => { c.moveTo(42, 14); c.lineTo(45, 4); c.lineTo(38, 11); c.closePath(); }, D, lw);
+  hdFill(ctx, ell(33, 19, 12, 9.5), B, lw);
+  hdFill(ctx, ell(28.5, 19, 5, 5), F, 1); hdFill(ctx, ell(37.5, 19, 5, 5), F, 1);
+  hdFill(ctx, ell(28.8, 19, 3, 3), "#ffc21a", 1); hdFill(ctx, ell(37.8, 19, 3, 3), "#ffc21a", 1);
+  hdFill(ctx, ell(29.2, 19, 1.5, 1.7), HD_INK, 0); hdFill(ctx, ell(38.2, 19, 1.5, 1.7), HD_INK, 0);
+  hdFill(ctx, (c) => { c.moveTo(31.5, 22); c.lineTo(34.5, 22); c.lineTo(33, 26); c.closePath(); }, "#f2a830", 1);
+  hdFill(ctx, ell(44, 35, 5.5, 11, -0.25 - flap), hdShift(B, -0.1), lw);                             // near wing
+  hdFill(ctx, ell(29, 49, 3, 1.6), "#f2a830", 1); hdFill(ctx, ell(36, 49, 3, 1.6), "#f2a830", 1);
+}
