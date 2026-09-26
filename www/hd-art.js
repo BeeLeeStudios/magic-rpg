@@ -255,9 +255,44 @@ function drawHDDragon(ctx, P, t = 0) {
    dragon so the rider can be drawn straight onto its back.
    H: { hero: "boy"|"girl", skin, hair, armor, cape, leather, blade, hilt, gem }
    --------------------------------------------------------------------- */
+/* Saddle on the dragon's back (dragon coordinates): blanket with gold
+   trim, leather seat with a raised cantle and pommel horn, girth strap
+   around the belly, and the stirrup leather. The stirrup iron itself is
+   drawn after the rider so it wraps the boot. */
+function drawHDSaddle(ctx, H) {
+  const leather = "#6b3f22", leatherLo = "#3e2414";
+  const cloth = H.saddle || hdShift(H.cape, -0.15);
+  // girth strap around the belly
+  hdFill(ctx, (c) => { c.moveTo(112, 72); c.lineTo(117, 72); c.lineTo(122, 112); c.lineTo(117, 112); }, hdGrad(ctx, 0, 72, 0, 112, [[0, leather], [1, leatherLo]]), 1.4);
+  hdFill(ctx, (c) => { c.roundRect(115, 99, 7, 6, 1.2); }, H.hilt, 1.1);
+  // blanket lying on the back and hanging down the flank, gold-trimmed hem
+  hdFill(ctx, (c) => {
+    c.moveTo(88, 71); c.quadraticCurveTo(110, 66, 134, 70);
+    c.lineTo(133, 88); c.quadraticCurveTo(127, 92, 121, 89); c.quadraticCurveTo(114, 93, 107, 89); c.quadraticCurveTo(100, 93, 93, 88);
+    c.lineTo(90, 80); c.closePath();
+  }, hdGrad(ctx, 0, 66, 0, 92, [[0, hdShift(cloth, 0.2)], [1, hdShift(cloth, -0.2)]]), 1.6);
+  ctx.strokeStyle = H.hilt; ctx.lineWidth = 1.8; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(94, 86); ctx.quadraticCurveTo(100, 90.5, 107, 86.8); ctx.quadraticCurveTo(114, 90.5, 121, 86.8); ctx.quadraticCurveTo(127, 89.5, 132, 86); ctx.stroke();
+  // seat: tall cantle behind the rider, dip, pommel horn in front
+  hdFill(ctx, (c) => {
+    c.moveTo(90, 74); c.quadraticCurveTo(85, 62, 90, 58); c.quadraticCurveTo(96, 57, 97, 64);
+    c.quadraticCurveTo(112, 71, 127, 64); c.quadraticCurveTo(128, 56, 132, 55); c.quadraticCurveTo(136, 57, 134, 63);
+    c.quadraticCurveTo(135, 71, 132, 76); c.quadraticCurveTo(110, 79, 90, 74);
+  }, hdGrad(ctx, 0, 55, 0, 78, [[0, "#a86a3c"], [0.5, leather], [1, leatherLo]]), 1.8);
+  ctx.strokeStyle = "#d09a68"; ctx.lineWidth = 1; ctx.setLineDash([2, 1.6]);
+  ctx.beginPath(); ctx.moveTo(93, 72.5); ctx.quadraticCurveTo(111, 76.5, 131, 72.5); ctx.stroke(); ctx.setLineDash([]);
+  hdFill(ctx, (c) => { c.arc(132.5, 56, 2.4, 0, Math.PI * 2); }, H.hilt, 1);
+  // stirrup leather down to the boot
+  hdFill(ctx, (c) => { c.moveTo(119, 74); c.lineTo(122, 74); c.lineTo(127, 97); c.lineTo(124, 97); }, leatherLo, 1.1);
+}
+function drawHDStirrup(ctx, H) {
+  hdFill(ctx, (c) => { c.moveTo(119, 96); c.quadraticCurveTo(119, 103, 126, 103); c.quadraticCurveTo(133, 103, 133, 96); c.lineTo(130.5, 96); c.quadraticCurveTo(130.5, 100.5, 126, 100.5); c.quadraticCurveTo(121.5, 100.5, 121.5, 96); }, H.hilt, 1.2);
+}
+
 function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
+  drawHDSaddle(ctx, H);
   // drawn around its seat (108, 74), placed on the dragon's shoulders
-  ctx.save(); ctx.translate(108 + ox, 68 + oy); ctx.scale(1.3, 1.3); ctx.translate(-108, -74);
+  ctx.save(); ctx.translate(108 + ox, 73 + oy); ctx.scale(1.3, 1.3); ctx.translate(-108, -74);   // seated in the saddle
   const girl = H.hero === "girl";
   const sway = Math.sin(t * Math.PI * 2) * 1.5;
   // Riders wear a short scarf that streams back from the neck instead of
@@ -326,6 +361,7 @@ function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
   hdFill(ctx, (c) => { c.arc(bx - 1, by + 4, 3.2, 0, Math.PI * 2); }, hdShift(H.leather, 0.1), 1.3);
   hdFill(ctx, (c) => { c.arc(bx - 4, by + 8, 1.6, 0, Math.PI * 2); }, H.gem || H.hilt, 1);
   ctx.restore();
+  drawHDStirrup(ctx, H);
 }
 
 /* Hero standing on foot (side view, facing right, sword ready). */
