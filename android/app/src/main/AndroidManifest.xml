@@ -39,6 +39,6 @@
     <!-- Permissions -->
 
     <!-- No permissions: the game runs fully offline and never uses the network.
-         (INTERNET removed on purpose -- keeps the Data safety form at "no data collected"
+         (INTERNET removed on purpose: keeps the Data safety form at "no data collected"
          and guarantees nothing can be sent anywhere from a kids app.) -->
 </manifest>
