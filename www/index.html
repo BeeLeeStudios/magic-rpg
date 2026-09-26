@@ -3703,7 +3703,12 @@ function titleSceneHeight() {
 /* The scene is composed in 160-wide "art units" (so the layout code stays
    simple) but rendered TITLE_K times larger, with every layer smoothed, so
    nothing on screen looks blocky. */
-const TITLE_K = 4;
+const TITLE_K = (() => {
+  // art units -> device pixels: panel width (<= ~372 CSS px) x pixel ratio
+  const cssW = Math.min(420, window.innerWidth - 24) - 24;
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  return Math.max(2, Math.ceil((cssW * dpr) / 160));
+})();
 
 function buildTitleScene(H) {
   const W = 160, K = TITLE_K;
@@ -7156,7 +7161,7 @@ function epx2(src) {
 function renderSmooth(src, dw, dh, soft = 0.65, blurR = 0.45) {
   dw = Math.max(1, Math.round(dw)); dh = Math.max(1, Math.round(dh));
   let up = src, passes = 0;
-  while (passes < 4 && (up.width < dw || up.height < dh)) { up = epx2(up); passes++; }
+  while (passes < 5 && (up.width < dw || up.height < dh)) { up = epx2(up); passes++; }
   if (passes === 0) up = epx2(up);             // always round the corners at least once
   const out = makeTextureCanvas(dw, dh);
   const ctx = out.getContext("2d");
@@ -8071,7 +8076,7 @@ const BattleStage = {
       disc.addColorStop(0, cel.core); disc.addColorStop(1, cel.edge);
       octx.fillStyle = disc; octx.beginPath(); octx.arc(x, y, r, 0, Math.PI * 2); octx.fill();
     }
-    octx.drawImage(renderSmooth(low.canvas, out.width, out.height, 0.35, 0.4), 0, 0);
+    octx.drawImage(renderSmooth(low.canvas, out.width, out.height, 0), 0, 0);
     this._bg = { canvas: out, extra: low.extra };
     this._bgFadeStart = performance.now();
     this.parts = this.parts.filter((p) => !p.ambient);
