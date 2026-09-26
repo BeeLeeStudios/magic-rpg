@@ -50,13 +50,14 @@ async function drawArt(width, height, kind, file) {
     ctx.imageSmoothingEnabled = false;
     const fire = ELEMENT_PALETTES.creature_fire;
 
-    const rider = (scale, x, y, hero = 'boy') => {
-      const over = Math.max(0, -SADDLE_Y);
-      paintPixelFrame(ctx, PIX_DRAGON, 0, fire, scale, x, y + over * scale);
-      paintPixelFrame(ctx, heroSprite(hero, true), 0, heroPaletteForTier(3, hero), scale, x + SADDLE_X * scale, y + (SADDLE_Y + over) * scale);
+    // Same smooth renderer the game uses (EPX + painted fills + clean outlines).
+    const drawSmooth = (srcs, scale, x, y) => {
+      const img = renderSprite(srcs, srcs.fill.width * scale, srcs.fill.height * scale);
+      ctx.drawImage(img, x, y);
     };
+    const rider = (scale, x, y, hero = 'boy') => drawSmooth(riderSource(hero, fire, 3, 0), scale, x, y);
     const pixelText = (text, size, x, y, fill, align = 'center') => {
-      ctx.font = `700 ${size}px 'Pixelify Sans', monospace`;
+      ctx.font = `1000 ${size}px Nunito, sans-serif`;
       ctx.textAlign = align; ctx.textBaseline = 'middle';
       const o = Math.max(3, Math.round(size / 12));
       ctx.fillStyle = '#0c0714';
@@ -73,8 +74,11 @@ async function drawArt(width, height, kind, file) {
       // Full-bleed square; Play/Android apply their own rounded mask.
       if (kind !== 'icon-fg') {
         const bw = 64, bh = 64;
-        const bg = paintBiome(3, bw, bh, 52).canvas;   // night biome
-        ctx.drawImage(bg, 0, 0, width, height);
+        const low = paintBiome(3, bw, bh, 52, true);   // night biome, smooth sky
+        const sky = ctx.createLinearGradient(0, 0, 0, height * 0.8);
+        BIOMES[3].sky.forEach((c, i, a) => sky.addColorStop(i / (a.length - 1), c));
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(renderSmooth(low.canvas, width, height, 0.85, 0.6), 0, 0);
         const g = ctx.createRadialGradient(width / 2, height * 0.45, 0, width / 2, height * 0.45, width * 0.55);
         g.addColorStop(0, 'rgba(255,140,60,0.45)'); g.addColorStop(1, 'rgba(255,140,60,0)');
         ctx.fillStyle = g; ctx.fillRect(0, 0, width, height);
@@ -86,23 +90,32 @@ async function drawArt(width, height, kind, file) {
         const scale = Math.floor((width * safe) / (PIX_DRAGON.w + 2));
         const w = PIX_DRAGON.w * scale, h = (PIX_DRAGON.h + 3) * scale;
         rider(scale, Math.round((width - w) / 2), Math.round((height - h) / 2 + height * 0.02));
-        const u = Math.round(width / 40);
-        const glyph = (x, y, rows, col) => rows.forEach((r, j) => [...r].forEach((c, i) => { if (c === '#') { ctx.fillStyle = '#0c0714'; ctx.fillRect(x + i * u - u / 2, y + j * u - u / 2, u * 2, u * 2); } }));
-        const glyphFill = (x, y, rows, col) => rows.forEach((r, j) => [...r].forEach((c, i) => { if (c === '#') { ctx.fillStyle = col; ctx.fillRect(x + i * u, y + j * u, u, u); } }));
-        const plus = ['.#.', '###', '.#.'];
-        const s = kind === 'icon-fg' ? 0.04 : 0.1;
-        [[plus, width * s, height * s, '#ffd66e']].forEach(([gph, x, y, col]) => { glyph(x, y, gph); glyphFill(x, y, gph, col); });
+        // a chunky rounded "+" badge (maths!) in the corner
+        const u = width / 40, s = kind === 'icon-fg' ? 0.06 : 0.1;
+        const px = width * s, py = height * s, L = u * 3.2, T = u * 1.1;
+        const bar = (x, y, w, h) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, T / 2); };
+        ctx.fillStyle = '#0c0714';
+        bar(px - u * 0.35, py + L / 2 - T / 2 - u * 0.35, L + u * 0.7, T + u * 0.7); ctx.fill();
+        bar(px + L / 2 - T / 2 - u * 0.35, py - u * 0.35, T + u * 0.7, L + u * 0.7); ctx.fill();
+        ctx.fillStyle = '#ffd66e';
+        bar(px, py + L / 2 - T / 2, L, T); ctx.fill();
+        bar(px + L / 2 - T / 2, py, T, L); ctx.fill();
       }
     }
 
     if (kind === 'feature') {
       const ap = 4;
-      const bg = paintBiome(0, Math.ceil(width / ap), Math.ceil(height / ap), Math.floor(height / ap * 0.8)).canvas; // volcano
-      ctx.drawImage(bg, 0, 0, width, height);
+      const low = paintBiome(0, Math.ceil(width / ap), Math.ceil(height / ap), Math.floor(height / ap * 0.8), true); // volcano
+      const sky = ctx.createLinearGradient(0, 0, 0, height * 0.8);
+      BIOMES[0].sky.forEach((c, i, a) => sky.addColorStop(i / (a.length - 1), c));
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
+      const cel = low.extra.celestial;
+      if (cel) { const g = ctx.createRadialGradient(cel.x * ap, cel.y * ap, 0, cel.x * ap, cel.y * ap, cel.r * ap); g.addColorStop(0, cel.core); g.addColorStop(1, cel.edge); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cel.x * ap, cel.y * ap, cel.r * ap, 0, Math.PI * 2); ctx.fill(); }
+      ctx.drawImage(renderSmooth(low.canvas, width, height, 0.85, 0.6), 0, 0);
       ctx.fillStyle = 'rgba(10,4,20,0.25)'; ctx.fillRect(0, 0, width, height);
       rider(6, 40, 150, 'girl');
       const gob = PIX_ENEMY_ART['Ooze Monarch'];
-      paintPixelFrame(ctx, gob.art, 0, gob.palette, 5, width - gob.art.w * 5 - 40, height - gob.art.h * 5 - 22);
+      drawSmooth(spriteSource(gob.art, 0, gob.palette), 5, width - gob.art.w * 5 - 40, height - gob.art.h * 5 - 22);
       ctx.fillStyle = goldGrad(90, 190);
       pixelText('DRAGONS', 86, width * 0.56, 110, goldGrad(70, 150));
       ctx.save(); ctx.translate(width * 0.56, 185); ctx.rotate(-0.07);

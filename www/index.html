@@ -202,8 +202,6 @@ h1 {
 .hero-portrait {
   display: block;
   margin: 0 auto 6px;
-  image-rendering: pixelated;   /* never smooth pixel art */
-  image-rendering: crisp-edges;
 }
 
 .rank-row {
@@ -247,7 +245,6 @@ h1 {
   display: block;
   width: 100%;
   height: auto;
-  image-rendering: pixelated;
 }
 .journey-inner {
   position: absolute;
@@ -1040,12 +1037,12 @@ h1 {
 }
 
 /* =====================================================================
-   PIXEL SKIN (v2 graphics)
+   GAME SKIN (v3: smooth)
    Everything below overrides the original look so the game reads as one
-   consistent 16-bit world: chunky pixel frames (9-slice SVG border-image,
-   crisp at any size), a pixel display font, bevelled "cartridge" buttons,
-   and segmented HP bars. The original rules above are left in place so
-   layout and behaviour don't change -- this block only restyles them.
+   consistent world: rounded gold-trimmed panels, a heavy rounded font,
+   bevelled buttons and glossy HP bars. The original rules above are left
+   in place so layout and behaviour don't change -- this block only
+   restyles them.
    ===================================================================== */
 :root {
   --ink: #0c0714;
@@ -1062,10 +1059,6 @@ h1 {
      5/S, 2/Z and 6/8 were too alike). The pixel font is kept only for
      the title logo, where it is decoration rather than information. */
   --font-ui: 'Nunito', system-ui, sans-serif;
-  --frame-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%230c0714'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%230c0714'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%23ffe7a3'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%23ffe7a3'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%23e0a838'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%23e0a838'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%238a5a1c'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%238a5a1c'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%230c0714'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%230c0714'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%23221634'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%23221634'/%3E%3C/svg%3E");
-  --frame-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%2312040a'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%2312040a'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%23ffb3a0'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%23ffb3a0'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%23e0452e'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%23e0452e'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%237a1a10'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%237a1a10'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%2312040a'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%2312040a'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%232a0f14'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%232a0f14'/%3E%3C/svg%3E");
-  --frame-purple: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%230c0714'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%230c0714'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%23e9d5ff'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%23e9d5ff'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%23a26cf0'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%23a26cf0'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%234c1d95'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%234c1d95'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%230c0714'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%230c0714'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%231f1436'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%231f1436'/%3E%3C/svg%3E");
-  --frame-stone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%230c0714'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%230c0714'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%239d92b8'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%239d92b8'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%2362587c'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%2362587c'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%23342c48'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%23342c48'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%230c0714'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%230c0714'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%231b1329'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%231b1329'/%3E%3C/svg%3E");
   --safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
   --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
   --safe-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
@@ -1088,6 +1081,7 @@ html, body {
    reads as an empty browser page on tablets. */
 .wrap {
   font-family: 'Nunito', sans-serif;
+  image-rendering: auto;
   color: var(--text);
   padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(12px + var(--safe-left));
   background:
@@ -1096,16 +1090,15 @@ html, body {
     radial-gradient(ellipse at 50% 120%, #ff7a3c33 0%, transparent 55%),
     radial-gradient(ellipse at 50% -10%, #6b3fa044 0%, transparent 60%),
     linear-gradient(180deg, #1d1033 0%, #140b24 55%, #0d0718 100%);
-  image-rendering: pixelated;
 }
 
 /* ---------- pixel frames ---------- */
 .card, .arena, .shop-card, .levelup-card, .journey {
-  border: 12px solid transparent;
-  border-image: var(--frame-gold) 6 / 12px / 0 stretch;
-  border-radius: 0;
+  --frame: #e0a838;
+  border: 3px solid var(--frame);
+  border-radius: 22px;
   background-clip: padding-box;
-  box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+  box-shadow: 0 0 0 3px var(--ink), inset 0 0 0 2px rgba(255,231,163,0.18), 0 0 26px rgba(224,168,56,0.18), 0 18px 40px rgba(0,0,0,0.55);
 }
 .card, .shop-card, .levelup-card {
   background:
@@ -1113,10 +1106,10 @@ html, body {
     var(--panel);
   background-clip: padding-box;
 }
-.card { padding: 18px 14px; }
-.arena { padding: 8px 8px 10px; background: var(--panel-2); background-clip: padding-box; overflow: visible; }
-.shop-card { padding: 12px; border-image-source: var(--frame-stone); }
-.levelup-card { border-image-source: var(--frame-purple); padding: 18px 14px; }
+.card { padding: 22px 18px; }
+.arena { padding: 14px 14px 16px; background: var(--panel-2); background-clip: padding-box; overflow: visible; }
+.shop-card { padding: 16px; --frame: #7d6fa0; border-color: var(--frame); }
+.levelup-card { --frame: #a26cf0; border-color: var(--frame); padding: 22px 16px; box-shadow: 0 0 0 3px var(--ink), 0 0 40px rgba(162,108,240,0.45); }
 .journey { background: var(--ink); overflow: hidden; }
 
 .card::before, .card::after, .arena::before, .arena::after { display: none; }
@@ -1141,7 +1134,7 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
    The inset shadows are the bevel: light top-left, dark bottom-right. */
 .btn, .icon-btn, .close-btn, .delete-btn, .cancel-delete, .journey-btn, .boss-intro-btn, .hero-card, .levelup-choice-card {
   border: none !important;
-  border-radius: 0 !important;
+  border-radius: 14px !important;
   font-family: var(--font-ui);
   font-weight: 900;
   letter-spacing: 0.5px;
@@ -1149,7 +1142,7 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
   background: var(--b-face);
   color: var(--b-text);
   box-shadow:
-    0 -3px 0 0 var(--b-ink), 0 3px 0 0 var(--b-ink), -3px 0 0 0 var(--b-ink), 3px 0 0 0 var(--b-ink),
+    0 0 0 3px var(--b-ink),
     inset 3px 3px 0 0 var(--b-hi), inset -3px -4px 0 0 var(--b-lo);
   transition: transform 60ms ease, filter 120ms ease;
   cursor: pointer;
@@ -1157,7 +1150,7 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .btn:active:not(:disabled), .icon-btn:active, .journey-btn:active, .boss-intro-btn:active, .hero-card:active, .levelup-choice-card:active {
   transform: translateY(3px);
   box-shadow:
-    0 -3px 0 0 var(--b-ink), 0 3px 0 0 var(--b-ink), -3px 0 0 0 var(--b-ink), 3px 0 0 0 var(--b-ink),
+    0 0 0 3px var(--b-ink),
     inset 3px 4px 0 0 var(--b-lo), inset -3px -2px 0 0 var(--b-hi);
 }
 .btn:disabled { filter: grayscale(0.6) brightness(0.7); opacity: 1; }
@@ -1170,7 +1163,7 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
   --b-face: #2a203f; --b-hi: #463a63; --b-lo: #19122a; --b-text: var(--text-dim);
   width: 100%; margin-top: 14px; padding: 11px 14px; font-size: 15px;
 }
-.journey-btn { font-size: 30px; padding: 14px 52px; letter-spacing: 3px; margin-bottom: 20px; animation: pxPulse 1.6s steps(2) infinite; }
+.journey-btn { font-size: 30px; padding: 14px 52px; letter-spacing: 3px; margin-bottom: 20px; animation: pxPulse 1.6s ease-in-out infinite; }
 .journey-links { gap: 14px; }
 .journey-links .btn.ghost { margin-top: 0; width: auto; padding: 9px 14px; font-size: 14px; }
 .icon-btn { padding: 5px 9px; font-size: 13px; --b-face: #2e2346; }
@@ -1188,8 +1181,8 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .save-slot, .shop-item {
   background: #150e22;
   border: none;
-  border-radius: 0;
-  box-shadow: 0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink), -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink),
+  border-radius: 14px;
+  box-shadow: 0 0 0 3px var(--ink),
               inset 0 3px 0 0 #2d2344, inset 0 -3px 0 0 #0f0a18;
 }
 .save-list, .shop-list { gap: 14px; }
@@ -1215,11 +1208,11 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 
 /* ---------- journey / title ---------- */
 .journey { height: min(calc(100vh - 24px - var(--safe-top) - var(--safe-bottom)), 780px); min-height: 480px; }
-.journey-bg { image-rendering: pixelated; width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; }
+.journey-bg { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; }
 .journey-inner { background: linear-gradient(180deg, rgba(12,7,20,0.25) 0%, rgba(12,7,20,0) 30%, rgba(12,7,20,0) 55%, rgba(12,7,20,0.7) 100%); justify-content: space-between; padding: 22px 16px 20px; }
 .journey-bottom { display: flex; flex-direction: column; align-items: center; }
 .logo {
-  font-family: 'Pixelify Sans', monospace; font-weight: 900; line-height: 0.95;
+  font-family: var(--font-ui); font-weight: 1000; line-height: 0.95; letter-spacing: 1px;
   text-align: center; margin-bottom: 10px; animation: logoFloat 3s ease-in-out infinite;
 }
 .logo-top, .logo-bottom {
@@ -1229,9 +1222,10 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
   filter: drop-shadow(3px 0 0 var(--ink)) drop-shadow(-3px 0 0 var(--ink)) drop-shadow(0 3px 0 var(--ink)) drop-shadow(0 -3px 0 var(--ink)) drop-shadow(0 6px 0 #3a0f06);
 }
 .logo-vs {
+  border-radius: 10px;
   display: inline-block; margin: 4px 0; padding: 2px 12px 4px; font-size: clamp(18px, 5.5vw, 24px);
   color: #fff; background: #d8321f; letter-spacing: 2px;
-  box-shadow: 0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink), -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink), inset 0 3px 0 #ff8a6a, inset 0 -3px 0 #7a1108;
+  box-shadow: 0 0 0 3px var(--ink), inset 0 3px 0 #ff8a6a, inset 0 -3px 0 #7a1108;
   transform: rotate(-4deg);
 }
 @keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
@@ -1243,34 +1237,37 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .topbar.sub-row { font-family: 'Nunito', sans-serif; color: var(--text-dim); font-size: 12px; text-shadow: none; margin-top: 4px; }
 .wave-chip { display: inline-flex; align-items: center; gap: 6px; }
 .wave-chip .boss-tag {
+  border-radius: 6px;
   font-size: 11px; color: #fff; background: #d8321f; padding: 1px 6px;
-  box-shadow: 0 -2px 0 var(--ink), 0 2px 0 var(--ink), -2px 0 0 var(--ink), 2px 0 0 var(--ink);
-  animation: pxPulse 0.8s steps(2) infinite;
+  box-shadow: 0 0 0 2px var(--ink);
+  animation: pxPulse 0.8s ease-in-out infinite;
 }
 .rank-badge {
-  font-family: var(--font-ui); font-weight: 900; border: none; border-radius: 0;
+  font-family: var(--font-ui); font-weight: 900; border: none; border-radius: 999px;
   background: #4c1d95; color: #f3e8ff;
-  box-shadow: 0 -2px 0 var(--ink), 0 2px 0 var(--ink), -2px 0 0 var(--ink), 2px 0 0 var(--ink), inset 0 2px 0 #7c3aed;
+  box-shadow: 0 0 0 2px var(--ink), inset 0 2px 0 #7c3aed;
 }
 .rank-prog { color: var(--text-dim); font-weight: 800; }
 .xpbar, .hpbar, .mini-hpbar {
-  position: relative; border: none; border-radius: 0; background: #0f0a18; overflow: visible;
-  box-shadow: 0 -2px 0 var(--ink), 0 2px 0 var(--ink), -2px 0 0 var(--ink), 2px 0 0 var(--ink), inset 0 2px 0 #00000088;
+  position: relative; border: none; border-radius: 999px; background: #0f0a18; overflow: visible;
+  box-shadow: 0 0 0 2px var(--ink), inset 0 2px 0 #00000088;
 }
 .xpbar { height: 8px; }
 .hpbar { height: 14px; }
-.xpfill { background: linear-gradient(180deg, #d9b8ff 0 30%, #a26cf0 30% 70%, #6d3fc0 70%); transition: width 0.5s steps(12); }
-.hpfill { position: relative; z-index: 1; transition: width 0.35s steps(10); }
+.xpfill { background: linear-gradient(180deg, #e2c8ff, #a26cf0 55%, #6d3fc0); transition: width 0.5s ease-out; }
+.hpfill { position: relative; z-index: 1; border-radius: 999px; transition: width 0.35s ease-out; }
+.xpfill, .hpghost { border-radius: 999px; }
 /* Segment ticks + a 1-row specular stripe, painted over whatever fill
    colour the bar has (the enemy bar is tinted per-monster inline). */
 .hpfill::after {
   content: ""; position: absolute; inset: 0;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.45) 0 3px, transparent 3px calc(100% - 3px), rgba(0,0,0,0.3) calc(100% - 3px)),
-    repeating-linear-gradient(90deg, transparent 0 9px, rgba(0,0,0,0.35) 9px 11px);
+    repeating-linear-gradient(90deg, transparent 0 18px, rgba(0,0,0,0.18) 18px 20px);
+  border-radius: 999px;
 }
 .player-fill { background: #2fd47a; }
-.player-fill.low { background: #ff4a3a; animation: pxPulse 0.6s steps(2) infinite; }
+.player-fill.low { background: #ff4a3a; animation: pxPulse 0.6s ease-in-out infinite; }
 /* Trailing "damage ghost": stays at the previous width for a moment and
    then drains, so the kid can SEE how much a hit took. */
 .hpghost { position: absolute; left: 0; top: 0; bottom: 0; background: #fff2c8; z-index: 0; transition: width 0.6s ease 0.25s; }
@@ -1279,33 +1276,35 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .name-row .hp-num { font-family: var(--font-ui); color: var(--text-dim); }
 .enemy-mini-emoji { display: none; }
 .enemy-mini { width: 36px; }
-.enemy-mini .mini-icon { width: 32px; height: 28px; image-rendering: pixelated; display: block; margin: 0 auto 3px; }
+.enemy-mini .mini-icon { width: 32px; height: 28px; display: block; margin: 0 auto 3px; }
 
 .battlefield-anchor { height: 250px; margin: 10px 0 12px; }
 #battle-stage-host {
-  box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px #e0a838, 0 0 0 9px var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px #e0a838, 0 0 0 9px var(--ink), 0 0 24px rgba(224,168,56,0.25);
   background: #0c0714;
   overflow: hidden;
 }
-#battle-stage-host canvas { display: block; image-rendering: pixelated; }
+#battle-stage-host canvas { display: block; }
 
 .banner {
+  border-radius: 12px;
   font-family: var(--font-ui); font-weight: 900; font-size: 15px; color: var(--gold);
   background: #150e22; padding: 6px 8px; margin: 8px 3px;
-  box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #2d2344;
-  animation: bannerIn 0.35s steps(4);
+  box-shadow: 0 0 0 3px var(--ink), inset 0 3px 0 #2d2344;
+  animation: bannerIn 0.35s ease-out;
 }
 @keyframes bannerIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.rank-banner { background: #5b21b6 !important; box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #a78bfa !important; border: none !important; }
-.boss-banner { background: #9a1c12 !important; box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #ff6a4a !important; border: none !important; }
+.rank-banner { background: #5b21b6 !important; box-shadow: 0 0 0 3px var(--ink), inset 0 3px 0 #a78bfa !important; border: none !important; }
+.boss-banner { background: #9a1c12 !important; box-shadow: 0 0 0 3px var(--ink), inset 0 3px 0 #ff6a4a !important; border: none !important; }
 
 /* ---------- problem card ---------- */
 .problem-card {
-  border: none; border-radius: 0; margin: 14px 3px 3px; padding: 12px 12px 14px;
+  border: none; border-radius: 18px; margin: 14px 3px 3px; padding: 12px 12px 14px;
   background:
     repeating-linear-gradient(0deg, transparent 0 22px, rgba(255,255,255,0.025) 22px 24px),
     #150e22;
-  box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #2d2344, inset 0 -3px 0 #0a0612;
+  box-shadow: 0 0 0 3px var(--ink), inset 0 3px 0 #2d2344, inset 0 -3px 0 #0a0612;
 }
 .streak { font-family: var(--font-ui); font-weight: 900; font-size: 14px; color: #ffb35c; text-shadow: 0 2px 0 var(--ink); height: 18px; }
 .problem {
@@ -1314,7 +1313,7 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
   text-shadow: 0 4px 0 var(--ink), 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 7px 0 #00000066;
 }
 .problem .op { color: var(--gold); }
-.problem .q { color: #7fe3ff; display: inline-block; animation: qBlink 1s steps(2) infinite; }
+.problem .q { color: #7fe3ff; display: inline-block; animation: qBlink 1s ease-in-out infinite; }
 @keyframes qBlink { 50% { opacity: 0.45; } }
 .choices { gap: 14px; margin: 0 3px 14px; }
 .choice {
@@ -1322,16 +1321,16 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
   font-size: 30px; padding: 12px 0 14px; color: #fff; text-shadow: 0 3px 0 var(--ink);
 }
 .choice:disabled { filter: brightness(0.75) saturate(0.6); }
-.choice.correct { --b-face: #22b566; --b-hi: #7ff0b0; --b-lo: #0f6a3a; filter: none !important; animation: pickPop 0.3s steps(3); }
-.choice.wrong { --b-face: #d8321f; --b-hi: #ff8a6a; --b-lo: #7a1108; filter: none !important; animation: pickShake 0.3s steps(4); }
+.choice.correct { --b-face: #22b566; --b-hi: #7ff0b0; --b-lo: #0f6a3a; filter: none !important; animation: pickPop 0.3s ease-out; }
+.choice.wrong { --b-face: #d8321f; --b-hi: #ff8a6a; --b-lo: #7a1108; filter: none !important; animation: pickShake 0.3s ease-out; }
 .choice.reveal { --b-face: #1a7a48; --b-hi: #6ee7a8; --b-lo: #0c4a2a; filter: none !important; }
 @keyframes pickPop { 50% { transform: scale(1.08); } }
 @keyframes pickShake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
 .fireball-btn { --b-face: #3a2440; --b-text: var(--text-dim); margin: 4px 3px 0; width: calc(100% - 6px); font-size: 15px; padding: 11px 0; }
-.fireball-btn.ready { --b-face: #ff6a24; --b-hi: #ffd08a; --b-lo: #a8320c; --b-text: #2a0f04; border: none; animation: pxPulse 0.7s steps(2) infinite; }
+.fireball-btn.ready { --b-face: #ff6a24; --b-hi: #ffd08a; --b-lo: #a8320c; --b-text: #2a0f04; border: none; animation: pxPulse 0.7s ease-in-out infinite; }
 .charge-pips { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
-.charge-pips i { width: 10px; height: 10px; background: #150e22; box-shadow: 0 0 0 2px var(--ink); display: inline-block; }
+.charge-pips i { width: 11px; height: 11px; border-radius: 50%; background: #150e22; box-shadow: 0 0 0 2px var(--ink); display: inline-block; }
 .charge-pips i.on { background: #ffcf3a; box-shadow: 0 0 0 2px var(--ink), inset 0 -3px 0 #e0701c; }
 .potion-row { gap: 14px; margin: 14px 3px 0; }
 .potion-btn { font-size: 13px; padding: 10px 4px; --b-face: #2e2346; --b-text: var(--text-dim); }
@@ -1341,14 +1340,14 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 
 /* Answer streak: the problem card catches fire. */
 .problem-card.on-fire {
-  box-shadow: 0 -3px 0 #ff7a1c, 0 3px 0 #ff7a1c, -3px 0 0 #ff7a1c, 3px 0 0 #ff7a1c,
+  box-shadow: 0 0 0 3px #ff7a1c,
               inset 0 3px 0 #2d2344, inset 0 -3px 0 #0a0612, 0 0 22px 2px rgba(255,122,28,0.55);
-  animation: fireGlow 0.5s steps(2) infinite;
+  animation: fireGlow 0.5s ease-in-out infinite;
 }
 .problem-card.blazing { animation-duration: 0.25s; }
 .problem-card.on-fire .streak { font-size: 16px; color: #ffcf3a; }
 @keyframes fireGlow {
-  50% { box-shadow: 0 -3px 0 #ffcf3a, 0 3px 0 #ffcf3a, -3px 0 0 #ffcf3a, 3px 0 0 #ffcf3a,
+  50% { box-shadow: 0 0 0 3px #ffcf3a,
                     inset 0 3px 0 #2d2344, inset 0 -3px 0 #0a0612, 0 0 32px 6px rgba(255,160,40,0.7); }
 }
 
@@ -1371,11 +1370,11 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .shop-item-type { color: var(--text-dim); font-weight: 900; }
 .shop-item-emoji { filter: drop-shadow(0 2px 0 var(--ink)); }
 .shop-item-emoji.dragon-icon, .shop-item-emoji.px-icon { width: 44px; height: 36px; filter: none; }
-.shop-item-emoji.px-icon canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.shop-item-emoji.px-icon canvas { width: 100%; height: 100%; display: block; }
 
 /* ---------- level up ---------- */
 .levelup-overlay { background: rgba(10,4,24,0.86); }
-.firework-particle { border-radius: 0; width: 6px; height: 6px; animation-timing-function: steps(8); }
+.firework-particle { border-radius: 0; width: 6px; height: 6px; animation-timing-function: ease-out; }
 .levelup-emoji { filter: drop-shadow(0 3px 0 var(--ink)); }
 .levelup-card h2 { font-size: 34px; }
 .levelup-card p { color: var(--text); }
@@ -1388,7 +1387,7 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .boss-intro { background: radial-gradient(ellipse at 50% 55%, #4a0a0acc 0%, #0a0206f2 65%); }
 .boss-intro-lead { font-family: var(--font-ui); font-weight: 900; text-shadow: 0 3px 0 var(--ink), 0 0 18px rgba(255,59,42,0.75); }
 .boss-intro-name { font-family: var(--font-ui); font-weight: 900; color: #ffd9c8; text-shadow: 0 4px 0 var(--ink), 0 0 22px rgba(255,110,80,0.9); margin: 6px 0 18px; }
-.boss-portrait { display: block; margin: 8px auto 0; image-rendering: pixelated; animation: bossBob 1.2s steps(2) infinite; filter: drop-shadow(0 0 18px #ff3b2a88); }
+.boss-portrait { display: block; margin: 8px auto 0; animation: bossBob 1.6s ease-in-out infinite; filter: drop-shadow(0 0 18px #ff3b2a88); }
 @keyframes bossBob { 50% { transform: translateY(-6px); } }
 .boss-intro-btn { --b-face: #d8321f; --b-hi: #ff8a6a; --b-lo: #7a1108; --b-text: #fff0e8; font-size: 30px; padding: 14px 52px; }
 .boss-intro-warn { filter: drop-shadow(0 3px 0 var(--ink)); }
@@ -2664,6 +2663,7 @@ function newProblem(lvl) {
    worse" message, the game just quietly becomes winnable again. */
 /* Dismisses the boss intro and hands control back. */
 function beginBossFight() {
+  Sound.play("tap");
   S.bossIntro = null;
   S.locked = false;
   render();
@@ -2780,6 +2780,7 @@ function applyPoisonTicks() {
       en.hp = Math.max(0, en.hp - 5);
       en.poisonTurns -= 1;
       addPopup("-5", "enemy", "poison");
+      Sound.play("poisonTick");
     }
   });
   if (S.potionCooldown > 0) S.potionCooldown -= 1;
@@ -2793,6 +2794,9 @@ function finishRound() {
   // Wind-up bosses advance one step per answered problem.
   const chargeEvent = tickBossCharge();
   if (chargeEvent) {
+    // wind-up starts / player breaks it / it fires (the hit plays "hurt")
+    if (chargeEvent.type === "start") Sound.play("charge");
+    else if (chargeEvent.type === "break") Sound.play("shatter");
     S.bossBanner = chargeEvent.line;
     const cMsg = chargeEvent.line;
     const crid = S.runId;
@@ -2806,6 +2810,7 @@ function finishRound() {
 
   const absorbLine = tickBossMinions();
   if (absorbLine) {
+    Sound.play("slurp");
     S.bossBanner = absorbLine;
     const aMsg = absorbLine;
     const arid = S.runId;
@@ -2848,6 +2853,7 @@ function handleWaveClear() {
     label = meta.count > 1 ? `${meta.count}× ${meta.name}` : meta.name;
   }
   S.coins += coinReward;
+  if (!meta.isChest) Sound.play("coin");   // chests already jingle when they open
   const oldLevel = dragonLevel;
   S.xp += xpReward;
   const newLevelInfo = levelFromXP(S.xp);
@@ -3201,7 +3207,7 @@ function handleAnswer(val) {
       if (weakMult > 1) addPopup("WEAK!", "enemy", "crit");
       // Armour has to announce itself or it just reads as the game being
       // broken -- the player needs to know WHY the hit barely landed.
-      if (armorMult < 1) addPopup("🛡️ FROZEN!", "enemy", "dmg");
+      if (armorMult < 1) { addPopup("🛡️ FROZEN!", "enemy", "dmg"); Sound.play("clink"); }
       if (hit.fast && !isCrit) addPopup("⚡ FAST!", "player", "heal");
       addPopup(`-${dmg}${isCrit ? "!" : ""}`, "enemy", isCrit ? "crit" : "dmg");
       addImpact("enemy");
@@ -3212,6 +3218,7 @@ function handleAnswer(val) {
       // Boss phase check: dropping past a threshold splits off minions.
       const summonLine = checkBossSummon(target);
       if (summonLine) {
+        Sound.play("split");
         S.bossBanner = summonLine;
         BattleFX.enemyHit();
         const sMsg = summonLine;
@@ -3310,6 +3317,7 @@ function enemyStrikePlayer(rawDmg, onSurvive) {
       setTimeout(() => {
         saveActiveSlot();
         S.screen = "gameover";
+        Sound.play("gameover");
         render();
       }, 700);
     } else {
@@ -3374,6 +3382,7 @@ function usePotionHP() {
   S.healCooldown = 2;
   const eff = getActiveBuffs();
   const healAmt = Math.round(S.playerMaxHP * 0.2 * (1 + eff.potionEffPct / 100));
+  Sound.play("heal");
   S.playerHP = Math.min(S.playerMaxHP, S.playerHP + healAmt);
   addPopup(`+${healAmt}`, "player", "heal");
   saveActiveSlot();
@@ -3385,6 +3394,7 @@ function usePotionPoison() {
   if (S.potionCharge < 3 || S.potionCooldown > 0) return;
   const target = getActiveEnemy();
   if (target) target.poisonTurns = 3;
+  Sound.play("poison");
   S.potionCharge = 0;
   S.potionCooldown = 10;
   addPopup("☠️", "enemy", "dmg");
@@ -3396,6 +3406,7 @@ function buyItem(item) {
   if (item.type === "dmg") {
     const level = levelFromXP(S.xp).level;
     if (isUpgradeOwned(item.id) || S.coins < item.cost || level < item.levelReq) return;
+    Sound.play("buy");
     S.coins -= item.cost;
     S.ownedUpgrades[item.id] = true;
     saveActiveSlot();
@@ -3404,6 +3415,7 @@ function buyItem(item) {
   }
   const level = levelFromXP(S.xp).level;
   if (isOwned(item.id) || S.coins < item.cost || (item.levelReq && level < item.levelReq)) return;
+  Sound.play("buy");
   S.coins -= item.cost;
   S.ownedCosmetics[item.id] = true;
   if (item.type === "accessory") S.equippedAccessory = item.id;
@@ -3513,18 +3525,13 @@ function heroSelectHTML() {
    scene uses, so the picker can never drift from what you actually get. */
 function paintHeroPortraits() {
   document.querySelectorAll(".hero-portrait").forEach((cv) => {
-    const sprite = heroSprite(cv.dataset.hero, false);
-    const ctx = cv.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    const scale = Math.max(1, Math.floor(Math.min(cv.width / sprite.w, cv.height / sprite.h)));
-    const ox = Math.round((cv.width - sprite.w * scale) / 2);
-    const oy = Math.round((cv.height - sprite.h * scale) / 2);
-    paintPixelFrame(ctx, sprite, 0, heroPaletteForTier(0, cv.dataset.hero), scale, ox, oy);
+    const hero = cv.dataset.hero;
+    paintSmoothInto(cv, `hero|${hero}`, () => spriteSource(heroSprite(hero, false), 0, heroPaletteForTier(0, hero)));
   });
 }
 
 function pickHero(which) {
+  Sound.play("tap");
   S.hero = which === "girl" ? "girl" : "boy";
   saveActiveSlot();
   flushSaves();
@@ -3552,7 +3559,7 @@ function titleHTML() {
     : "A dragon waits somewhere ahead";
   return `
     <div class="journey">
-      <canvas class="journey-bg" width="160" height="${titleSceneHeight()}"></canvas>
+      <canvas class="journey-bg" width="${160 * TITLE_K}" height="${titleSceneHeight() * TITLE_K}"></canvas>
       <div class="journey-inner">
         <div class="logo" role="heading" aria-level="1" aria-label="${GAME_NAME.full}">
           <span class="logo-top">${GAME_NAME.top}</span>
@@ -3612,21 +3619,32 @@ function titleSceneHeight() {
   return Math.max(200, Math.min(360, Math.round(160 * jh / Math.max(100, jw))));
 }
 
+/* The scene is composed in 160-wide "art units" (so the layout code stays
+   simple) but rendered TITLE_K times larger, with every layer smoothed, so
+   nothing on screen looks blocky. */
+const TITLE_K = 4;
+
 function buildTitleScene(H) {
-  const W = 160;
-  const bg = makeTextureCanvas(W, H);
+  const W = 160, K = TITLE_K;
+  const smooth = (c) => renderSmooth(c, c.width * K, c.height * K);
+  const bg = makeTextureCanvas(W * K, H * K);
   const ctx = bg.getContext("2d");
   const rnd = mulberry(4242);
-  paintDitherSky(ctx, W, H, ["#07051a", "#140c32", "#2a1450", "#5a2266", "#b4466a", "#ffb070"]);
-  // moon
-  const mx = 124, my = Math.round(H * 0.4), r = 13;
-  for (let y = -r - 4; y <= r + 4; y++) for (let x = -r - 4; x <= r + 4; x++) {
-    const d = Math.hypot(x, y);
-    if (d <= r) { ctx.fillStyle = (x * 3 + y * 5) % 7 === 0 && d < r - 2 ? "#e8d8b0" : (x + y < -6 ? "#fffbe8" : "#fbeec8"); ctx.fillRect(mx + x, my + y, 1, 1); }
-    else if (d <= r + 4 && ((x + y) & 1) && d > r + 1) { ctx.fillStyle = "#ffcf9a55"; ctx.fillRect(mx + x, my + y, 1, 1); }
-  }
+  const sky = ctx.createLinearGradient(0, 0, 0, H * K);
+  ["#07051a", "#140c32", "#2a1450", "#5a2266", "#b4466a", "#ffb070"].forEach((c, i, a) => sky.addColorStop(i / (a.length - 1), c));
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, bg.width, bg.height);
+  // moon with a soft halo
+  const mx = 124 * K, my = Math.round(H * 0.4) * K, r = 13 * K;
+  const halo = ctx.createRadialGradient(mx, my, r * 0.8, mx, my, r * 2.4);
+  halo.addColorStop(0, "rgba(255,210,160,0.35)"); halo.addColorStop(1, "rgba(255,210,160,0)");
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(mx, my, r * 2.4, 0, Math.PI * 2); ctx.fill();
+  const moon = ctx.createRadialGradient(mx - r * 0.35, my - r * 0.35, r * 0.1, mx, my, r);
+  moon.addColorStop(0, "#fffdf2"); moon.addColorStop(1, "#f0dca8");
+  ctx.fillStyle = moon; ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(200,170,120,0.35)";
+  [[-4, -3, 2.2], [3, 4, 1.6], [5, -5, 1.2], [-3, 5, 1]].forEach(([dx, dy, rr]) => { ctx.beginPath(); ctx.arc(mx + dx * K, my + dy * K, rr * K, 0, Math.PI * 2); ctx.fill(); });
   const stars = [];
-  for (let i = 0; i < Math.round(H * 0.4); i++) stars.push({ x: Math.floor(rnd() * W), y: Math.floor(rnd() * H * 0.55), p: rnd() * 6.28, big: rnd() < 0.12 });
+  for (let i = 0; i < Math.round(H * 0.4); i++) stars.push({ x: rnd() * W, y: rnd() * H * 0.55, p: rnd() * 6.28, big: rnd() < 0.12 });
   const far = makeTextureCanvas(W * 2, H); paintRidge(far.getContext("2d"), W * 2, H, mulberry(7), H - 58, 22, 2, "#3a1a4a", "#8a5a8a");
   const mid = makeTextureCanvas(W * 2, H); const mctx = mid.getContext("2d");
   const tops = paintRidge(mctx, W * 2, H, mulberry(11), H - 38, 12, 1.4, "#22102e", null);
@@ -3640,13 +3658,18 @@ function buildTitleScene(H) {
   const near = makeTextureCanvas(W * 2, H); const nctx = near.getContext("2d");
   const ntops = paintRidge(nctx, W * 2, H, mulberry(23), H - 12, 6, 1, "#0c0614", null);
   for (let x = 0; x < W * 2; x += 9 + ((x * 5) % 7)) paintPine(nctx, x, ntops[x] + 3, 16 + ((x * 11) % 10), "#0c0614", "#24123a");
-  const clouds = makeTextureCanvas(W * 2, 60); const cctx = clouds.getContext("2d");
+  // soft clouds, drawn directly at full resolution
+  const clouds = makeTextureCanvas(W * 2 * K, 60 * K); const cctx = clouds.getContext("2d");
   for (let i = 0; i < 6; i++) {
-    const x0 = i * 55 + 10, y0 = 16 + (i % 3) * 12, w = 26 + (i % 2) * 14;
-    cctx.fillStyle = "#6a3a78"; cctx.fillRect(x0, y0, w, 4); cctx.fillRect(x0 + 4, y0 - 3, w - 10, 3); cctx.fillRect(x0 + 10, y0 - 5, 10, 2);
-    cctx.fillStyle = "#b4668a"; cctx.fillRect(x0 + 4, y0 - 3, w - 14, 1); cctx.fillRect(x0 + 10, y0 - 5, 8, 1);
+    const x0 = (i * 55 + 10) * K, y0 = (16 + (i % 3) * 12) * K, w = (26 + (i % 2) * 14) * K;
+    cctx.fillStyle = "rgba(106,58,120,0.85)";
+    [[0.5, 0, 0.5, 0.16], [0.35, -0.12, 0.28, 0.14], [0.62, -0.1, 0.22, 0.12]].forEach(([fx, fy, rx, ry]) => {
+      cctx.beginPath(); cctx.ellipse(x0 + w * fx, y0 + w * fy, w * rx, w * ry, 0, 0, Math.PI * 2); cctx.fill();
+    });
+    cctx.fillStyle = "rgba(200,110,150,0.45)";
+    cctx.beginPath(); cctx.ellipse(x0 + w * 0.42, y0 - w * 0.17, w * 0.2, w * 0.05, 0, 0, Math.PI * 2); cctx.fill();
   }
-  return { W, H, bg, stars, far, mid, near, clouds, rider: null, riderKey: null };
+  return { W, H, K, bg, stars, far: smooth(far), mid: smooth(mid), near: smooth(near), clouds, rider: null, riderKey: null };
 }
 
 function titleRiderFrames(cache) {
@@ -3654,15 +3677,9 @@ function titleRiderFrames(cache) {
   const pal = ELEMENT_PALETTES[creature ? creature.id : "creature_fire"] || ELEMENT_PALETTES.creature_fire;
   const key = (S.hero || "boy") + pal.body + getSwordTier();
   if (cache.riderKey === key) return cache.rider;
-  const rider = heroSprite(S.hero || "boy", true);
-  const heroPal = heroPaletteForTier(getSwordTier(), S.hero);
-  const over = Math.max(0, -SADDLE_Y);
   cache.rider = PIX_DRAGON.frames.map((_, f) => {
-    const c = makeTextureCanvas(PIX_DRAGON.w + 2, PIX_DRAGON.h + over + 2);
-    const cx = c.getContext("2d");
-    paintPixelFrame(cx, PIX_DRAGON, f, pal, 1, 1, over + 1);
-    paintPixelFrame(cx, rider, f % rider.frames.length, heroPal, 1, SADDLE_X + 1, SADDLE_Y + over + 1);
-    return c;
+    const src = riderSource(S.hero || "boy", pal, getSwordTier(), f);
+    return renderSprite(src, src.fill.width * cache.K, src.fill.height * cache.K);
   });
   cache.riderKey = key;
   return cache.rider;
@@ -3679,19 +3696,20 @@ function runTitleScene() {
     if (!cv) { titleSceneRunning = false; return; }
     requestAnimationFrame(tick);
     if (document.hidden) return;
-    const T = titleSceneCache, ctx = cv.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
+    const T = titleSceneCache, K = T.K, ctx = cv.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
     ctx.drawImage(T.bg, 0, 0);
+    ctx.fillStyle = "#ffffff";
     for (const st of T.stars) {
       const tw = Math.sin(now / 500 + st.p);
       if (tw < -0.2) continue;
-      ctx.fillStyle = tw > 0.7 ? "#ffffff" : "#b8a8e8";
-      ctx.fillRect(st.x, st.y, 1, 1);
-      if (st.big && tw > 0.8) { ctx.fillRect(st.x - 1, st.y, 3, 1); ctx.fillRect(st.x, st.y - 1, 1, 3); }
+      ctx.globalAlpha = 0.45 + tw * 0.55;
+      ctx.beginPath(); ctx.arc(st.x * K, st.y * K, (st.big && tw > 0.6 ? 1.6 : 0.8) * K * 0.6, 0, Math.PI * 2); ctx.fill();
     }
+    ctx.globalAlpha = 1;
     const scroll = (layer, speed, y = 0) => {
-      const off = Math.floor((now * speed) % (T.W * 2));
-      ctx.drawImage(layer, -off, y); ctx.drawImage(layer, T.W * 2 - off, y);
+      const off = ((now * speed) % (T.W * 2)) * K;
+      ctx.drawImage(layer, -off, y * K); ctx.drawImage(layer, T.W * 2 * K - off, y * K);
     };
     scroll(T.clouds, 0.004, Math.round(T.H * 0.3));
     scroll(T.far, 0.003);
@@ -3699,9 +3717,9 @@ function runTitleScene() {
     const frames = titleRiderFrames(T);
     const f = frames[Math.floor(now / 260) % frames.length];
     const period = 9000, t = (now % period) / period;
-    const x = Math.round(-60 + t * (T.W + 90));
-    const y = Math.round(T.H * 0.46 - 20 + Math.sin(t * Math.PI * 4) * 5);
-    ctx.drawImage(f, x, y);
+    const x = -60 + t * (T.W + 90);
+    const y = T.H * 0.46 - 20 + Math.sin(t * Math.PI * 4) * 5;
+    ctx.drawImage(f, x * K, y * K);
     if (Math.random() < 0.5) embers.push({ x: x + 6, y: y + 30 + Math.random() * 6, vx: -0.02, vy: 0.01, life: 900, age: 0 });
     scroll(T.mid, 0.008);
     scroll(T.near, 0.016);
@@ -3709,8 +3727,10 @@ function runTitleScene() {
       const e = embers[i]; e.age += 16; if (e.age > e.life) { embers.splice(i, 1); continue; }
       e.x += e.vx * 16; e.y += e.vy * 16;
       ctx.fillStyle = e.age < 300 ? "#ffcf3a" : (e.age < 600 ? "#ff7a1c" : "#8a2a1a");
-      ctx.fillRect(Math.round(e.x), Math.round(e.y), 1, 1);
+      ctx.globalAlpha = 1 - e.age / e.life;
+      ctx.beginPath(); ctx.arc(e.x * K, e.y * K, K * 0.7, 0, Math.PI * 2); ctx.fill();
     }
+    ctx.globalAlpha = 1;
   };
   requestAnimationFrame(tick);
 }
@@ -4059,7 +4079,8 @@ root.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
-  if (action !== "answer" && action !== "toggle-sound") Sound.play("tap");
+  // Generic click for menu buttons; actions with their own sound skip it.
+  if (!["answer", "toggle-sound", "buy-item", "use-potion-hp", "use-potion-poison", "cast-fireball"].includes(action)) Sound.play("tap");
   if (action === "start-game") startGame();
   else if (action === "open-shop") { S.shopOpen = true; render(); }
   else if (action === "close-shop") { S.shopOpen = false; render(); }
@@ -6846,7 +6867,9 @@ const PIX_OUTLINE = "#140d10";
         light; pixels sitting on empty space below pick up occlusion.
      3. Specular pips: the lightest pixel of a lit edge gets a tiny
         near-white highlight on big sprites. */
-function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy) {
+function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy, layer = "all") {
+  // layer: "all" | "fill" (colour masses only) | "line" (outline, pupils,
+  // eye whites) -- the smooth renderer softens fills but keeps lines crisp.
   const rows = sprite.frames[frameIdx];
   const w = sprite.w, h = sprite.h;
   const ramps = {};
@@ -6885,7 +6908,7 @@ function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy) {
     return PIX_OUTLINE;
   };
 
-  for (let y = 0; y < h; y++) {
+  if (layer !== "fill") for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (filled(x, y)) continue;
       if (filled(x + 1, y) || filled(x - 1, y) || filled(x, y + 1) || filled(x, y - 1)) {
@@ -6902,6 +6925,8 @@ function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy) {
       const ch = row.charAt(x * 2);
       let col = colorAt(x, y);
       if (!col) continue;
+      const isLine = ch === "e" || ch === "W";
+      if ((layer === "fill" && isLine) || (layer === "line" && !isLine)) continue;
       if (ch !== "e" && ch !== "W") {
         const topOpen = !filled(x, y - 1);
         const leftOpen = !filled(x - 1, y);
@@ -6927,6 +6952,191 @@ function makeFlashCanvas(src, color) {
   cx.fillStyle = color || "#ffffff";
   cx.fillRect(0, 0, c.width, c.height);
   return c;
+}
+
+
+/* ================= SMOOTH ART =================
+   The sprites are still authored as pixel grids (so the palettes, hue
+   shading and outlines above keep working), but they are no longer SHOWN
+   as blocky pixels. Each frame is painted at 1 sprite-pixel = 1 pixel,
+   upscaled with EPX (the "Scale2x" edge-smoothing filter emulators use --
+   it rounds diagonal staircases into smooth curves) several times, and
+   then drawn with high-quality filtering at the final size. Results are
+   cached, since EPX is far too slow to run every frame. */
+function epx2(src) {
+  const w = src.width, h = src.height;
+  const s = new Uint32Array(src.getContext("2d").getImageData(0, 0, w, h).data.buffer);
+  const out = makeTextureCanvas(w * 2, h * 2);
+  const octx = out.getContext("2d");
+  const od = octx.createImageData(w * 2, h * 2);
+  const o = new Uint32Array(od.data.buffer);
+  const W2 = w * 2;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const P = s[y * w + x];
+      const A = y > 0 ? s[(y - 1) * w + x] : 0;
+      const B = x < w - 1 ? s[y * w + x + 1] : 0;
+      const C = x > 0 ? s[y * w + x - 1] : 0;
+      const D = y < h - 1 ? s[(y + 1) * w + x] : 0;
+      let e0 = P, e1 = P, e2 = P, e3 = P;
+      if (C === A && C !== D && A !== B) e0 = A;
+      if (A === B && A !== C && B !== D) e1 = B;
+      if (D === C && D !== B && C !== A) e2 = C;
+      if (B === D && B !== A && D !== C) e3 = D;
+      const i = (y * 2) * W2 + x * 2;
+      o[i] = e0; o[i + 1] = e1; o[i + W2] = e2; o[i + W2 + 1] = e3;
+    }
+  }
+  octx.putImageData(od, 0, 0);
+  return out;
+}
+
+/* EPX-upscale until the art is at least as big as it will be drawn
+   (max 4 passes = 16x), then resample to exactly dw x dh. */
+function renderSmooth(src, dw, dh, soft = 0.65, blurR = 0.45) {
+  dw = Math.max(1, Math.round(dw)); dh = Math.max(1, Math.round(dh));
+  let up = src, passes = 0;
+  while (passes < 4 && (up.width < dw || up.height < dh)) { up = epx2(up); passes++; }
+  if (passes === 0) up = epx2(up);             // always round the corners at least once
+  const out = makeTextureCanvas(dw, dh);
+  const ctx = out.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(up, 0, 0, dw, dh);
+  if (soft > 0) {
+    /* "Painted" pass: a blurred copy is laid back over the image, clipped
+       to its own silhouette (source-atop). The blocky light/shadow steps
+       inside a sprite melt into gradients while the outer outline stays
+       crisp. blurR is in source pixels (0.45 = soft but still defined). */
+    const px = dw / src.width;
+    const blur = makeTextureCanvas(dw, dh);
+    const bctx = blur.getContext("2d");
+    bctx.filter = `blur(${Math.max(1, px * blurR)}px)`;
+    bctx.drawImage(out, 0, 0);
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.globalAlpha = soft;
+    ctx.drawImage(blur, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
+  }
+  return out;
+}
+
+/* Soft volume lighting for characters: a warm light from the upper left and
+   a cool shade toward the lower right, clipped to the sprite. Makes the
+   flat-shaded art read as rounded, painted forms. */
+function addVolumeLight(c) {
+  const ctx = c.getContext("2d"), w = c.width, h = c.height;
+  ctx.globalCompositeOperation = "source-atop";
+  const hi = ctx.createRadialGradient(w * 0.3, h * 0.2, 0, w * 0.3, h * 0.2, Math.max(w, h) * 0.75);
+  hi.addColorStop(0, "rgba(255,244,220,0.22)"); hi.addColorStop(1, "rgba(255,244,220,0)");
+  ctx.fillStyle = hi; ctx.fillRect(0, 0, w, h);
+  const lo = ctx.createLinearGradient(0, h * 0.35, 0, h);
+  lo.addColorStop(0, "rgba(30,10,60,0)"); lo.addColorStop(1, "rgba(30,10,60,0.28)");
+  ctx.fillStyle = lo; ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "source-over";
+  return c;
+}
+
+const SMOOTH_CACHE = new Map();
+function renderSmoothCached(key, makeSrc, dw, dh) {
+  const k = `${key}|${Math.round(dw)}x${Math.round(dh)}`;
+  let c = SMOOTH_CACHE.get(k);
+  if (!c) {
+    if (SMOOTH_CACHE.size > 160) SMOOTH_CACHE.clear();
+    c = renderSprite(makeSrc(), dw, dh);
+    SMOOTH_CACHE.set(k, c);
+  }
+  return c;
+}
+
+/* One sprite frame at 1:1 with a 1px margin for the outline pass. */
+function spriteSource(art, frame, palette) {
+  const mk = (layer) => {
+    const c = makeTextureCanvas(art.w + 2, art.h + 2);
+    paintPixelFrame(c.getContext("2d"), art, frame % art.frames.length, palette, 1, 1, 1, layer);
+    return c;
+  };
+  return { fill: mk("fill"), line: mk("line") };
+}
+
+/* The hero sitting on a dragon, composed at 1:1 before smoothing so the
+   two sprites blend into one smooth outline. */
+function riderSource(hero, mountPalette, tier, frame) {
+  const rider = heroSprite(hero, true);
+  const over = Math.max(0, -SADDLE_Y);
+  const W = PIX_DRAGON.w + 2, H = PIX_DRAGON.h + over + 2;
+  const heroPal = heroPaletteForTier(tier, hero);
+  const one = (art, f, pal, x, y, layer) => {
+    const c = makeTextureCanvas(W, H);
+    paintPixelFrame(c.getContext("2d"), art, f % art.frames.length, pal, 1, x, y, layer);
+    return c;
+  };
+  const dFill = one(PIX_DRAGON, frame, mountPalette, 1, over + 1, "fill");
+  const dLine = one(PIX_DRAGON, frame, mountPalette, 1, over + 1, "line");
+  const rFill = one(rider, frame, heroPal, SADDLE_X + 1, SADDLE_Y + over + 1, "fill");
+  const rLine = one(rider, frame, heroPal, SADDLE_X + 1, SADDLE_Y + over + 1, "line");
+  // Each sprite's outline is removed where it would cross the OTHER
+  // sprite's body, so rider and dragon don't get a tangle of dark lines
+  // drawn through each other -- colour alone separates them there.
+  const cut = (line, mask) => { const x = line.getContext("2d"); x.globalCompositeOperation = "destination-out"; x.drawImage(mask, 0, 0); return line; };
+  const fill = makeTextureCanvas(W, H), fctx = fill.getContext("2d");
+  fctx.drawImage(dFill, 0, 0); fctx.drawImage(rFill, 0, 0);
+  const line = makeTextureCanvas(W, H), lctx = line.getContext("2d");
+  lctx.drawImage(cut(dLine, rFill), 0, 0); lctx.drawImage(cut(rLine, dFill), 0, 0);
+  return { fill, line };
+}
+
+/* "Goo" edge smoothing: blur a layer, then push its alpha back toward
+   fully opaque / fully transparent. Staircase edges become smooth curves
+   (the classic metaball trick) while the edge itself stays clean. */
+function gooify(c, radius, detail = 0.35) {
+  const w = c.width, h = c.height;
+  const b = makeTextureCanvas(w, h), bctx = b.getContext("2d");
+  bctx.filter = `blur(${Math.max(0.5, radius)}px)`;
+  bctx.drawImage(c, 0, 0);
+  bctx.filter = "none";
+  // keep a little of the original crisp detail inside the shape
+  if (detail > 0) { bctx.globalCompositeOperation = "source-atop"; bctx.globalAlpha = detail; bctx.drawImage(c, 0, 0); bctx.globalAlpha = 1; bctx.globalCompositeOperation = "source-over"; }
+  const img = bctx.getImageData(0, 0, w, h), d = img.data;
+  for (let i = 3; i < d.length; i += 4) {
+    const a = d[i] / 255;
+    if (a <= 0) continue;
+    const t = Math.min(1, Math.max(0, (a - 0.42) * 5 + 0.5));   // steep S-curve around the old edge
+    const k = a > 0 ? t / a : 0;
+    // colours are un-premultiplied by getImageData, so only alpha changes
+    d[i] = Math.round(t * 255);
+    if (k === 0) { d[i - 1] = d[i - 2] = d[i - 3] = 0; }
+  }
+  bctx.putImageData(img, 0, 0);
+  return b;
+}
+
+/* Fill layer softened and edge-smoothed, volume-lit, then the (also
+   edge-smoothed) outline/eye layer on top. */
+function renderSprite(srcs, dw, dh) {
+  const px = dw / srcs.fill.width;                      // screen pixels per sprite pixel
+  const out = addVolumeLight(gooify(renderSmooth(srcs.fill, dw, dh, 0.5, 0.4), px * 0.4, 0.55));
+  const line = gooify(renderSmooth(srcs.line, dw, dh, 0), px * 0.3, 0.6);
+  out.getContext("2d").drawImage(line, 0, 0);
+  return out;
+}
+
+/* Paints a smoothed source into a <canvas> element, sized to the canvas's
+   on-screen size times the device pixel ratio so it stays sharp. */
+function paintSmoothInto(cv, key, makeSrc) {
+  const r = cv.getBoundingClientRect();
+  const cssW = r.width || cv.width, cssH = r.height || cv.height;
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  cv.style.width = `${cssW}px`; cv.style.height = `${cssH}px`;
+  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+  const src = makeSrc();
+  const fit = Math.min(cv.width / src.fill.width, cv.height / src.fill.height);
+  const dw = src.fill.width * fit, dh = src.fill.height * fit;
+  const img = renderSmoothCached(key, () => src, dw, dh);
+  const ctx = cv.getContext("2d");
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.drawImage(img, Math.round((cv.width - dw) / 2), Math.round((cv.height - dh) / 2));
 }
 
 /* Largest whole-number scale that fits the sprite in the space available.
@@ -7117,8 +7327,10 @@ function drawSprite(ctx, s) {
   if (s.rotation) ctx.rotate(s.rotation);
   if (s.scale !== 1) ctx.scale(s.scale, s.scale);
   if (s.kind === "image" && s.canvas) {
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(s.canvas, -s.canvas.width * (s.originX ?? 0), -s.canvas.height * (s.originY ?? 0));
+    const w = s.dw || s.canvas.width, h = s.dh || s.canvas.height;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(s.canvas, -w * (s.originX ?? 0), -h * (s.originY ?? 0), w, h);
   } else if (s.kind === "text" && s.text) {
     ctx.font = `${s.fontWeight || 900} ${s.fontSize}px ${s.fontFamily || "Nunito, sans-serif"}`;
     ctx.textAlign = "center";
@@ -7204,6 +7416,12 @@ const Sound = {
   },
   play(name) {
     if (!this.ensure()) return;
+    // The same sound fired twice within a moment (e.g. "WEAK!" and a crit
+    // popup landing together) would just double the volume -- play it once.
+    const now = performance.now();
+    this._last = this._last || {};
+    if (now - (this._last[name] || -1e9) < 120) return;
+    this._last[name] = now;
     try {
       switch (name) {
         case "tap": this.tone(740, 0.05, { vol: 0.25 }); break;
@@ -7215,7 +7433,21 @@ const Sound = {
         case "hurt": this.noise(0.18, { vol: 0.5, from: 1500, to: 100 }); this.tone(160, 0.2, { type: "triangle", to: 60, vol: 0.5 }); break;
         case "fireball": this.noise(0.45, { vol: 0.35, from: 800, to: 4000 }); this.tone(200, 0.4, { type: "sawtooth", to: 600, vol: 0.12 }); break;
         case "boom": this.noise(0.5, { vol: 0.7, from: 1800, to: 60 }); this.tone(90, 0.4, { type: "triangle", to: 40, vol: 0.6 }); break;
-        case "defeat": [523, 392, 330, 262].forEach((f, i) => this.tone(f, 0.09, { at: i * 0.06, vol: 0.25 })); this.noise(0.3, { at: 0.05, vol: 0.25, from: 4000, to: 500 }); break;
+        // enemy beaten: a "poof" and a bright rising jingle (a win, not a loss)
+        case "defeat": this.noise(0.25, { vol: 0.35, from: 5000, to: 600 }); [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.1, { at: 0.08 + i * 0.07, vol: 0.28 })); break;
+        // player lost the run: slow, gentle falling notes (sad but not scary)
+        case "gameover": [392, 349, 311, 262].forEach((f, i) => this.tone(f, i === 3 ? 0.6 : 0.22, { at: i * 0.22, type: "triangle", vol: 0.4 })); break;
+        case "enemySwing": this.noise(0.16, { vol: 0.3, from: 1800, to: 300 }); this.tone(140, 0.14, { type: "sawtooth", to: 90, vol: 0.15 }); break;
+        case "heal": [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.12, { at: i * 0.05, type: "sine", vol: 0.3 })); break;
+        case "poison": [300, 250, 340, 220].forEach((f, i) => this.tone(f, 0.09, { at: i * 0.07, type: "sine", to: f * 1.6, vol: 0.3 })); break;
+        case "poisonTick": this.tone(260, 0.1, { type: "sine", to: 420, vol: 0.22 }); break;
+        case "buy": this.tone(1319, 0.06, { vol: 0.25 }); this.tone(1568, 0.06, { at: 0.06, vol: 0.25 }); this.tone(2093, 0.18, { at: 0.12, vol: 0.25 }); break;
+        case "knock": this.tone(180, 0.08, { type: "triangle", to: 120, vol: 0.5 }); this.noise(0.05, { vol: 0.3, from: 1200, to: 400 }); break;
+        case "charge": this.tone(110, 0.9, { type: "sawtooth", to: 330, vol: 0.18 }); this.tone(55, 0.9, { type: "triangle", to: 165, vol: 0.3 }); break;
+        case "shatter": this.noise(0.35, { vol: 0.45, from: 9000, to: 2000 }); [1568, 1319, 1760].forEach((f, i) => this.tone(f, 0.08, { at: i * 0.04, type: "triangle", vol: 0.25 })); break;
+        case "split": this.tone(400, 0.25, { type: "sine", to: 120, vol: 0.4 }); this.tone(600, 0.2, { at: 0.08, type: "sine", to: 200, vol: 0.3 }); break;
+        case "slurp": this.tone(150, 0.4, { type: "sine", to: 500, vol: 0.4 }); break;
+        case "clink": this.tone(2637, 0.12, { type: "triangle", vol: 0.25 }); this.tone(3136, 0.15, { at: 0.04, type: "triangle", vol: 0.2 }); break;
         case "coin": this.tone(988, 0.07, { vol: 0.3 }); this.tone(1319, 0.18, { at: 0.07, vol: 0.3 }); break;
         case "levelup": [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.tone(f, i === 5 ? 0.35 : 0.1, { at: i * 0.09, vol: 0.3 })); break;
         case "rankup": [659, 831, 988, 1319].forEach((f, i) => this.tone(f, 0.12, { at: i * 0.08, type: "triangle", vol: 0.45 })); break;
@@ -7275,14 +7507,8 @@ const PIX_SWORD = { w: 16, h: 16, frames: [gridSprite(16, 16, (set) => {
 /* Paints frame 0 of a pixel sprite into a canvas at the largest integer
    scale that fits, centred. Used for every small UI portrait: shop
    mounts, swords, multi-enemy minis, the boss intro, hero cards. */
-function paintSpriteInto(cv, art, palette, frame = 0) {
-  const ctx = cv.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, cv.width, cv.height);
-  const scale = Math.max(1, Math.floor(Math.min((cv.width - 2) / art.w, (cv.height - 2) / art.h)));
-  const ox = Math.round((cv.width - art.w * scale) / 2);
-  const oy = Math.round((cv.height - art.h * scale) / 2);
-  paintPixelFrame(ctx, art, frame % art.frames.length, palette, scale, ox, oy);
+function paintSpriteInto(cv, art, palette, frame = 0, key = "") {
+  paintSmoothInto(cv, `icon|${key}|${frame}`, () => spriteSource(art, frame, palette));
 }
 
 /* Resolves a data-pix="kind:key" attribute to sprite art + palette. */
@@ -7305,7 +7531,7 @@ function pixIconSpec(spec) {
 function paintPixIcons() {
   document.querySelectorAll("canvas[data-pix]").forEach((cv) => {
     const spec = pixIconSpec(cv.dataset.pix);
-    if (spec) paintSpriteInto(cv, spec.art, spec.palette);
+    if (spec) paintSpriteInto(cv, spec.art, spec.palette, 0, cv.dataset.pix);
   });
 }
 
@@ -7400,36 +7626,45 @@ function arenaBiomeForWave(wave) {
    The stage scales it up with nearest-neighbour, so this runs once per
    biome change / resize rather than per frame. Returns the canvas plus
    anything the animated layer needs (star positions, ground line). */
-function paintBiome(biomeIdx, bw, bh, groundY) {
+function paintBiome(biomeIdx, bw, bh, groundY, smoothSky = false) {
   const B = BIOMES[biomeIdx];
   const c = makeTextureCanvas(bw, bh);
   const ctx = c.getContext("2d");
   const rnd = mulberry(1000 + biomeIdx * 77);
-  paintDitherSky(ctx, bw, groundY + 2, B.sky);
+  // In smooth mode the sky is a real gradient painted at full resolution
+  // underneath, so it's left transparent here.
+  if (!smoothSky) paintDitherSky(ctx, bw, groundY + 2, B.sky);
   const extra = { stars: [] };
 
   if (B.id === "night" || B.id === "ice" || B.id === "forest") {
     const n = B.id === "night" ? 60 : 24;
     for (let i = 0; i < n; i++) extra.stars.push({ x: Math.floor(rnd() * bw), y: Math.floor(rnd() * groundY * 0.55), p: rnd() * 6.28, big: rnd() < 0.15 });
   }
-  if (B.id === "night") {
+  extra.celestial = null;
+  if (smoothSky) {
+    // drawn later at full resolution as smooth glowing discs
+    if (B.id === "night") extra.celestial = { x: bw * 0.78, y: bh * 0.2, r: Math.max(6, bh * 0.1), core: "#fffbe8", edge: "#e8dcb0", glow: "rgba(200,180,255,0.35)" };
+    if (B.id === "lagoon") extra.celestial = { x: bw * 0.25, y: groundY * 0.62, r: Math.max(7, bh * 0.1), core: "#fff6c8", edge: "#ffc56a", glow: "rgba(255,210,140,0.5)" };
+    if (B.id === "volcano") extra.celestial = { x: bw * 0.2, y: groundY * 0.3, r: Math.max(8, bh * 0.12), core: "#ff9a5a", edge: "#e0401a", glow: "rgba(255,90,30,0.45)" };
+  }
+  if (B.id === "night" && !smoothSky) {
     // moon with crater dither
     const mx = Math.floor(bw * 0.78), my = Math.floor(bh * 0.2), r = Math.max(6, Math.floor(bh * 0.1));
     for (let y = -r - 3; y <= r + 3; y++) for (let x = -r - 3; x <= r + 3; x++) {
       const d = Math.hypot(x, y);
       if (d <= r) { ctx.fillStyle = (x + y) % 5 === 0 && d < r - 2 ? "#d8d0b0" : (x < -r * 0.3 && y < 0 ? "#fffbe8" : "#f0e8c8"); ctx.fillRect(mx + x, my + y, 1, 1); }
-      else if (d <= r + 3 && ((x + y) & 1)) { ctx.fillStyle = "#6a5a9a"; ctx.fillRect(mx + x, my + y, 1, 1); }
+      else if (!smoothSky && d <= r + 3 && ((x + y) & 1)) { ctx.fillStyle = "#6a5a9a"; ctx.fillRect(mx + x, my + y, 1, 1); }
     }
   }
-  if (B.id === "lagoon") {
+  if (B.id === "lagoon" && !smoothSky) {
     const sx = Math.floor(bw * 0.25), sy = Math.floor(groundY * 0.62), r = Math.max(7, Math.floor(bh * 0.1));
     for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r) { ctx.fillStyle = y < -r / 3 ? "#fff6c8" : "#ffd68a"; ctx.fillRect(sx + x, sy + y, 1, 1); }
   }
-  if (B.id === "volcano") {
+  if (B.id === "volcano" && !smoothSky) {
     const r = Math.max(8, Math.floor(bh * 0.12)), sx = Math.floor(bw * 0.2), sy = Math.floor(groundY * 0.3);
     for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r && ((x ^ y) & 1 || x * x + y * y < r * r * 0.6)) { ctx.fillStyle = "#ff5a2a"; ctx.fillRect(sx + x, sy + y, 1, 1); }
   }
-  if (B.id === "ice") {
+  if (B.id === "ice" && !smoothSky) {
     // aurora ribbons
     for (let band = 0; band < 3; band++) {
       const col = ["#5affc8", "#5ad8ff", "#a88aff"][band];
@@ -7506,8 +7741,9 @@ function paintBiome(biomeIdx, bw, bh, groundY) {
   for (let y = groundY + 3; y < bh; y++) for (let x = 0; x < bw; x++) {
     const v = rnd();
     const t = (y - groundY) / Math.max(1, bh - groundY);
-    if (v < 0.08 + t * 0.35 && BAYER4[(y & 3) * 4 + (x & 3)] < t + 0.2) { ctx.fillStyle = gDark; ctx.fillRect(x, y, 1, 1); }
-    else if (v > 0.985) { ctx.fillStyle = gTop; ctx.fillRect(x, y, 1, 1); }
+    const dens = smoothSky ? 0.35 : 1;   // smooth mode: calmer ground texture
+    if (v < (0.08 + t * 0.35) * dens && BAYER4[(y & 3) * 4 + (x & 3)] < t + 0.2) { ctx.fillStyle = gDark; ctx.fillRect(x, y, 1, 1); }
+    else if (v > 1 - 0.015 * dens) { ctx.fillStyle = gTop; ctx.fillRect(x, y, 1, 1); }
   }
   if (B.id === "forest" || B.id === "lagoon") {
     ctx.fillStyle = B.id === "forest" ? "#7ac04a" : "#f5deaa";
@@ -7599,7 +7835,42 @@ const BattleStage = {
     const first = this._biome === -1;
     this._bgPrev = first ? null : this._bg;
     this._biome = idx;
-    this._bg = paintBiome(idx, this.bw, this.bh, this.groundArtY);
+    // Paint the scenery at low resolution, EPX-smooth it up to device
+    // resolution, and lay it over a true gradient sky.
+    const low = paintBiome(idx, this.bw, this.bh, this.groundArtY, true);
+    const dpr = this.dpr || 1;
+    const out = makeTextureCanvas(this.bw * this.ap * dpr, this.bh * this.ap * dpr);
+    const octx = out.getContext("2d");
+    const sky = octx.createLinearGradient(0, 0, 0, this.groundY * dpr);
+    BIOMES[idx].sky.forEach((col, i, arr) => sky.addColorStop(i / (arr.length - 1), col));
+    octx.fillStyle = sky; octx.fillRect(0, 0, out.width, out.height);
+    if (BIOMES[idx].id === "ice") {
+      // aurora: soft glowing ribbons
+      const k = this.ap * dpr;
+      octx.save(); octx.filter = `blur(${k * 1.2}px)`; octx.globalAlpha = 0.45; octx.lineCap = "round";
+      ["#5affc8", "#5ad8ff", "#a88aff"].forEach((col, band) => {
+        octx.strokeStyle = col; octx.lineWidth = k * (3 + band);
+        octx.beginPath();
+        for (let x = 0; x <= this.bw; x += 1) {
+          const y = this.groundArtY * (0.18 + band * 0.08) + Math.sin(x / (9 + band * 3) + band) * 4;
+          if (x) octx.lineTo(x * k, y * k); else octx.moveTo(x * k, y * k);
+        }
+        octx.stroke();
+      });
+      octx.restore();
+    }
+    const cel = low.extra.celestial;
+    if (cel) {
+      const k = this.ap * dpr, x = cel.x * k, y = cel.y * k, r = cel.r * k;
+      const halo = octx.createRadialGradient(x, y, r * 0.8, x, y, r * 2.6);
+      halo.addColorStop(0, cel.glow); halo.addColorStop(1, "rgba(0,0,0,0)");
+      octx.fillStyle = halo; octx.beginPath(); octx.arc(x, y, r * 2.6, 0, Math.PI * 2); octx.fill();
+      const disc = octx.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.1, x, y, r);
+      disc.addColorStop(0, cel.core); disc.addColorStop(1, cel.edge);
+      octx.fillStyle = disc; octx.beginPath(); octx.arc(x, y, r, 0, Math.PI * 2); octx.fill();
+    }
+    octx.drawImage(renderSmooth(low.canvas, out.width, out.height, 0.85, 0.6), 0, 0);
+    this._bg = { canvas: out, extra: low.extra };
     this._bgFadeStart = performance.now();
     this.parts = this.parts.filter((p) => !p.ambient);
   },
@@ -7620,33 +7891,31 @@ const BattleStage = {
     if (wantKey !== this._enemySpriteKey) { this._enemySpriteKey = wantKey; this._enemySprite = wantSprite; this.bakeEnemy(); }
   },
 
+  /* Sprites are baked once per look (hero, mount, sword tier, enemy) as
+     smooth textures at device resolution; the frame loop only blits them. */
   bakePlayer() {
     const u = this.unit;
     if (!u || !isFinite(u)) return;
     this.dragonStrips = []; this.dragonFlash = [];
     const mounted = !!this._mountPalette;
-    const rider = heroSprite(this._hero, mounted);
-    const heroPal = heroPaletteForTier(this._swordTier || 0, this._hero);
+    const hero = this._hero || "boy", tier = this._swordTier || 0;
+    const rider = heroSprite(hero, mounted);
     const targetH = DRAGON_ART_GRID * u;
-    const scale = mounted ? pixScaleFor(PIX_DRAGON, targetH) : pixScaleFor(rider, targetH * 0.78);
+    const baseW = mounted ? PIX_DRAGON.w : rider.w;
+    const baseH = (mounted ? PIX_DRAGON.h : rider.h) + (mounted ? Math.max(0, -SADDLE_Y) : 0);
+    const scale = mounted ? targetH / PIX_DRAGON.h * 0.95 : (targetH * 0.8) / rider.h;
     this._pixScale = scale;
-    const overhangY = mounted ? Math.max(0, -SADDLE_Y) : 0;
-    const texW = ((mounted ? PIX_DRAGON.w : rider.w) + 2) * scale;
-    const texH = ((mounted ? PIX_DRAGON.h : rider.h) + overhangY + 2) * scale;
-    if (texW <= 0 || texW > 4096 || texH > 4096) return;
+    const texW = (baseW + 2) * scale, texH = (baseH + 2) * scale;
+    const dpr = this.dpr || 1;
     const frames = mounted ? PIX_DRAGON.frames.length : rider.frames.length;
+    const palKey = mounted ? JSON.stringify(this._mountPalette) : "foot";
     for (let f = 0; f < frames; f++) {
-      const c = makeTextureCanvas(texW, texH);
-      const cx = c.getContext("2d");
-      cx.imageSmoothingEnabled = false;
-      if (mounted) {
-        paintPixelFrame(cx, PIX_DRAGON, f, this._mountPalette, scale, scale, (overhangY + 1) * scale);
-        paintPixelFrame(cx, rider, f % rider.frames.length, heroPal, scale, (SADDLE_X + 1) * scale, (SADDLE_Y + overhangY + 1) * scale);
-      } else {
-        paintPixelFrame(cx, rider, f, heroPal, scale, scale, scale);
-      }
-      this.dragonStrips.push(makeSprite("image", { canvas: c, originX: 0, originY: 0 }));
-      this.dragonFlash.push(makeSprite("image", { canvas: makeFlashCanvas(c), originX: 0, originY: 0 }));
+      const key = `player|${hero}|${tier}|${palKey}|${f}`;
+      const tex = renderSmoothCached(key, () => (mounted
+        ? riderSource(hero, this._mountPalette, tier, f)
+        : spriteSource(rider, f, heroPaletteForTier(tier, hero))), texW * dpr, texH * dpr);
+      this.dragonStrips.push(makeSprite("image", { canvas: tex, dw: texW, dh: texH, originX: 0, originY: 0 }));
+      this.dragonFlash.push(makeSprite("image", { canvas: makeFlashCanvas(tex), dw: texW, dh: texH, originX: 0, originY: 0 }));
     }
     this._stripBaseX = Math.round(this.dragonOriginX + (targetH - texW) / 2);
     this._stripBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH + scale);
@@ -7661,17 +7930,15 @@ const BattleStage = {
     const sprite = this._enemySprite;
     if (!sprite) return;
     const fullH = DRAGON_ART_GRID * u;
-    const targetH = fullH * (sprite.sizePct || 1);
-    const scale = pixScaleFor(sprite.art, targetH);
+    const targetH = fullH * (sprite.sizePct || 1) * 0.92;
+    const scale = targetH / sprite.art.h;
     const texW = (sprite.art.w + 2) * scale, texH = (sprite.art.h + 2) * scale;
-    if (texW <= 0 || texW > 4096) return;
+    const dpr = this.dpr || 1;
     for (let f = 0; f < sprite.art.frames.length; f++) {
-      const c = makeTextureCanvas(texW, texH);
-      const cx = c.getContext("2d");
-      cx.imageSmoothingEnabled = false;
-      paintPixelFrame(cx, sprite.art, f, sprite.palette, scale, scale, scale);
-      this.enemyStrips.push(makeSprite("image", { canvas: c, originX: 0, originY: 0 }));
-      this.enemyFlash.push(makeSprite("image", { canvas: makeFlashCanvas(c), originX: 0, originY: 0 }));
+      const key = `enemy|${this._enemySpriteKey}|${f}`;
+      const tex = renderSmoothCached(key, () => spriteSource(sprite.art, f, sprite.palette), texW * dpr, texH * dpr);
+      this.enemyStrips.push(makeSprite("image", { canvas: tex, dw: texW, dh: texH, originX: 0, originY: 0 }));
+      this.enemyFlash.push(makeSprite("image", { canvas: makeFlashCanvas(tex), dw: texW, dh: texH, originX: 0, originY: 0 }));
     }
     this._enemyPixScale = scale;
     this._enemyBaseX = Math.round(this.dragonOriginX + (fullH - texW) / 2);
@@ -7708,7 +7975,6 @@ const BattleStage = {
   },
 
   drawParticles(ctx, now, front) {
-    const ap = this.ap;
     for (const p of this.parts) {
       if (!!p.front !== front) continue;
       const t = p.age / p.life;
@@ -7717,14 +7983,21 @@ const BattleStage = {
       if (a <= 0) continue;
       ctx.globalAlpha = a;
       ctx.fillStyle = p.hue !== undefined ? `hsl(${(p.hue + now / 6) % 360},95%,65%)` : p.color;
-      const s = p.size;
-      const x = Math.round(p.x / ap) * ap, y = Math.round(p.y / ap) * ap;
-      if (p.shape === "plus" && s >= ap) {
-        ctx.fillRect(x - ap, y, ap * 3, ap); ctx.fillRect(x, y - ap, ap, ap * 3);
+      const r = Math.max(1, p.size * 0.6);
+      const x = p.x, y = p.y;
+      ctx.beginPath();
+      if (p.shape === "plus") {
+        // four-point twinkle star
+        const L = r * 2.6, n = r * 0.45;
+        ctx.moveTo(x, y - L); ctx.lineTo(x + n, y - n); ctx.lineTo(x + L, y); ctx.lineTo(x + n, y + n);
+        ctx.lineTo(x, y + L); ctx.lineTo(x - n, y + n); ctx.lineTo(x - L, y); ctx.lineTo(x - n, y - n);
+        ctx.closePath(); ctx.fill();
       } else if (p.shape === "ring") {
-        ctx.fillRect(x - ap, y, ap, ap); ctx.fillRect(x + ap, y, ap, ap); ctx.fillRect(x, y - ap, ap, ap); ctx.fillRect(x, y + ap, ap, ap);
+        // bubble
+        ctx.lineWidth = Math.max(1, r * 0.5); ctx.strokeStyle = ctx.fillStyle;
+        ctx.arc(x, y, r * 1.6, 0, Math.PI * 2); ctx.stroke();
       } else {
-        ctx.fillRect(x, y, s, s);
+        ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
       }
     }
     ctx.globalAlpha = 1;
@@ -7823,13 +8096,13 @@ const BattleStage = {
     ctx.drawImage(this._bg.canvas, 0, 0, W, H);
     ctx.globalAlpha = 1;
     const ap = this.ap;
+    ctx.fillStyle = "#ffffff";
     for (const st of this._bg.extra.stars) {
       const tw = Math.sin(now / 400 + st.p);
       if (tw < -0.3) continue;
       ctx.globalAlpha = 0.5 + tw * 0.5;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(st.x * ap, st.y * ap, ap, ap);
-      if (st.big && tw > 0.6) { ctx.fillRect((st.x - 1) * ap, st.y * ap, ap * 3, ap); ctx.fillRect(st.x * ap, (st.y - 1) * ap, ap, ap * 3); }
+      const r = (st.big && tw > 0.6 ? 1.4 : 0.8) * ap * 0.5;
+      ctx.beginPath(); ctx.arc((st.x + 0.5) * ap, (st.y + 0.5) * ap, r, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
     const B = BIOMES[this._biome];
@@ -7843,7 +8116,7 @@ const BattleStage = {
       for (let i = 0; i < 7; i++) {
         const x = ((i * 53 + now / 40) % (this.W + 40)) - 20;
         const y = this.groundY - ap * (2 + (i % 4) * 2);
-        ctx.globalAlpha = 0.6; ctx.fillRect(Math.round(x / ap) * ap, y, ap * 3, ap);
+        ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.ellipse(x, y, ap * 2, ap * 0.4, 0, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalAlpha = 1;
     }
@@ -7857,13 +8130,14 @@ const BattleStage = {
       ctx.beginPath(); ctx.ellipse(cx, cy, rx * this.unit * 1.25, ry * this.unit * 1.5, 0, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
     }
-    // stepped (pixel) shadow instead of a soft blur
-    const ap = this.ap;
-    for (let i = 3; i >= 1; i--) {
-      ctx.fillStyle = "rgba(0,0,0,0.16)";
-      const w = Math.round(rx * this.unit * (i / 3) / ap) * ap, h = Math.max(ap, Math.round(ry * this.unit * (i / 3) / ap) * ap);
-      ctx.fillRect(Math.round((cx - w) / ap) * ap, Math.round((cy - h / 2) / ap) * ap, w * 2, h);
-    }
+    // soft contact shadow
+    ctx.save();
+    ctx.translate(cx, cy); ctx.scale(1, ry / rx);
+    const R = rx * this.unit;
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    g.addColorStop(0, "rgba(0,0,0,0.5)"); g.addColorStop(0.6, "rgba(0,0,0,0.25)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   },
 
   drawPlayer(ctx, now) {
@@ -7884,7 +8158,7 @@ const BattleStage = {
     const scale = this._pixScale || 1;
     const n = Math.max(1, this.dragonStrips.length);
     const frame = Math.floor(now / 380) % n;
-    const bobPx = Math.sin(now / 500) > 0 ? 1 : 0;
+    const bobPx = (Math.sin(now / 500) + 1) * 0.5;   // smooth breathing bob
     const flash = now < this.playerFlashUntil;
     const strips = flash ? this.dragonFlash : this.dragonStrips;
     const img = strips[frame];
@@ -7913,7 +8187,7 @@ const BattleStage = {
       const n = this.enemyStrips.length;
       const frame = Math.floor(now / 420) % n;
       const idle = this._enemyKind === "chest" && this._chestMode === "idle";
-      const bobPx = idle ? (Math.sin(now / 260) > 0.6 ? 1 : 0) : (Math.sin(now / 560) > 0 ? 1 : 0);
+      const bobPx = idle ? Math.max(0, Math.sin(now / 260)) * 0.8 : (Math.sin(now / 560) + 1) * 0.5;
       const flash = now < this.enemyFlashUntil;
       const img = (flash ? this.enemyFlash : this.enemyStrips)[frame];
       if (img) {
@@ -7936,54 +8210,57 @@ const BattleStage = {
      plotted on the background art grid so they share the sprites' pixel
      size instead of looking like smooth vector overlays. */
   drawFx(ctx, now) {
-    const ap = this.ap;
-    const plot = (x, y, s = 1) => ctx.fillRect(Math.round(x / ap) * ap, Math.round(y / ap) * ap, ap * s, ap * s);
     for (let i = this.fx.length - 1; i >= 0; i--) {
       const f = this.fx[i];
       const t = (now - f.t0) / f.dur;
       if (t < 0) continue;
       if (t >= 1) { this.fx.splice(i, 1); continue; }
+      ctx.save();
       if (f.type === "slash") {
+        // a bright crescent that sweeps across the target
         const r = this.unit * 16;
         const a0 = -2.4, a1 = 0.5;
         const head = a0 + (a1 - a0) * Math.min(1, t * 1.8);
         const tail = a0 + (a1 - a0) * Math.max(0, t * 1.8 - 0.6);
-        for (let a = tail; a <= head; a += 0.05) {
-          const k = (a - tail) / Math.max(0.001, head - tail);
-          const thick = Math.round(1 + k * 2);
-          ctx.fillStyle = k > 0.75 ? "#ffffff" : (k > 0.35 ? "#fff3a8" : "#ffb04a");
-          ctx.globalAlpha = 1 - t * 0.6;
-          for (let j = 0; j < thick; j++) plot(f.x + Math.cos(a) * (r - j * ap), f.y + Math.sin(a) * (r - j * ap) * 0.8);
-        }
-        ctx.globalAlpha = 1;
+        ctx.translate(f.x, f.y); ctx.scale(1, 0.8);
+        ctx.globalAlpha = 1 - t * 0.6;
+        ctx.lineCap = "round";
+        ctx.shadowColor = "#ffcf3a"; ctx.shadowBlur = this.unit * 3;
+        [["#ffb04a", this.unit * 3.2], ["#fff3a8", this.unit * 1.8], ["#ffffff", this.unit * 0.8]].forEach(([col, w]) => {
+          ctx.strokeStyle = col; ctx.lineWidth = w;
+          ctx.beginPath(); ctx.arc(0, 0, r, tail, head); ctx.stroke();
+        });
       } else if (f.type === "star") {
         const len = this.unit * (4 + 10 * Math.sin(Math.min(1, t * 1.6) * Math.PI));
-        ctx.fillStyle = t < 0.3 ? "#ffffff" : f.color;
+        ctx.translate(f.x, f.y); ctx.rotate(0.2);
         ctx.globalAlpha = 1 - t;
-        for (let k = 0; k < 8; k++) {
-          const a = k * Math.PI / 4 + 0.2;
-          const L = k % 2 ? len * 0.55 : len;
-          for (let d = 0; d < L; d += ap) plot(f.x + Math.cos(a) * d, f.y + Math.sin(a) * d, d < L * 0.35 ? 2 : 1);
+        ctx.shadowColor = f.color; ctx.shadowBlur = this.unit * 4;
+        ctx.fillStyle = t < 0.3 ? "#ffffff" : f.color;
+        ctx.beginPath();
+        for (let k = 0; k < 16; k++) {
+          const L = k % 2 ? len * 0.28 : (k % 4 === 0 ? len : len * 0.6);
+          const a = k * Math.PI / 8;
+          ctx.lineTo(Math.cos(a) * L, Math.sin(a) * L);
         }
-        ctx.globalAlpha = 1;
+        ctx.closePath(); ctx.fill();
       } else if (f.type === "ring") {
         const r = this.unit * f.r * (0.2 + t);
-        ctx.fillStyle = f.color; ctx.globalAlpha = 1 - t;
-        const steps = Math.max(16, Math.round(r / ap * 6));
-        for (let k = 0; k < steps; k++) { const a = (k / steps) * Math.PI * 2; plot(f.x + Math.cos(a) * r, f.y + Math.sin(a) * r * 0.75); }
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1 - t;
+        ctx.strokeStyle = f.color; ctx.lineWidth = this.unit * 1.4 * (1 - t) + 1;
+        ctx.shadowColor = f.color; ctx.shadowBlur = this.unit * 3;
+        ctx.beginPath(); ctx.ellipse(f.x, f.y, r, r * 0.75, 0, 0, Math.PI * 2); ctx.stroke();
       } else if (f.type === "fireball") {
         const e = EASE.cubicIn(Math.min(1, t));
         const x = f.x0 + (f.x1 - f.x0) * e;
         const y = f.y0 + (f.y1 - f.y0) * e - Math.sin(e * Math.PI) * this.unit * 8;
-        const R = Math.round(this.unit * (2.4 + e * 1.8) / ap);
-        const rings = [["#d8321f", R + 1], ["#ff7a1c", R], ["#ffcf3a", R - 1], ["#fff3b0", Math.max(1, R - 2)]];
-        for (const [col, rr] of rings) {
-          ctx.fillStyle = col;
-          for (let yy = -rr; yy <= rr; yy++) for (let xx = -rr; xx <= rr; xx++) if (xx * xx + yy * yy <= rr * rr + (now / 60 % 2)) plot(x + xx * ap, y + yy * ap);
-        }
-        for (let k = 0; k < 3; k++) this.spawn({ x: x - ap * 2, y: y + (Math.random() - 0.5) * ap * 4, vx: -0.05 - Math.random() * 0.08, vy: (Math.random() - 0.5) * 0.04, life: 380, color: ["#ffcf3a", "#ff7a1c", "#d8321f", "#5a2a1a"][(Math.random() * 4) | 0], front: true });
+        const R = this.unit * (3 + e * 2.2);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, R * 1.8);
+        g.addColorStop(0, "#ffffff"); g.addColorStop(0.2, "#fff3b0"); g.addColorStop(0.45, "#ffcf3a");
+        g.addColorStop(0.7, "#ff7a1c"); g.addColorStop(1, "rgba(216,50,31,0)");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R * 1.8, 0, Math.PI * 2); ctx.fill();
+        for (let k = 0; k < 3; k++) this.spawn({ x: x - R * 0.6, y: y + (Math.random() - 0.5) * R, vx: -0.05 - Math.random() * 0.08, vy: (Math.random() - 0.5) * 0.04, life: 380, color: ["#ffcf3a", "#ff7a1c", "#d8321f", "#5a2a1a"][(Math.random() * 4) | 0], front: true });
       }
+      ctx.restore();
     }
   },
 
@@ -8075,19 +8352,20 @@ const BattleStage = {
     const ox = this.enemyLayer.x + (this._enemyBaseX || 0), oy = this.enemyLayer.y + (this._enemyBaseY || 0);
     const glow = this._enemyGlow || "#ffffff";
     if (strip && strip.canvas) {
-      // Sample the sprite on its own pixel grid; every opaque sprite pixel
-      // becomes a particle that keeps that pixel's colour.
-      const c = strip.canvas, sc = this._enemyPixScale || 1;
+      // Sample the sprite texture on a coarse grid; every opaque sample
+      // becomes a particle that keeps that spot's colour, so the monster
+      // visibly bursts apart into its own colours.
+      const c = strip.canvas, k = (strip.dw || c.width) / c.width;
       let data = null;
       try { data = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; } catch (e) { data = null; }
       if (data) {
-        const step = Math.max(sc, Math.round(this.ap));
+        const step = Math.max(2, Math.round(this.ap * 1.3 / k));
         for (let y = 0; y < c.height; y += step) for (let x = 0; x < c.width; x += step) {
           const o = (y * c.width + x) * 4;
           if (data[o + 3] < 128 || Math.random() < 0.35) continue;
           this.spawn({
-            x: ox + x, y: oy + y, vx: (Math.random() - 0.5) * 0.12, vy: -0.05 - Math.random() * 0.14,
-            g: 0.00025, life: 700 + Math.random() * 700, size: step,
+            x: ox + x * k, y: oy + y * k, vx: (Math.random() - 0.5) * 0.12, vy: -0.05 - Math.random() * 0.14,
+            g: 0.00025, life: 700 + Math.random() * 700, size: step * k * 1.1,
             color: `rgb(${data[o]},${data[o + 1]},${data[o + 2]})`, drag: 0.99, front: true,
           });
         }
@@ -8118,12 +8396,13 @@ const BattleStage = {
     this.burst(cx, cy, ["#ff5a4a", "#ffffff", "#ffb04a"], 16, 0.25, { life: 420 });
   },
   enemyAttack() {
+    Sound.play("enemySwing");
     killTweensOf(this.enemyLayer);
     this.enemyLayer.alpha = 1;
     tweenTo(this.enemyLayer, { x: this.enemyBase.x - this.W * 0.18 }, { duration: 175, yoyo: true, ease: "quadOut" });
   },
   enemyHit() {
-    Sound.play("hit");
+    Sound.play(this._enemyKind === "chest" ? "knock" : "hit");
     const now = performance.now();
     killTweensOf(this.enemyLayer); killTweensOf(this.enemyText);
     this.enemyLayer.alpha = 1; this.enemyLayer.y = this.enemyBase.y;
@@ -8212,6 +8491,7 @@ function resizeStage(w, h) {
   battleCanvas.style.height = `${h}px`;
   const ctx = battleCanvas.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  BattleStage.dpr = dpr;
   BattleStage.layout(w, h);
 }
 
