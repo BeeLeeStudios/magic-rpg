@@ -2,10 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#140b24" />
+<meta name="color-scheme" content="dark" />
 <title>Dragons vs Math</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Nunito:wght@600;800;900&display=swap');
+/* Fonts are bundled in www/fonts (SIL OFL) instead of loaded from Google
+   Fonts: the Android app has no INTERNET permission and must look right
+   fully offline. "MedievalSharp" is aliased to the pixel font so every
+   existing heading picks up the new look without touching each rule. */
+@font-face { font-family: 'Pixelify Sans'; src: url('fonts/pixelify-sans.woff2') format('woff2'); font-weight: 400 700; font-display: block; }
+@font-face { font-family: 'MedievalSharp'; src: url('fonts/pixelify-sans.woff2') format('woff2'); font-weight: 400 700; font-display: block; }
+@font-face { font-family: 'Nunito'; src: url('fonts/nunito.woff2') format('woff2'); font-weight: 200 1000; font-display: swap; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -1030,6 +1038,345 @@ h1 {
   pointer-events: none;
   z-index: 3;
 }
+
+/* =====================================================================
+   PIXEL SKIN (v2 graphics)
+   Everything below overrides the original look so the game reads as one
+   consistent 16-bit world: chunky pixel frames (9-slice SVG border-image,
+   crisp at any size), a pixel display font, bevelled "cartridge" buttons,
+   and segmented HP bars. The original rules above are left in place so
+   layout and behaviour don't change -- this block only restyles them.
+   ===================================================================== */
+:root {
+  --ink: #0c0714;
+  --gold: #f4c869;
+  --gold-hi: #ffe7a3;
+  --gold-lo: #8a5a1c;
+  --text: #f3e9ff;
+  --text-dim: #b9a9d6;
+  --panel: #221634;
+  --panel-2: #1b1329;
+  --ember: #ff7a3c;
+  --px: 3px;
+  --frame-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%230c0714'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%230c0714'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%23ffe7a3'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%23ffe7a3'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%23e0a838'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%23e0a838'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%238a5a1c'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%238a5a1c'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%230c0714'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%230c0714'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%23221634'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%23221634'/%3E%3C/svg%3E");
+  --frame-red: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%2312040a'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%2312040a'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%23ffb3a0'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%23ffb3a0'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%23e0452e'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%23e0452e'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%237a1a10'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%237a1a10'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%2312040a'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%2312040a'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%232a0f14'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%232a0f14'/%3E%3C/svg%3E");
+  --frame-purple: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%230c0714'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%230c0714'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%23e9d5ff'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%23e9d5ff'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%23a26cf0'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%23a26cf0'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%234c1d95'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%234c1d95'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%230c0714'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%230c0714'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%231f1436'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%231f1436'/%3E%3C/svg%3E");
+  --frame-stone: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='16' height='18' fill='%230c0714'/%3E%3Crect x='0' y='1' width='18' height='16' fill='%230c0714'/%3E%3Crect x='2' y='1' width='14' height='16' fill='%239d92b8'/%3E%3Crect x='1' y='2' width='16' height='14' fill='%239d92b8'/%3E%3Crect x='3' y='2' width='12' height='14' fill='%2362587c'/%3E%3Crect x='2' y='3' width='14' height='12' fill='%2362587c'/%3E%3Crect x='4' y='3' width='10' height='12' fill='%23342c48'/%3E%3Crect x='3' y='4' width='12' height='10' fill='%23342c48'/%3E%3Crect x='5' y='4' width='8' height='10' fill='%230c0714'/%3E%3Crect x='4' y='5' width='10' height='8' fill='%230c0714'/%3E%3Crect x='6' y='5' width='6' height='8' fill='%231b1329'/%3E%3Crect x='5' y='6' width='8' height='6' fill='%231b1329'/%3E%3C/svg%3E");
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+  --safe-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+  --safe-right: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
+}
+
+html, body {
+  background: #140b24;
+  color: var(--text);
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+/* Night-sky page: a deep violet gradient plus two tiled layers of pixel
+   stars (hard-edged 2px dots), so the space around the game card never
+   reads as an empty browser page on tablets. */
+.wrap {
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(12px + var(--safe-left));
+  background:
+    radial-gradient(circle, #fff6 1px, transparent 1.5px) 0 0 / 97px 89px,
+    radial-gradient(circle, #ffe7a355 1px, transparent 1.5px) 40px 30px / 151px 131px,
+    radial-gradient(ellipse at 50% 120%, #ff7a3c33 0%, transparent 55%),
+    radial-gradient(ellipse at 50% -10%, #6b3fa044 0%, transparent 60%),
+    linear-gradient(180deg, #1d1033 0%, #140b24 55%, #0d0718 100%);
+  image-rendering: pixelated;
+}
+
+/* ---------- pixel frames ---------- */
+.card, .arena, .shop-card, .levelup-card, .journey {
+  border: 12px solid transparent;
+  border-image: var(--frame-gold) 6 / 12px / 0 stretch;
+  border-radius: 0;
+  background-clip: padding-box;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+}
+.card, .shop-card, .levelup-card {
+  background:
+    linear-gradient(180deg, rgba(255,231,163,0.06), transparent 40%),
+    var(--panel);
+  background-clip: padding-box;
+}
+.card { padding: 18px 14px; }
+.arena { padding: 8px 8px 10px; background: var(--panel-2); background-clip: padding-box; overflow: visible; }
+.shop-card { padding: 12px; border-image-source: var(--frame-stone); }
+.levelup-card { border-image-source: var(--frame-purple); padding: 18px 14px; }
+.journey { background: var(--ink); overflow: hidden; }
+
+.card::before, .card::after, .arena::before, .arena::after { display: none; }
+.arena.damage-flash::before {
+  display: block; width: auto; height: auto; border: none; inset: -12px;
+  box-shadow: inset 0 0 60px 16px rgba(255,40,40,0.6);
+}
+
+h1, .journey-title, .shop-header h2, .levelup-card h2 {
+  font-family: 'Pixelify Sans', monospace;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--gold);
+  text-shadow: 0 3px 0 var(--ink), 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 6px 0 #00000066;
+}
+.title-emoji { filter: drop-shadow(0 3px 0 var(--ink)); }
+.sub { color: var(--text-dim); }
+
+/* ---------- pixel buttons ----------
+   The four 0-offset box-shadows draw a 3px outline with the corners
+   missing, which is exactly a hand-drawn pixel button's chamfered edge.
+   The inset shadows are the bevel: light top-left, dark bottom-right. */
+.btn, .icon-btn, .close-btn, .delete-btn, .cancel-delete, .journey-btn, .boss-intro-btn, .hero-card, .levelup-choice-card {
+  border: none !important;
+  border-radius: 0 !important;
+  font-family: 'Pixelify Sans', monospace;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  --b-face: #3b2d57; --b-hi: #5d4a85; --b-lo: #241a38; --b-ink: var(--ink); --b-text: var(--text);
+  background: var(--b-face);
+  color: var(--b-text);
+  box-shadow:
+    0 -3px 0 0 var(--b-ink), 0 3px 0 0 var(--b-ink), -3px 0 0 0 var(--b-ink), 3px 0 0 0 var(--b-ink),
+    inset 3px 3px 0 0 var(--b-hi), inset -3px -4px 0 0 var(--b-lo);
+  transition: transform 60ms ease, filter 120ms ease;
+  cursor: pointer;
+}
+.btn:active:not(:disabled), .icon-btn:active, .journey-btn:active, .boss-intro-btn:active, .hero-card:active, .levelup-choice-card:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 -3px 0 0 var(--b-ink), 0 3px 0 0 var(--b-ink), -3px 0 0 0 var(--b-ink), 3px 0 0 0 var(--b-ink),
+    inset 3px 4px 0 0 var(--b-lo), inset -3px -2px 0 0 var(--b-hi);
+}
+.btn:disabled { filter: grayscale(0.6) brightness(0.7); opacity: 1; }
+
+.btn.primary, .play-slot, .journey-btn, .shop-btn.buy:not(:disabled) {
+  --b-face: #ff8a3c; --b-hi: #ffd08a; --b-lo: #b8471c; --b-text: #2a0f04;
+}
+.btn.primary.big { padding: 16px 20px; font-size: 22px; }
+.btn.ghost {
+  --b-face: #2a203f; --b-hi: #463a63; --b-lo: #19122a; --b-text: var(--text-dim);
+  width: 100%; margin-top: 14px; padding: 11px 14px; font-size: 15px;
+}
+.journey-btn { font-size: 30px; padding: 14px 52px; letter-spacing: 3px; margin-bottom: 20px; animation: pxPulse 1.6s steps(2) infinite; }
+.journey-links { gap: 14px; }
+.journey-links .btn.ghost { margin-top: 0; width: auto; padding: 9px 14px; font-size: 14px; }
+.icon-btn { padding: 5px 9px; font-size: 13px; --b-face: #2e2346; }
+.close-btn { width: 34px; height: 34px; font-size: 15px; --b-face: #5a2338; --b-hi: #8a3a55; --b-lo: #3a1424; }
+.delete-btn, .cancel-delete { --b-face: #3a2440; padding: 8px 10px; }
+.confirm-delete { --b-face: #e0452e !important; --b-hi: #ff9a7a; --b-lo: #8a1a10; --b-text: #fff3ee !important; }
+.shop-btn { padding: 9px 12px; font-size: 13px; }
+.shop-btn.equip { --b-face: #3b2d57; --b-text: var(--text); }
+.shop-btn.equipped { --b-face: #2e8a58; --b-hi: #6ee7a8; --b-lo: #145534; --b-text: #eafff3; }
+.edit-btn { filter: drop-shadow(0 2px 0 var(--ink)); }
+
+@keyframes pxPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.18); } }
+
+/* ---------- save select ---------- */
+.save-slot, .shop-item {
+  background: #150e22;
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink), -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink),
+              inset 0 3px 0 0 #2d2344, inset 0 -3px 0 0 #0f0a18;
+}
+.save-list, .shop-list { gap: 14px; }
+.save-slot-name { font-family: 'Pixelify Sans', monospace; font-weight: 700; color: var(--gold); font-size: 17px; }
+.save-slot-summary { color: var(--text-dim); font-weight: 700; }
+.parent-link {
+  display: inline-block; margin-top: 16px; background: none; border: none; color: var(--text-dim);
+  font: 700 12px 'Nunito', sans-serif; text-decoration: underline; cursor: pointer; padding: 6px;
+}
+
+/* ---------- hero select ---------- */
+.hero-title { font-size: clamp(26px, 8vw, 36px); margin: 0 0 4px; text-align: center; }
+.hero-sub { text-align: center; color: var(--text-dim); font-weight: 800; margin: 0 0 6px; }
+.hero-pick { gap: 18px; margin-top: 22px; }
+.hero-card {
+  --b-face: #2a1f40; --b-hi: #4a3a6e; --b-lo: #150e22;
+  padding: 14px 10px 12px; font-size: 20px; color: var(--gold);
+  background:
+    radial-gradient(ellipse at 50% 88%, #ffcf6e55 0%, transparent 45%),
+    linear-gradient(180deg, #2f2248, #1b1329);
+}
+.hero-card span { display: block; text-shadow: 0 2px 0 var(--ink); }
+
+/* ---------- journey / title ---------- */
+.journey { height: min(calc(100vh - 24px - var(--safe-top) - var(--safe-bottom)), 780px); min-height: 480px; }
+.journey-bg { image-rendering: pixelated; width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; }
+.journey-inner { background: linear-gradient(180deg, rgba(12,7,20,0.25) 0%, rgba(12,7,20,0) 30%, rgba(12,7,20,0) 55%, rgba(12,7,20,0.7) 100%); justify-content: space-between; padding: 22px 16px 20px; }
+.journey-bottom { display: flex; flex-direction: column; align-items: center; }
+.logo {
+  font-family: 'Pixelify Sans', monospace; font-weight: 700; line-height: 0.95;
+  text-align: center; margin-bottom: 10px; animation: logoFloat 3s ease-in-out infinite;
+}
+.logo-top, .logo-bottom {
+  display: block; font-size: clamp(34px, 11vw, 52px); color: var(--gold);
+  background: linear-gradient(180deg, #fff3c4 0%, #ffd66e 45%, #f08a24 55%, #c8501a 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(3px 0 0 var(--ink)) drop-shadow(-3px 0 0 var(--ink)) drop-shadow(0 3px 0 var(--ink)) drop-shadow(0 -3px 0 var(--ink)) drop-shadow(0 6px 0 #3a0f06);
+}
+.logo-vs {
+  display: inline-block; margin: 4px 0; padding: 2px 12px 4px; font-size: clamp(18px, 5.5vw, 24px);
+  color: #fff; background: #d8321f; letter-spacing: 2px;
+  box-shadow: 0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink), -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink), inset 0 3px 0 #ff8a6a, inset 0 -3px 0 #7a1108;
+  transform: rotate(-4deg);
+}
+@keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.journey-lead { font-family: 'Pixelify Sans', monospace; font-weight: 700; color: #ffe0cc; text-shadow: 0 2px 0 var(--ink); letter-spacing: 2px; }
+.journey-sub { color: var(--text); font-weight: 800; text-shadow: 0 2px 0 var(--ink); margin-bottom: 16px; }
+
+/* ---------- battle HUD ---------- */
+.topbar { font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: 16px; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
+.topbar.sub-row { font-family: 'Nunito', sans-serif; color: var(--text-dim); font-size: 12px; text-shadow: none; margin-top: 4px; }
+.wave-chip { display: inline-flex; align-items: center; gap: 6px; }
+.wave-chip .boss-tag {
+  font-size: 11px; color: #fff; background: #d8321f; padding: 1px 6px;
+  box-shadow: 0 -2px 0 var(--ink), 0 2px 0 var(--ink), -2px 0 0 var(--ink), 2px 0 0 var(--ink);
+  animation: pxPulse 0.8s steps(2) infinite;
+}
+.rank-badge {
+  font-family: 'Pixelify Sans', monospace; font-weight: 700; border: none; border-radius: 0;
+  background: #4c1d95; color: #f3e8ff;
+  box-shadow: 0 -2px 0 var(--ink), 0 2px 0 var(--ink), -2px 0 0 var(--ink), 2px 0 0 var(--ink), inset 0 2px 0 #7c3aed;
+}
+.rank-prog { color: var(--text-dim); font-weight: 800; }
+.xpbar, .hpbar, .mini-hpbar {
+  position: relative; border: none; border-radius: 0; background: #0f0a18; overflow: visible;
+  box-shadow: 0 -2px 0 var(--ink), 0 2px 0 var(--ink), -2px 0 0 var(--ink), 2px 0 0 var(--ink), inset 0 2px 0 #00000088;
+}
+.xpbar { height: 8px; }
+.hpbar { height: 14px; }
+.xpfill { background: linear-gradient(180deg, #d9b8ff 0 30%, #a26cf0 30% 70%, #6d3fc0 70%); transition: width 0.5s steps(12); }
+.hpfill { position: relative; z-index: 1; transition: width 0.35s steps(10); }
+/* Segment ticks + a 1-row specular stripe, painted over whatever fill
+   colour the bar has (the enemy bar is tinted per-monster inline). */
+.hpfill::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.45) 0 3px, transparent 3px calc(100% - 3px), rgba(0,0,0,0.3) calc(100% - 3px)),
+    repeating-linear-gradient(90deg, transparent 0 9px, rgba(0,0,0,0.35) 9px 11px);
+}
+.player-fill { background: #2fd47a; }
+.player-fill.low { background: #ff4a3a; animation: pxPulse 0.6s steps(2) infinite; }
+/* Trailing "damage ghost": stays at the previous width for a moment and
+   then drains, so the kid can SEE how much a hit took. */
+.hpghost { position: absolute; left: 0; top: 0; bottom: 0; background: #fff2c8; z-index: 0; transition: width 0.6s ease 0.25s; }
+.name-row { font-weight: 900; font-size: 13px; margin: 6px 0 5px; }
+.name-row .cname { font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: 15px; color: #fff; text-shadow: 0 2px 0 var(--ink); }
+.name-row .hp-num { font-family: 'Pixelify Sans', monospace; color: var(--text-dim); }
+.enemy-mini-emoji { display: none; }
+.enemy-mini { width: 36px; }
+.enemy-mini .mini-icon { width: 32px; height: 28px; image-rendering: pixelated; display: block; margin: 0 auto 3px; }
+
+.battlefield-anchor { height: 250px; margin: 10px 0 12px; }
+#battle-stage-host {
+  box-shadow: 0 0 0 3px var(--ink), 0 0 0 6px #e0a838, 0 0 0 9px var(--ink);
+  background: #0c0714;
+  overflow: hidden;
+}
+#battle-stage-host canvas { display: block; image-rendering: pixelated; }
+
+.banner {
+  font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: 15px; color: var(--gold);
+  background: #150e22; padding: 6px 8px; margin: 8px 3px;
+  box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #2d2344;
+  animation: bannerIn 0.35s steps(4);
+}
+@keyframes bannerIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.rank-banner { background: #5b21b6 !important; box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #a78bfa !important; border: none !important; }
+.boss-banner { background: #9a1c12 !important; box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #ff6a4a !important; border: none !important; }
+
+/* ---------- problem card ---------- */
+.problem-card {
+  border: none; border-radius: 0; margin: 14px 3px 3px; padding: 12px 12px 14px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 22px, rgba(255,255,255,0.025) 22px 24px),
+    #150e22;
+  box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink), -3px 0 0 var(--ink), 3px 0 0 var(--ink), inset 0 3px 0 #2d2344, inset 0 -3px 0 #0a0612;
+}
+.streak { font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: 14px; color: #ffb35c; text-shadow: 0 2px 0 var(--ink); height: 18px; }
+.problem {
+  font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: clamp(38px, 12vw, 50px); color: #fff;
+  letter-spacing: 2px; margin: 2px 0 14px;
+  text-shadow: 0 4px 0 var(--ink), 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 -3px 0 var(--ink), 0 7px 0 #00000066;
+}
+.problem .op { color: var(--gold); }
+.problem .q { color: #7fe3ff; display: inline-block; animation: qBlink 1s steps(2) infinite; }
+@keyframes qBlink { 50% { opacity: 0.45; } }
+.choices { gap: 14px; margin: 0 3px 14px; }
+.choice {
+  --b-face: #3a2d5c; --b-hi: #6a58a0; --b-lo: #221838;
+  font-size: 30px; padding: 12px 0 14px; color: #fff; text-shadow: 0 3px 0 var(--ink);
+}
+.choice:disabled { filter: brightness(0.75) saturate(0.6); }
+.choice.correct { --b-face: #22b566; --b-hi: #7ff0b0; --b-lo: #0f6a3a; filter: none !important; animation: pickPop 0.3s steps(3); }
+.choice.wrong { --b-face: #d8321f; --b-hi: #ff8a6a; --b-lo: #7a1108; filter: none !important; animation: pickShake 0.3s steps(4); }
+.choice.reveal { --b-face: #1a7a48; --b-hi: #6ee7a8; --b-lo: #0c4a2a; filter: none !important; }
+@keyframes pickPop { 50% { transform: scale(1.08); } }
+@keyframes pickShake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+.fireball-btn { --b-face: #3a2440; --b-text: var(--text-dim); margin: 4px 3px 0; width: calc(100% - 6px); font-size: 15px; padding: 11px 0; }
+.fireball-btn.ready { --b-face: #ff6a24; --b-hi: #ffd08a; --b-lo: #a8320c; --b-text: #2a0f04; border: none; animation: pxPulse 0.7s steps(2) infinite; }
+.charge-pips { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.charge-pips i { width: 10px; height: 10px; background: #150e22; box-shadow: 0 0 0 2px var(--ink); display: inline-block; }
+.charge-pips i.on { background: #ffcf3a; box-shadow: 0 0 0 2px var(--ink), inset 0 -3px 0 #e0701c; }
+.potion-row { gap: 14px; margin: 14px 3px 0; }
+.potion-btn { font-size: 13px; padding: 10px 4px; --b-face: #2e2346; --b-text: var(--text-dim); }
+.potion-btn.ready.hp-ready { --b-face: #22b566; --b-hi: #7ff0b0; --b-lo: #0f6a3a; --b-text: #042010; border: none; }
+.potion-btn.ready.poison-ready { --b-face: #8b5cf6; --b-hi: #c4b5fd; --b-lo: #4c1d95; --b-text: #16072e; border: none; }
+.potion-charge-note { color: var(--text-dim); font-weight: 700; margin-top: 10px; }
+
+/* ---------- shop ---------- */
+.shop-overlay { background: rgba(8,4,16,0.82); padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom)); }
+.shop-coins { font-family: 'Pixelify Sans', monospace; font-size: 18px; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
+.shop-section-title { font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: 17px; color: var(--gold); text-shadow: 0 2px 0 var(--ink); margin: 20px 0 12px; }
+.shop-item { margin: 0 3px; }
+.shop-item-name { font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: 15px; color: #fff; }
+.shop-item-type { color: var(--text-dim); font-weight: 700; }
+.shop-item-emoji { filter: drop-shadow(0 2px 0 var(--ink)); }
+.shop-item-emoji.dragon-icon, .shop-item-emoji.px-icon { width: 44px; height: 36px; filter: none; }
+.shop-item-emoji.px-icon canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+
+/* ---------- level up ---------- */
+.levelup-overlay { background: rgba(10,4,24,0.86); }
+.firework-particle { border-radius: 0; width: 6px; height: 6px; animation-timing-function: steps(8); }
+.levelup-emoji { filter: drop-shadow(0 3px 0 var(--ink)); }
+.levelup-card h2 { font-size: 34px; }
+.levelup-card p { color: var(--text); }
+.range-note { color: #c4b5fd !important; }
+.levelup-choice-card { --b-face: #2a1f40; --b-hi: #4a3a6e; --b-lo: #150e22; margin: 0 3px; padding: 12px; }
+.levelup-choice-name { font-family: 'Pixelify Sans', monospace; font-size: 17px; color: var(--gold); }
+.levelup-choice-desc { color: var(--text); font-family: 'Nunito', sans-serif; font-weight: 800; }
+
+/* ---------- boss intro ---------- */
+.boss-intro { background: radial-gradient(ellipse at 50% 55%, #4a0a0acc 0%, #0a0206f2 65%); }
+.boss-intro-lead { font-family: 'Pixelify Sans', monospace; font-weight: 700; text-shadow: 0 3px 0 var(--ink), 0 0 18px rgba(255,59,42,0.75); }
+.boss-intro-name { font-family: 'Pixelify Sans', monospace; font-weight: 700; color: #ffd9c8; text-shadow: 0 4px 0 var(--ink), 0 0 22px rgba(255,110,80,0.9); margin: 6px 0 18px; }
+.boss-portrait { display: block; margin: 8px auto 0; image-rendering: pixelated; animation: bossBob 1.2s steps(2) infinite; filter: drop-shadow(0 0 18px #ff3b2a88); }
+@keyframes bossBob { 50% { transform: translateY(-6px); } }
+.boss-intro-btn { --b-face: #d8321f; --b-hi: #ff8a6a; --b-lo: #7a1108; --b-text: #fff0e8; font-size: 30px; padding: 14px 52px; }
+.boss-intro-warn { filter: drop-shadow(0 3px 0 var(--ink)); }
+
+/* ---------- parents / privacy sheet ---------- */
+.info-card { text-align: left; }
+.info-card h1 { text-align: center; font-size: 26px; }
+.info-card h3 { font-family: 'Pixelify Sans', monospace; color: var(--gold); margin: 16px 0 6px; font-size: 17px; }
+.info-card p, .info-card li { font-size: 14px; line-height: 1.5; color: var(--text); font-weight: 600; }
+.info-card ul { padding-left: 20px; margin: 6px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo, .journey-btn, .boss-portrait, .problem .q, .fireball-btn.ready, .player-fill.low { animation: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -1043,7 +1390,7 @@ h1 {
    Math/difficulty ......... MATH_BANDS, MASTERY, evaluateBandChange
    Combat math .............. getProblemDamage, getEnemyDamage, getExpectedPlayerDamage
    Enemies/bosses ........... ENEMIES, decideChest, BOSSES, getEnemyForWave, tickBossCharge
-   Shop items ............... LEVEL_STYLES, COSMETICS, BACKGROUND_STYLES,
+   Shop items ............... LEVEL_STYLES, COSMETICS, BIOMES (arena backdrops),
                                DMG_UPGRADES, SWORD_TIERS (rider's held sword, tier-colored)
    Level-up cards ........... LEVEL_UP_CARDS, pickLevelUpCardChoices
    Save slots (localStorage). loadSaves, persistSaves, makeSlot, selectSave
@@ -1062,7 +1409,8 @@ h1 {
                                PIX_SLOT_KEY letter and N is a 0/1/2 shade index (see pixRamp);
                                "." = empty, "e" = outline-black, "W" = white. paintPixelFrame()
                                is what actually reads this format.
-   Battle stage (canvas) .... const BattleStage  (init/layout/bake.../draw/syncFromState).
+   Battle stage (canvas) .... BIOMES/paintBiome (pixel backdrops), const BattleStage
+                               (init/layout/bake.../draw/syncFromState, particles, fx).
                                No engine dependency -- plain canvas 2D, works fully offline.
    Stage <-> DOM bridge ...... battleStageHost, ensureBattleGame, syncBattleStage, BattleFX
                                (BattleFX.xxx() calls are what combat logic above fires into
@@ -1607,37 +1955,6 @@ const ENEMIES = [
 
 /* Treasure chest: a random bonus "wave" that replaces a normal enemy.
    It never attacks and always yields a random 25-50 gold + flat 20 XP. */
-const CHEST_PALETTE = { wood: "#8a5a2e", woodDark: "#5c3a1c", lid: "#a06a34", metal: "#e8c04a", metalDark: "#b8901e", glow: "#fff3b0" };
-
-function chestPixelParts(mode) {
-  const p = CHEST_PALETTE;
-  const base = [
-    { type: "rect", fill: p.wood, x: 9, y: 24, w: 30, h: 16 },
-    { type: "rect", fill: p.metalDark, x: 9, y: 24, w: 4, h: 16 },
-    { type: "rect", fill: p.metalDark, x: 35, y: 24, w: 4, h: 16 },
-  ];
-  if (mode === "open") {
-    return base.concat([
-      { type: "poly", fill: p.lid, pts: [[8, 24], [10, 8], [38, 6], [40, 22], [9, 24]] },
-      { type: "rect", fill: p.metalDark, x: 9, y: 5, w: 4, h: 17 },
-      { type: "rect", fill: p.metalDark, x: 35, y: 3, w: 4, h: 17 },
-      { type: "circle", fill: p.glow, cx: 24, cy: 20, r: 15, alpha: 0.35 },
-      { type: "circle", fill: p.metal, cx: 18, cy: 18, r: 2.2 },
-      { type: "circle", fill: p.metal, cx: 24, cy: 14, r: 2.2 },
-      { type: "circle", fill: p.metal, cx: 30, cy: 19, r: 2.2 },
-      { type: "circle", fill: p.metal, cx: 21, cy: 22, r: 2.2 },
-      { type: "circle", fill: p.metal, cx: 27, cy: 23, r: 2.2 },
-    ]);
-  }
-  return base.concat([
-    { type: "poly", fill: p.lid, pts: [[9, 24], [9, 14], [14, 9], [34, 9], [39, 14], [39, 24]] },
-    { type: "rect", fill: p.metalDark, x: 9, y: 9, w: 4, h: 15 },
-    { type: "rect", fill: p.metalDark, x: 35, y: 9, w: 4, h: 15 },
-    { type: "rect", fill: p.metal, x: 20, y: 21, w: 8, h: 8 },
-    { type: "circle", fill: p.woodDark, cx: 24, cy: 25, r: 1.6 },
-  ]);
-}
-
 /* Roughly a 1-in-5 chance per wave (never on boss waves, never twice in a
    row) that the next wave is a treasure chest instead of a real enemy. */
 function decideChest(wave) {
@@ -2007,16 +2324,8 @@ const COSMETICS = [
   { id: "pet_dragonwhelp", name: "Dragon Whelp", emoji: "🐉", cost: 270, type: "pet", levelReq: 25, dmgPercent: 100 },
 ];
 
-/* Battle arena backdrops. No longer shop items -- one is picked at random
-   every other wave (see arenaBackgroundForWave below) so the scenery keeps
-   changing on its own as the kid fights through waves. */
-const BACKGROUND_STYLES = [
-  "radial-gradient(circle at 30% 100%, rgba(255,90,30,0.35), transparent 60%), radial-gradient(circle at 80% 0%, rgba(255,150,40,0.18), transparent 55%), linear-gradient(180deg, #3a0f06 0%, #1a0704 100%)",
-  "radial-gradient(circle at 20% 0%, rgba(255,230,150,0.2), transparent 55%), radial-gradient(circle at 90% 90%, rgba(80,180,200,0.28), transparent 55%), linear-gradient(180deg, #123a4a 0%, #0a2430 100%)",
-  "radial-gradient(circle at 20% 0%, rgba(140,255,120,0.14), transparent 55%), radial-gradient(circle at 90% 90%, rgba(30,90,40,0.35), transparent 55%), linear-gradient(180deg, #10240f 0%, #081408 100%)",
-  "radial-gradient(circle at 30% 10%, rgba(180,140,255,0.22), transparent 55%), radial-gradient(circle at 85% 80%, rgba(90,60,180,0.28), transparent 55%), linear-gradient(180deg, #0e0a24 0%, #05040f 100%)",
-  "radial-gradient(circle at 20% 0%, rgba(180,230,255,0.22), transparent 55%), radial-gradient(circle at 90% 90%, rgba(120,190,230,0.22), transparent 55%), linear-gradient(180deg, #12283a 0%, #061420 100%)",
-];
+/* Battle arena backdrops are painted pixel biomes now -- see BIOMES and
+   arenaBiomeForWave() in the battle stage section. */
 
 /* Deterministic pseudo-random in [0,1) from an integer seed -- same input
    always gives the same output, so re-renders within the same wave-pair
@@ -2024,15 +2333,6 @@ const BACKGROUND_STYLES = [
 function seededRandom01(n) {
   n = (n << 13) ^ n;
   return ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 0x7fffffff;
-}
-
-/* Picks a background for the current wave. Waves are grouped in pairs
-   (1-2, 3-4, 5-6, ...) so the backdrop holds steady for two waves, then
-   randomly changes to a (possibly different) one for the next pair. */
-function arenaBackgroundForWave(wave) {
-  const pairIndex = Math.floor((Math.max(1, wave) - 1) / 2);
-  const idx = Math.floor(seededRandom01(pairIndex) * BACKGROUND_STYLES.length);
-  return BACKGROUND_STYLES[idx];
 }
 
 /* Permanent +1 DMG upgrades, incremental cost, gated by dragon level.
@@ -2312,7 +2612,19 @@ const root = document.getElementById("root");
 /* The `lvl` argument is ignored now -- problems come from the mastery band,
    not the dragon's level. Kept in the signature so the ~8 existing call
    sites don't all need touching. */
+/* Answer feedback: the tapped button turns green or red, and on a miss
+   the right answer lights up too, so every wrong answer still teaches
+   the fact instead of just costing HP. Cleared with each new problem. */
+function choiceFeedbackClass(c) {
+  const pk = S.pick;
+  if (!pk) return "";
+  if (c === pk.val) return pk.correct ? "correct" : "wrong";
+  if (!pk.correct && c === pk.answer) return "reveal";
+  return "";
+}
+
 function newProblem(lvl) {
+  S.pick = null;
   const p = generateProblem(pickProblemBand());
   S.problem = p;
   S.choices = makeChoices(p);
@@ -2818,6 +3130,7 @@ function handleAnswer(val) {
   S.locked = true;
   const correct = val === S.problem.answer;
   S.lastAnswerCorrect = correct;
+  S.pick = { val, correct, answer: S.problem.answer };
 
   // Timing drives both the mastery check and the speed damage bonus.
   const elapsed = Math.max(0, Date.now() - (S.problemShownAt || Date.now()));
@@ -3127,6 +3440,7 @@ function saveSelectHTML() {
     <p class="sub">Select a save file to continue your saga, or begin a new one.</p>
     <div class="save-list">${items}</div>
     <button class="btn ghost" data-action="add-save" ${SAVES.slots.length >= 12 ? "disabled" : ""}>➕ New Save Slot</button>
+    <button class="parent-link" data-action="open-info">For Parents · Privacy</button>
   </div>`;
 }
 
@@ -3139,6 +3453,7 @@ function bossIntroHTML() {
         <div class="boss-intro-warn">\u2620\uFE0F</div>
         <div class="boss-intro-lead">A BOSS APPROACHES</div>
         <div class="boss-intro-name">${esc(S.bossIntro.name)}</div>
+        ${PIX_ENEMY_ART[S.bossIntro.name] ? `<canvas class="boss-portrait" data-pix="boss:${esc(S.bossIntro.name)}" width="${PIX_ENEMY_ART[S.bossIntro.name].art.w * 4 + 8}" height="${PIX_ENEMY_ART[S.bossIntro.name].art.h * 4 + 8}"></canvas>` : ""}
         <button class="boss-intro-btn" onclick="beginBossFight()">FIGHT!</button>
       </div>
     </div>`;
@@ -3146,9 +3461,9 @@ function bossIntroHTML() {
 
 function heroSelectHTML() {
   return `
-    <div class="wrap">
-      <h1 class="title">Choose Your Hero</h1>
-      <p class="subtitle">You'll find a dragon to ride later on.</p>
+    <div class="card">
+      <h1 class="hero-title">Choose Your Hero</h1>
+      <p class="hero-sub">You'll find a dragon to ride later on.</p>
       <div class="hero-pick">
         <button class="hero-card" onclick="pickHero('boy')">
           <canvas class="hero-portrait" data-hero="boy" width="96" height="152"></canvas>
@@ -3185,14 +3500,18 @@ function pickHero(which) {
   render();
 }
 
-/* Replaces the old title card, which was a wall of eighteen rules bullets.
-   The audience is 5-14 -- they don't read rules screens, they press the
-   big button. Everything that list explained is now taught by playing:
-   the fireball charges visibly, the boss wave announces itself, the Math
-   Rank badge shows progress.
+/* The game's display name lives here and in capacitor.config.json /
+   android strings.xml only, so a rename is a three-line change. */
+const GAME_NAME = { top: "DRAGONS", mid: "VS", bottom: "MATH", full: "Dragons vs Math" };
 
-   Same full-screen treatment as the boss intro, so the game has one
-   consistent "something is about to happen" moment. */
+/* TODO before publishing: set a real support address. The same address
+   goes in Play Console (store listing contact) and docs/privacy-policy.html. */
+const PRIVACY_CONTACT_EMAIL = "support@YOUR-DOMAIN.com";
+const PRIVACY_UPDATED = "September 26, 2026";
+
+/* Title screen: an animated pixel-art splash rather than a rules card. The
+   audience is 5-13 -- they press the big button. The scene is painted by
+   runTitleScene() below; this just lays the logo and buttons over it. */
 function titleHTML() {
   const returning = (S.xp > 0 || S.coins > 0);
   const lead = returning ? "CONTINUE YOUR JOURNEY" : "BEGIN YOUR JOURNEY";
@@ -3201,82 +3520,166 @@ function titleHTML() {
     : "A dragon waits somewhere ahead";
   return `
     <div class="journey">
-      <canvas class="journey-bg" width="480" height="300"></canvas>
+      <canvas class="journey-bg" width="160" height="${titleSceneHeight()}"></canvas>
       <div class="journey-inner">
-        <div class="journey-title">Dragons vs Math</div>
-        <div class="journey-lead">${lead}</div>
-        <div class="journey-sub">${sub}</div>
-        <button class="journey-btn" data-action="start-game">START</button>
-        <div class="journey-links">
-          <button class="btn ghost" data-action="open-shop">🛒 Shop</button>
-          <button class="btn ghost" data-action="switch-save">💾 Switch Save</button>
+        <div class="logo" role="heading" aria-level="1" aria-label="${GAME_NAME.full}">
+          <span class="logo-top">${GAME_NAME.top}</span>
+          <span class="logo-vs">${GAME_NAME.mid}</span>
+          <span class="logo-bottom">${GAME_NAME.bottom}</span>
+        </div>
+        <div class="journey-bottom">
+          <div class="journey-lead">${lead}</div>
+          <div class="journey-sub">${sub}</div>
+          <button class="journey-btn" data-action="start-game">START</button>
+          <div class="journey-links">
+            <button class="btn ghost" data-action="open-shop">🛒 Shop</button>
+            <button class="btn ghost" data-action="switch-save">💾 Saves</button>
+          </div>
         </div>
       </div>
     </div>`;
 }
 
-/* Draws a parallax pixel forest: three tree lines receding into haze, then
-   a ground band. Deterministic from a fixed seed so it looks the same
-   every time rather than flickering on each render. */
-function paintJourneyForest() {
-  const cv = document.querySelector(".journey-bg");
-  if (!cv) return;
-  const ctx = cv.getContext("2d");
-  const W = cv.width, H = cv.height;
-  ctx.imageSmoothingEnabled = false;
+/* In-app privacy notice. Google Play requires the policy to be reachable
+   inside the app, not only on the store listing. It is shown inline (no
+   outbound link), so no parental gate is needed to open it. Keep this
+   text in sync with docs/privacy-policy.html. */
+function infoHTML() {
+  return `
+  <div class="card info-card">
+    <h1>For Parents</h1>
+    <p>${GAME_NAME.full} is a math practice game for kids ages 5–13. Every correct answer powers an attack; the game quietly adjusts the math to your child's level (addition and subtraction, from "within 10" up to two-digit regrouping).</p>
+    <h3>Privacy</h3>
+    <ul>
+      <li><strong>We collect no data.</strong> No accounts, no analytics, no ads, no tracking, no in-app purchases.</li>
+      <li>The app has no internet permission and never connects to the internet.</li>
+      <li>Save files (hero choice, coins, progress and any save-slot name your child types) are stored only on this device and are never sent anywhere.</li>
+      <li>Deleting a save slot or uninstalling the app erases that data.</li>
+    </ul>
+    <h3>Contact</h3>
+    <p>Questions? Email <strong>${PRIVACY_CONTACT_EMAIL}</strong>.</p>
+    <p style="color:var(--text-dim);font-size:12px">Privacy policy last updated ${PRIVACY_UPDATED}.</p>
+    <button class="btn primary big" data-action="close-info">Back</button>
+  </div>`;
+}
 
-  let seed = 20260909;
-  const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+/* ---------- animated title scene ----------
+   160x208 art pixels, scaled up with nearest-neighbour by CSS. A rider on
+   the player's own mount (or a fire dragon before one is owned) loops
+   across a moonlit valley with parallax mountains, drifting clouds, a
+   castle and twinkling stars. Runs only while the title canvas exists. */
+let titleSceneRunning = false;
+let titleSceneCache = null;
 
-  const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, "#1b2a2e");
-  sky.addColorStop(0.55, "#24352c");
-  sky.addColorStop(1, "#2c3a26");
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W, H);
+/* Art-pixel height that matches the journey panel's on-screen aspect, so
+   the scene fills a tall phone without cropping or stretching. */
+function titleSceneHeight() {
+  const jw = Math.min(420, window.innerWidth - 24) - 24;
+  const jh = Math.max(480, Math.min(window.innerHeight - 24, 780)) - 24;
+  return Math.max(200, Math.min(360, Math.round(160 * jh / Math.max(100, jw))));
+}
 
+function buildTitleScene(H) {
+  const W = 160;
+  const bg = makeTextureCanvas(W, H);
+  const ctx = bg.getContext("2d");
+  const rnd = mulberry(4242);
+  paintDitherSky(ctx, W, H, ["#07051a", "#140c32", "#2a1450", "#5a2266", "#b4466a", "#ffb070"]);
   // moon
-  ctx.fillStyle = "#e8e2c0";
-  ctx.beginPath(); ctx.arc(W * 0.78, H * 0.18, 16, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#24352c";
-  ctx.beginPath(); ctx.arc(W * 0.755, H * 0.155, 14, 0, Math.PI * 2); ctx.fill();
+  const mx = 124, my = Math.round(H * 0.4), r = 13;
+  for (let y = -r - 4; y <= r + 4; y++) for (let x = -r - 4; x <= r + 4; x++) {
+    const d = Math.hypot(x, y);
+    if (d <= r) { ctx.fillStyle = (x * 3 + y * 5) % 7 === 0 && d < r - 2 ? "#e8d8b0" : (x + y < -6 ? "#fffbe8" : "#fbeec8"); ctx.fillRect(mx + x, my + y, 1, 1); }
+    else if (d <= r + 4 && ((x + y) & 1) && d > r + 1) { ctx.fillStyle = "#ffcf9a55"; ctx.fillRect(mx + x, my + y, 1, 1); }
+  }
+  const stars = [];
+  for (let i = 0; i < Math.round(H * 0.4); i++) stars.push({ x: Math.floor(rnd() * W), y: Math.floor(rnd() * H * 0.55), p: rnd() * 6.28, big: rnd() < 0.12 });
+  const far = makeTextureCanvas(W * 2, H); paintRidge(far.getContext("2d"), W * 2, H, mulberry(7), H - 58, 22, 2, "#3a1a4a", "#8a5a8a");
+  const mid = makeTextureCanvas(W * 2, H); const mctx = mid.getContext("2d");
+  const tops = paintRidge(mctx, W * 2, H, mulberry(11), H - 38, 12, 1.4, "#22102e", null);
+  for (let x = 3; x < W * 2; x += 5 + ((x * 7) % 6)) paintPine(mctx, x, tops[x] + 3, 9 + ((x * 13) % 9), "#170a20", "#3a1f48");
+  // castle on the mid ridge
+  const cx = 60, cb = tops[cx] + 2;
+  mctx.fillStyle = "#12081c";
+  mctx.fillRect(cx - 12, cb - 16, 24, 18);
+  [[-14, 26], [10, 22], [-3, 34]].forEach(([dx, hh]) => { mctx.fillRect(cx + dx, cb - hh, 6, hh); for (let i = 0; i < 6; i += 2) mctx.fillRect(cx + dx + i, cb - hh - 2, 1, 2); });
+  mctx.fillStyle = "#ffcf5a"; [[-12, 20], [12, 14], [0, 27], [-6, 9], [6, 9], [1, 18]].forEach(([dx, dy]) => mctx.fillRect(cx + dx, cb - dy, 1, 2));
+  const near = makeTextureCanvas(W * 2, H); const nctx = near.getContext("2d");
+  const ntops = paintRidge(nctx, W * 2, H, mulberry(23), H - 12, 6, 1, "#0c0614", null);
+  for (let x = 0; x < W * 2; x += 9 + ((x * 5) % 7)) paintPine(nctx, x, ntops[x] + 3, 16 + ((x * 11) % 10), "#0c0614", "#24123a");
+  const clouds = makeTextureCanvas(W * 2, 60); const cctx = clouds.getContext("2d");
+  for (let i = 0; i < 6; i++) {
+    const x0 = i * 55 + 10, y0 = 16 + (i % 3) * 12, w = 26 + (i % 2) * 14;
+    cctx.fillStyle = "#6a3a78"; cctx.fillRect(x0, y0, w, 4); cctx.fillRect(x0 + 4, y0 - 3, w - 10, 3); cctx.fillRect(x0 + 10, y0 - 5, 10, 2);
+    cctx.fillStyle = "#b4668a"; cctx.fillRect(x0 + 4, y0 - 3, w - 14, 1); cctx.fillRect(x0 + 10, y0 - 5, 8, 1);
+  }
+  return { W, H, bg, stars, far, mid, near, clouds, rider: null, riderKey: null };
+}
 
-  // three tree bands, near ones darker and taller
-  const bands = [
-    { y: H * 0.62, col: "#2f4433", trunk: "#26382b", w: 26, h: 66, step: 22 },
-    { y: H * 0.74, col: "#263a2a", trunk: "#1d2c21", w: 34, h: 88, step: 30 },
-    { y: H * 0.88, col: "#1a2a1d", trunk: "#141f16", w: 46, h: 118, step: 44 },
-  ];
-  for (const b of bands) {
-    for (let x = -20; x < W + 40; x += b.step) {
-      const jx = x + Math.round(rnd() * 10 - 5);
-      const jh = b.h + Math.round(rnd() * 18 - 9);
-      ctx.fillStyle = b.trunk;
-      ctx.fillRect(jx + b.w / 2 - 3, b.y - jh * 0.25, 6, jh * 0.3);
-      ctx.fillStyle = b.col;
-      // conifer: three stacked triangles
-      for (let t = 0; t < 3; t++) {
-        const ty = b.y - jh + (jh * 0.28) * t;
-        const tw = b.w * (0.6 + 0.2 * t);
-        ctx.beginPath();
-        ctx.moveTo(jx + b.w / 2, ty);
-        ctx.lineTo(jx + b.w / 2 + tw / 2, ty + jh * 0.4);
-        ctx.lineTo(jx + b.w / 2 - tw / 2, ty + jh * 0.4);
-        ctx.closePath();
-        ctx.fill();
-      }
+function titleRiderFrames(cache) {
+  const creature = COSMETICS.find((c) => c.id === S.equippedCreature);
+  const pal = ELEMENT_PALETTES[creature ? creature.id : "creature_fire"] || ELEMENT_PALETTES.creature_fire;
+  const key = (S.hero || "boy") + pal.body + getSwordTier();
+  if (cache.riderKey === key) return cache.rider;
+  const rider = heroSprite(S.hero || "boy", true);
+  const heroPal = heroPaletteForTier(getSwordTier());
+  const over = Math.max(0, -SADDLE_Y);
+  cache.rider = PIX_DRAGON.frames.map((_, f) => {
+    const c = makeTextureCanvas(PIX_DRAGON.w + 2, PIX_DRAGON.h + over + 2);
+    const cx = c.getContext("2d");
+    paintPixelFrame(cx, PIX_DRAGON, f, pal, 1, 1, over + 1);
+    paintPixelFrame(cx, rider, f % rider.frames.length, heroPal, 1, SADDLE_X + 1, SADDLE_Y + over + 1);
+    return c;
+  });
+  cache.riderKey = key;
+  return cache.rider;
+}
+
+function runTitleScene() {
+  if (titleSceneRunning) return;
+  titleSceneRunning = true;
+  const want = titleSceneHeight();
+  if (!titleSceneCache || titleSceneCache.H !== want) titleSceneCache = buildTitleScene(want);
+  const embers = [];
+  const tick = (now) => {
+    const cv = document.querySelector(".journey-bg");
+    if (!cv) { titleSceneRunning = false; return; }
+    requestAnimationFrame(tick);
+    if (document.hidden) return;
+    const T = titleSceneCache, ctx = cv.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(T.bg, 0, 0);
+    for (const st of T.stars) {
+      const tw = Math.sin(now / 500 + st.p);
+      if (tw < -0.2) continue;
+      ctx.fillStyle = tw > 0.7 ? "#ffffff" : "#b8a8e8";
+      ctx.fillRect(st.x, st.y, 1, 1);
+      if (st.big && tw > 0.8) { ctx.fillRect(st.x - 1, st.y, 3, 1); ctx.fillRect(st.x, st.y - 1, 1, 3); }
     }
-  }
-
-  // ground
-  ctx.fillStyle = "#3a3524";
-  ctx.fillRect(0, H * 0.88, W, H * 0.12);
-  ctx.fillStyle = "#4a4a2c";
-  ctx.fillRect(0, H * 0.88, W, 4);
-  for (let i = 0; i < 40; i++) {
-    ctx.fillStyle = i % 2 ? "#2f2b1c" : "#453f28";
-    ctx.fillRect(rnd() * W, H * 0.89 + rnd() * H * 0.1, 3, 2);
-  }
+    const scroll = (layer, speed, y = 0) => {
+      const off = Math.floor((now * speed) % (T.W * 2));
+      ctx.drawImage(layer, -off, y); ctx.drawImage(layer, T.W * 2 - off, y);
+    };
+    scroll(T.clouds, 0.004, Math.round(T.H * 0.3));
+    scroll(T.far, 0.003);
+    // the rider loops across between the far and mid layers
+    const frames = titleRiderFrames(T);
+    const f = frames[Math.floor(now / 260) % frames.length];
+    const period = 9000, t = (now % period) / period;
+    const x = Math.round(-60 + t * (T.W + 90));
+    const y = Math.round(T.H * 0.46 - 20 + Math.sin(t * Math.PI * 4) * 5);
+    ctx.drawImage(f, x, y);
+    if (Math.random() < 0.5) embers.push({ x: x + 6, y: y + 30 + Math.random() * 6, vx: -0.02, vy: 0.01, life: 900, age: 0 });
+    scroll(T.mid, 0.008);
+    scroll(T.near, 0.016);
+    for (let i = embers.length - 1; i >= 0; i--) {
+      const e = embers[i]; e.age += 16; if (e.age > e.life) { embers.splice(i, 1); continue; }
+      e.x += e.vx * 16; e.y += e.vy * 16;
+      ctx.fillStyle = e.age < 300 ? "#ffcf3a" : (e.age < 600 ? "#ff7a1c" : "#8a2a1a");
+      ctx.fillRect(Math.round(e.x), Math.round(e.y), 1, 1);
+    }
+  };
+  requestAnimationFrame(tick);
 }
 
 function playingHTML() {
@@ -3296,9 +3699,6 @@ function playingHTML() {
   const equippedCreatureItem = COSMETICS.find((c) => c.id === S.equippedCreature);
   const equippedPetItem = COSMETICS.find((c) => c.id === S.equippedPet);
   const playerEmoji = equippedCreatureItem ? equippedCreatureItem.emoji : "🐲";
-  // Backdrop isn't a purchase anymore -- it rotates on its own, holding
-  // steady for two waves at a time (see arenaBackgroundForWave).
-  const arenaBgStyle = ` style="background:${arenaBackgroundForWave(S.wave)};"`;
   const xpLabel = levelInfo.maxed ? "MAX LEVEL" : `${levelInfo.remaining}/${levelInfo.needed} XP`;
   const xpFillPct = levelInfo.maxed ? 100 : Math.round((levelInfo.remaining / levelInfo.needed) * 100);
 
@@ -3307,7 +3707,7 @@ function playingHTML() {
   const playerImpacts = S.impacts.filter((i) => i.side === "player")
     .map(() => `<div class="impact-burst">💥</div>`).join("");
 
-  const fireballDots = "●".repeat(Math.min(3, S.fireballCharge)) + "○".repeat(Math.max(0, 3 - S.fireballCharge));
+  const fireballPips = [0, 1, 2].map((i) => `<i class="${i < S.fireballCharge ? "on" : ""}"></i>`).join("");
 
   // Math Rank: the kid's own skill track, separate from dragon level.
   // Shown as progress toward the next rank rather than a raw accuracy
@@ -3319,9 +3719,9 @@ function playingHTML() {
     : `${Math.min(rankStat.seen, MASTERY.minSeen)}/${MASTERY.minSeen} to next`;
 
   return `
-  <div class="arena"${arenaBgStyle}>
+  <div class="arena">
     <div class="topbar">
-      <span>Wave ${S.wave}${meta.isBoss ? " · BOSS" : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</span>
+      <span class="wave-chip">Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</span>
       <span class="topbar-actions">
         <button class="icon-btn" data-action="switch-save">💾</button>
         <button class="icon-btn" data-action="open-shop">🪙 ${S.coins} · 🛒</button>
@@ -3345,7 +3745,9 @@ function playingHTML() {
       <div class="enemy-multi-row">
         ${S.enemies.map((en, i) => `
           <div class="enemy-mini ${i === S.activeEnemyIdx ? "active" : ""} ${en.hp <= 0 ? "defeated" : ""}">
-            <div class="enemy-mini-emoji" style="filter: drop-shadow(0 0 6px ${en.glow})">${en.hp > 0 ? en.emoji : "💀"}</div>
+            ${PIX_ENEMY_ART[en.name]
+              ? `<canvas class="mini-icon" data-pix="enemy:${esc(en.name)}" width="64" height="56"></canvas>`
+              : `<div class="enemy-mini-emoji" style="display:block">${en.hp > 0 ? en.emoji : "💀"}</div>`}
             <div class="mini-hpbar"><div class="mini-hpfill" style="width:${Math.max(0, Math.round((en.hp / en.maxHP) * 100))}%; background:${en.glow}"></div></div>
             ${en.poisonTurns > 0 ? `<div class="poison-tag">☠️</div>` : ""}
           </div>
@@ -3355,7 +3757,7 @@ function playingHTML() {
         <span class="cname">${activeEnemy.name}${activeEnemy.poisonTurns > 0 ? " ☠️" : ""}</span>
         <span class="hp-num">${Math.max(0, activeEnemy.hp)}/${activeEnemy.maxHP}</span>
       </div>
-      <div class="hpbar"><div class="hpfill enemy-fill" style="width:${ePct}%; background:${activeEnemy.glow}"></div></div>
+      <div class="hpbar" data-bar="enemy"><div class="hpghost" style="width:${ePct}%"></div><div class="hpfill enemy-fill" style="width:${ePct}%; background:${activeEnemy.glow}"></div></div>
     </div>
 
     <!-- Big Phaser-rendered battle stage (dragon + monster) overlays this
@@ -3372,20 +3774,20 @@ function playingHTML() {
         <span class="cname">Your Dragon</span>
         <span class="hp-num">${Math.max(0, S.playerHP)}/${S.playerMaxHP}</span>
       </div>
-      <div class="hpbar"><div class="hpfill player-fill" style="width:${pPct}%"></div></div>
+      <div class="hpbar" data-bar="player"><div class="hpghost" style="width:${pPct}%"></div><div class="hpfill player-fill${pPct <= 30 ? " low" : ""}" style="width:${pPct}%"></div></div>
     </div>
 
     <div class="problem-card">
       <div class="streak">${S.streak > 1 ? `🔥 ${S.streak} in a row` : "&nbsp;"}</div>
-      <div class="problem">${S.problem.a} ${S.problem.op} ${S.problem.b} = ?</div>
+      <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span></div>
       <div class="choices">
         ${S.choices.map((c) => `
-          <button class="btn choice"
+          <button class="btn choice ${choiceFeedbackClass(c)}"
             data-action="answer" data-value="${c}" ${S.locked ? "disabled" : ""}>${c}</button>
         `).join("")}
       </div>
       <button class="btn fireball-btn ${S.fireballReady ? "ready" : ""}" data-action="cast-fireball" ${(!S.fireballReady || S.locked) ? "disabled" : ""}>
-        🔥 Fireball ${fireballDots}
+        🔥 Fireball <span class="charge-pips">${fireballPips}</span>
       </button>
       <div class="potion-row">
         <button class="btn potion-btn ${healReady ? "ready hp-ready" : ""}" data-action="use-potion-hp" ${(!healReady || S.locked || S.coins < 5) ? "disabled" : ""}>
@@ -3426,7 +3828,7 @@ function upgradeItemHTML(item) {
   }
   return `
     <div class="shop-item">
-      <div class="shop-item-emoji">${item.emoji}</div>
+      <div class="shop-item-emoji px-icon"><canvas data-pix="sword:${DMG_UPGRADES.indexOf(item) + 1}" width="36" height="36"></canvas></div>
       <div class="shop-item-info">
         <div class="shop-item-name">${item.name}</div>
         <div class="shop-item-type">+1 DMG · Requires Lv.${item.levelReq}</div>
@@ -3466,7 +3868,7 @@ function cosmeticItemHTML(item) {
     ? `Pet · +${item.dmgPercent}% ATK on attack${item.levelReq ? ` · Requires Lv.${item.levelReq}` : ""}`
     : `${COSMETIC_TYPE_LABEL[item.type]}${item.levelReq ? ` · Requires Lv.${item.levelReq}` : ""}`;
   const iconHtml = ELEMENT_PALETTES[item.id]
-    ? `<div class="shop-item-emoji dragon-icon">${dragonIconSVG(ELEMENT_PALETTES[item.id])}</div>`
+    ? `<div class="shop-item-emoji px-icon"><canvas data-pix="mount:${item.id}" width="${PIX_DRAGON.w + 2}" height="${PIX_DRAGON.h + 2}"></canvas></div>`
     : `<div class="shop-item-emoji">${item.emoji}</div>`;
   return `
     <div class="shop-item">
@@ -3567,14 +3969,55 @@ function renderNow() {
   else if (S.screen === "title") html += titleHTML();
   else if (S.screen === "playing") html += playingHTML();
   else if (S.screen === "gameover") html += gameOverHTML();
+  else if (S.screen === "info") html += infoHTML();
   if (S.shopOpen) html += shopHTML();
   if (S.levelUpData) html += levelUpHTML();
   html += "</div>";
   if (S.bossIntro) html += bossIntroHTML();
+  const bars = captureBars();
   root.innerHTML = html;
+  animateBars(bars);
   if (S.screen === "heroselect") paintHeroPortraits();
-  if (S.screen === "title") paintJourneyForest();
+  if (S.screen === "title") runTitleScene();
+  paintPixIcons();
   syncBattleStage();
+}
+
+/* render() rebuilds the DOM wholesale, which would make HP bars jump
+   instead of animate. Before each rebuild, remember how wide every bar
+   currently LOOKS; afterwards, start the new bars from there and let the
+   CSS transition carry them to their real value. The ghost bar lags
+   behind on damage so the size of a hit stays visible for a moment. */
+function captureBars() {
+  const out = {};
+  root.querySelectorAll("[data-bar]").forEach((bar) => {
+    const bw = bar.getBoundingClientRect().width || 1;
+    const fill = bar.querySelector(".hpfill"), ghost = bar.querySelector(".hpghost");
+    out[bar.dataset.bar] = {
+      fill: fill ? (fill.getBoundingClientRect().width / bw) * 100 : null,
+      ghost: ghost ? (ghost.getBoundingClientRect().width / bw) * 100 : null,
+    };
+  });
+  return out;
+}
+function animateBars(prev) {
+  const jobs = [];
+  root.querySelectorAll("[data-bar]").forEach((bar) => {
+    const old = prev[bar.dataset.bar];
+    if (!old) return;
+    const fill = bar.querySelector(".hpfill"), ghost = bar.querySelector(".hpghost");
+    const target = fill ? fill.style.width : null;
+    if (fill && old.fill !== null && target) { fill.style.transition = "none"; fill.style.width = `${old.fill}%`; }
+    if (ghost && old.ghost !== null) {
+      ghost.style.transition = "none";
+      ghost.style.width = `${Math.max(old.ghost, parseFloat(target) || 0)}%`;
+    }
+    jobs.push(() => {
+      if (fill && target) { fill.style.transition = ""; fill.style.width = target; }
+      if (ghost && target) { ghost.style.transition = ""; ghost.style.width = target; }
+    });
+  });
+  if (jobs.length) { void root.offsetWidth; jobs.forEach((j) => j()); }
 }
 
 /* ---------- events (delegated) ---------- */
@@ -3605,11 +4048,37 @@ root.addEventListener("click", (e) => {
   else if (action === "cancel-delete-save") cancelDeleteSave();
   else if (action === "add-save") addSave();
   else if (action === "switch-save") switchSave();
+  else if (action === "open-info") { S.screen = "info"; render(); }
+  else if (action === "close-info") { S.screen = "saveselect"; render(); }
 });
 
 window.addEventListener("beforeunload", () => { saveActiveSlot(); flushSaves(); });
 // iOS Safari often never fires beforeunload; pagehide is the reliable one.
 window.addEventListener("pagehide", () => { saveActiveSlot(); flushSaves(); });
+// Android apps are rarely "closed" -- they're backgrounded and later
+// killed by the OS without any unload event. Save on every hide.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { saveActiveSlot(); flushSaves(); }
+});
+
+/* Android system Back button (Capacitor App plugin; absent in a plain
+   browser, where this is a no-op). Without a handler Back would quit the
+   app from any screen. Instead it steps back one layer at a time:
+   overlay -> title -> save list -> exit. Mid-battle it goes to the save
+   list, which saves the fight so it resumes exactly where it was. */
+(function wireAndroidBack() {
+  const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (!App || !App.addListener) return;
+  App.addListener("backButton", () => {
+    if (S.bossIntro || S.levelUpData) return;           // must be answered on screen
+    if (S.shopOpen) { S.shopOpen = false; render(); return; }
+    if (S.screen === "info") { S.screen = "saveselect"; render(); return; }
+    if (S.screen === "saveselect") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
+    if (S.screen === "heroselect") { S.screen = "saveselect"; render(); return; }
+    switchSave();
+  });
+  App.addListener("pause", () => { saveActiveSlot(); flushSaves(); });
+})();
 
 /* ---------- Phaser battle stage ----------
    Everything below replaces the old hand-rolled <canvas> pixel rig. The
@@ -3646,47 +4115,6 @@ const ELEMENT_PALETTES = {
   creature_shadow: { body: "#3a2452", dark: "#160a26", belly: "#7a5aa0", wing: "#5c3f7a", horn: "#0a0512" },
   creature_skeleton:{ body: "#e8e2d0", dark: "#a89f85", belly: "#fff8e8", wing: "#d8d0b8", horn: "#5a5040" },
 };
-
-/* Returns the dragon's shape list for a given palette, in the shared 0-48
-   coordinate space. `moves` tags which parts get the idle wing-lift offset
-   applied by the Phaser renderer (ignored by the static SVG icon). */
-function dragonPixelParts(p) {
-  return [
-    { id: "tail", moves: false, type: "poly", fill: p.dark, pts: [[14,30],[8,32],[4,28],[3,22],[4,17],[10,18],[7,22],[8,28],[10,33],[18,34]] },
-    { id: "legBack", moves: false, type: "rect", fill: p.dark, x: 14, y: 34, w: 8, h: 9 },
-    { id: "legBackFootL", moves: false, type: "rect", fill: p.horn, x: 13, y: 41, w: 4, h: 3 },
-    { id: "legBackFootR", moves: false, type: "rect", fill: p.horn, x: 18, y: 41, w: 4, h: 3 },
-    { id: "wing", moves: true, type: "poly", fill: p.wing, pts: [[16,20],[22,3],[26,12],[31,5],[30,17],[22,21]] },
-    { id: "spike1", moves: true, type: "poly", fill: p.horn, pts: [[17,20],[19,16],[21,20]] },
-    { id: "spike2", moves: true, type: "poly", fill: p.horn, pts: [[22,20],[24,14],[26,20]] },
-    { id: "spike3", moves: true, type: "poly", fill: p.horn, pts: [[27,20],[29,15],[31,20]] },
-    { id: "body", moves: false, type: "ellipse", fill: p.body, cx: 24, cy: 29, rx: 12, ry: 10 },
-    { id: "belly", moves: false, type: "ellipse", fill: p.belly, cx: 25, cy: 33, rx: 6.5, ry: 6 },
-    { id: "legFront", moves: false, type: "rect", fill: p.body, x: 26, y: 36, w: 6, h: 8 },
-    { id: "legFrontFootL", moves: false, type: "rect", fill: p.horn, x: 25, y: 43, w: 3, h: 3 },
-    { id: "legFrontFootR", moves: false, type: "rect", fill: p.horn, x: 29, y: 43, w: 3, h: 3 },
-    { id: "head", moves: false, type: "circle", fill: p.body, cx: 36, cy: 21, r: 7 },
-    { id: "snout", moves: false, type: "poly", fill: p.body, pts: [[40,18],[46,20],[46,24],[40,25]] },
-    { id: "jaw", moves: false, type: "ellipse", fill: p.belly, cx: 41, cy: 23, rx: 3.5, ry: 2 },
-    { id: "horn", moves: false, type: "poly", fill: p.horn, pts: [[32,16],[34,8],[36,15]] },
-    { id: "eye", moves: false, type: "circle", fill: DRAGON_OUTLINE, cx: 38, cy: 20, r: 1.6 },
-    { id: "eyeShine", moves: false, type: "circle", fill: "#ffffff", cx: 38.5, cy: 19.5, r: 0.6 },
-  ];
-}
-
-/* Renders the shared shape list as a small static SVG icon (used in the
-   shop list). Purely presentational, no animation. */
-function dragonIconSVG(palette) {
-  const parts = dragonPixelParts(palette);
-  const shapes = parts.map((s) => {
-    if (s.type === "rect") return `<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" fill="${s.fill}" stroke="${DRAGON_OUTLINE}" stroke-width="0.6"/>`;
-    if (s.type === "circle") return `<circle cx="${s.cx}" cy="${s.cy}" r="${s.r}" fill="${s.fill}" stroke="${s.fill === DRAGON_OUTLINE ? "none" : DRAGON_OUTLINE}" stroke-width="0.6"/>`;
-    if (s.type === "ellipse") return `<ellipse cx="${s.cx}" cy="${s.cy}" rx="${s.rx}" ry="${s.ry}" fill="${s.fill}" stroke="${DRAGON_OUTLINE}" stroke-width="0.6"/>`;
-    if (s.type === "poly") return `<polygon points="${s.pts.map((pt) => pt.join(",")).join(" ")}" fill="${s.fill}" stroke="${DRAGON_OUTLINE}" stroke-width="0.6"/>`;
-    return "";
-  }).join("");
-  return `<svg viewBox="0 0 ${DRAGON_ART_GRID} ${DRAGON_ART_GRID}" xmlns="http://www.w3.org/2000/svg">${shapes}</svg>`;
-}
 
 function hexToRgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -6296,17 +6724,50 @@ const PIX_ENEMY_ART = {
 };
 
 /* Derives the 3-step light ramp for a material from its base colour, so
-   authoring only needs one colour per slot. */
+   authoring only needs one colour per slot.
+
+   v2: the ramp is HUE-SHIFTED, not just lightened/darkened. Highlights
+   drift toward warm yellow and shadows toward cool violet -- the standard
+   pixel-art trick that makes flat ramps look painted and lit instead of
+   "the same colour, but greyer". Memoized since every bake calls it for
+   every slot. */
+const PIX_RAMP_CACHE = new Map();
+function hueToward(h, target, amt) {
+  let d = ((target - h + 540) % 360) - 180;
+  return (h + d * amt + 360) % 360;
+}
+function hueShiftHex(hex, target, amt, satMul = 1) {
+  const [h, sat, l] = rgbToHsl(...hexToRgb(hex));
+  if (sat < 0.06) return hex;
+  return rgbToHex(...hslToRgb(hueToward(h, target, amt), Math.min(1, sat * satMul), l));
+}
 function pixRamp(base) {
-  return [shiftHex(base, 0.30), base, shiftHex(base, -0.34)];
+  let r = PIX_RAMP_CACHE.get(base);
+  if (r) return r;
+  // Same light/dark steps as the original ramp, then the hue nudge.
+  const [h, , l] = rgbToHsl(...hexToRgb(base));
+  const warmSkin = h < 50 && l > 0.55;   // a cool shift on skin reads as bruising
+  const hi = hueShiftHex(shiftHex(base, 0.30), 55, 0.12, 1.05);
+  const lo = hueShiftHex(shiftHex(base, -0.36), 255, warmSkin ? 0.03 : 0.1, 1.1);
+  r = [hi, base, lo];
+  PIX_RAMP_CACHE.set(base, r);
+  return r;
 }
 
 const PIX_OUTLINE = "#140d10";
 
 /* Paints one sprite frame onto a 2D context at `scale` device pixels per
-   sprite pixel. Draws the outline pass first: any empty pixel orthogonally
-   touching a filled one. Doing it at bake time keeps the silhouette
-   readable against the dark arena without authoring it by hand. */
+   sprite pixel.
+
+   v2 lighting passes, all resolved at bake time so the frame loop still
+   only blits one image per sprite:
+     1. Tinted outline ("sel-out"): the silhouette edge takes a very dark
+        version of the colour it touches instead of flat black, so a green
+        slime gets a deep-green rim and a fire dragon a deep-red one.
+     2. Rim light: pixels whose top neighbour is empty catch the (upper)
+        light; pixels sitting on empty space below pick up occlusion.
+     3. Specular pips: the lightest pixel of a lit edge gets a tiny
+        near-white highlight on big sprites. */
 function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy) {
   const rows = sprite.frames[frameIdx];
   const w = sprite.w, h = sprite.h;
@@ -6320,36 +6781,74 @@ function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy) {
     if (x < 0 || y < 0 || x >= w || y >= h) return ".";
     return rows[y].charAt(x * 2);
   };
+  const filled = (x, y) => slotAt(x, y) !== ".";
 
-  ctx.fillStyle = PIX_OUTLINE;
+  const colorAt = (x, y) => {
+    const row = rows[y];
+    const ch = row.charAt(x * 2);
+    if (ch === ".") return null;
+    if (ch === "e") return PIX_OUTLINE;
+    if (ch === "W") return "#ffffff";
+    const ramp = ramps[ch];
+    if (!ramp) return null;
+    const sh = parseInt(row.charAt(x * 2 + 1), 10);
+    return ramp[isNaN(sh) ? 1 : sh];
+  };
+  const outlineFor = (x, y) => {
+    // The first filled orthogonal neighbour decides the tint.
+    const nb = [[x, y + 1], [x, y - 1], [x - 1, y], [x + 1, y]];
+    for (const [nx, ny] of nb) {
+      if (!filled(nx, ny)) continue;
+      const ch = slotAt(nx, ny);
+      const ramp = ramps[ch];
+      if (!ramp) return PIX_OUTLINE;
+      return shiftHex(ramp[2], -0.62);
+    }
+    return PIX_OUTLINE;
+  };
+
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      if (slotAt(x, y) !== ".") continue;
-      if (slotAt(x + 1, y) !== "." || slotAt(x - 1, y) !== "." ||
-          slotAt(x, y + 1) !== "." || slotAt(x, y - 1) !== ".") {
+      if (filled(x, y)) continue;
+      if (filled(x + 1, y) || filled(x - 1, y) || filled(x, y + 1) || filled(x, y - 1)) {
+        ctx.fillStyle = outlineFor(x, y);
         ctx.fillRect(ox + x * scale, oy + y * scale, scale, scale);
       }
     }
   }
 
+  const big = w * h >= 900;
   for (let y = 0; y < h; y++) {
     const row = rows[y];
     for (let x = 0; x < w; x++) {
       const ch = row.charAt(x * 2);
-      if (ch === ".") continue;
-      let col;
-      if (ch === "e") col = PIX_OUTLINE;
-      else if (ch === "W") col = "#ffffff";
-      else {
-        const ramp = ramps[ch];
-        if (!ramp) continue;
-        const sh = parseInt(row.charAt(x * 2 + 1), 10);
-        col = ramp[isNaN(sh) ? 1 : sh];
+      let col = colorAt(x, y);
+      if (!col) continue;
+      if (ch !== "e" && ch !== "W") {
+        const topOpen = !filled(x, y - 1);
+        const leftOpen = !filled(x - 1, y);
+        const bottomOpen = !filled(x, y + 1);
+        if (topOpen) col = shiftHex(col, 0.22);
+        else if (leftOpen) col = shiftHex(col, 0.1);
+        else if (bottomOpen) col = shiftHex(col, -0.16);
+        if (big && topOpen && leftOpen) col = shiftHex(col, 0.45);
       }
       ctx.fillStyle = col;
       ctx.fillRect(ox + x * scale, oy + y * scale, scale, scale);
     }
   }
+}
+
+/* White silhouette of a baked frame, used for the one-frame "hit flash"
+   every good action game has. */
+function makeFlashCanvas(src, color) {
+  const c = makeTextureCanvas(src.width, src.height);
+  const cx = c.getContext("2d");
+  cx.drawImage(src, 0, 0);
+  cx.globalCompositeOperation = "source-in";
+  cx.fillStyle = color || "#ffffff";
+  cx.fillRect(0, 0, c.width, c.height);
+  return c;
 }
 
 /* Largest whole-number scale that fits the sprite in the space available.
@@ -6543,7 +7042,7 @@ function drawSprite(ctx, s) {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(s.canvas, -s.canvas.width * (s.originX ?? 0), -s.canvas.height * (s.originY ?? 0));
   } else if (s.kind === "text" && s.text) {
-    ctx.font = `${s.fontSize}px ${s.fontFamily || "MedievalSharp, serif"}`;
+    ctx.font = `${s.fontWeight || 400} ${s.fontSize}px ${s.fontFamily || "'Pixelify Sans', monospace"}`;
     ctx.textAlign = "center";
     ctx.textBaseline = s.baseline || "middle";
     if (s.glow) { ctx.shadowColor = s.glow; ctx.shadowBlur = s.glowBlur || 12; }
@@ -6574,6 +7073,319 @@ function makeTextureCanvas(w, h) {
   return c;
 }
 
+/* ---------- pixel helpers shared by the stage, title and icons ---------- */
+
+/* Builds a sprite in the PIX_* row format from drawing calls instead of
+   hand-typed strings. Used for the few small props (chest, swords) that
+   are simple enough to describe as rectangles. */
+function gridSprite(w, h, paint) {
+  const g = Array.from({ length: h }, () => Array(w).fill(".."));
+  const set = (x, y, code) => { if (x >= 0 && y >= 0 && x < w && y < h) g[y][x] = code; };
+  const rect = (x, y, rw, rh, code) => { for (let j = 0; j < rh; j++) for (let i = 0; i < rw; i++) set(x + i, y + j, code); };
+  paint(set, rect);
+  return g.map((r) => r.join(""));
+}
+
+const CHEST_PIX_PALETTE = { body: "#b0703a", dark: "#6e3f1c", horn: "#f2c440", belly: "#fff1a8", wing: "#ffffff" };
+function chestRows(open) {
+  return gridSprite(28, 24, (set, rect) => {
+    // body
+    rect(3, 12, 22, 10, "b1"); rect(3, 20, 22, 2, "b2"); rect(3, 16, 22, 1, "d1");
+    rect(6, 12, 2, 10, "h1"); rect(20, 12, 2, 10, "h1");
+    rect(3, 21, 22, 1, "d2");
+    if (!open) {
+      rect(5, 5, 18, 1, "b0"); rect(4, 6, 20, 1, "b0"); rect(3, 7, 22, 4, "b1"); rect(3, 10, 22, 1, "b2");
+      rect(6, 5, 2, 6, "h0"); rect(20, 5, 2, 6, "h0");
+      rect(3, 11, 22, 1, "h2");
+      rect(12, 9, 4, 5, "h0"); set(13, 11, "e1"); set(14, 11, "e1"); set(13, 12, "e1");
+    } else {
+      // lid flipped back, glowing loot inside
+      rect(4, 2, 20, 1, "d0"); rect(3, 3, 22, 5, "d1"); rect(6, 2, 2, 6, "h1"); rect(20, 2, 2, 6, "h1");
+      rect(3, 8, 22, 4, "l1"); rect(5, 9, 18, 2, "l0");
+      [[7, 9], [10, 8], [13, 9], [16, 8], [19, 9], [12, 10], [15, 10], [9, 10], [18, 10]].forEach(([x, y]) => set(x, y, "h0"));
+      rect(3, 11, 22, 1, "h2");
+    }
+  });
+}
+const PIX_CHEST_IDLE = { w: 28, h: 24, frames: [chestRows(false)] };
+const PIX_CHEST_OPEN = { w: 28, h: 24, frames: [chestRows(true)] };
+
+/* Sword icons for the shop's power upgrades, recoloured per SWORD_TIERS. */
+const PIX_SWORD = { w: 16, h: 16, frames: [gridSprite(16, 16, (set) => {
+  for (let i = 0; i < 10; i++) { set(5 + i, 10 - i, "B0"); set(5 + i, 11 - i, "B1"); set(6 + i, 11 - i, "B2"); }
+  set(15, 0, "B0");
+  [[2, 10], [3, 11], [4, 12], [5, 13], [6, 14], [3, 9], [7, 13]].forEach(([x, y]) => set(x, y, "g1"));
+  [[4, 11], [3, 12], [2, 13]].forEach(([x, y]) => set(x, y, "H1"));
+  set(1, 14, "g0"); set(2, 14, "g1"); set(1, 13, "g2");
+})] };
+
+/* Paints frame 0 of a pixel sprite into a canvas at the largest integer
+   scale that fits, centred. Used for every small UI portrait: shop
+   mounts, swords, multi-enemy minis, the boss intro, hero cards. */
+function paintSpriteInto(cv, art, palette, frame = 0) {
+  const ctx = cv.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const scale = Math.max(1, Math.floor(Math.min((cv.width - 2) / art.w, (cv.height - 2) / art.h)));
+  const ox = Math.round((cv.width - art.w * scale) / 2);
+  const oy = Math.round((cv.height - art.h * scale) / 2);
+  paintPixelFrame(ctx, art, frame % art.frames.length, palette, scale, ox, oy);
+}
+
+/* Resolves a data-pix="kind:key" attribute to sprite art + palette. */
+function pixIconSpec(spec) {
+  const [kind, ...rest] = spec.split(":");
+  const key = rest.join(":");
+  if (kind === "enemy" || kind === "boss") {
+    const a = PIX_ENEMY_ART[key];
+    return a ? { art: a.art, palette: a.palette } : null;
+  }
+  if (kind === "mount") return { art: PIX_DRAGON, palette: ELEMENT_PALETTES[key] || ELEMENT_PALETTES.starter };
+  if (kind === "sword") {
+    const t = SWORD_TIERS[Math.max(0, Math.min(SWORD_TIERS.length - 1, Number(key) || 0))];
+    return { art: PIX_SWORD, palette: { bladeColor: t.blade, hiltColor: t.hilt, gold: "#e0a832" } };
+  }
+  if (kind === "chest") return { art: PIX_CHEST_IDLE, palette: CHEST_PIX_PALETTE };
+  return null;
+}
+
+function paintPixIcons() {
+  document.querySelectorAll("canvas[data-pix]").forEach((cv) => {
+    const spec = pixIconSpec(cv.dataset.pix);
+    if (spec) paintSpriteInto(cv, spec.art, spec.palette);
+  });
+}
+
+/* 4x4 Bayer matrix for ordered dithering -- the "checkerboard blend"
+   that 16-bit games used for smooth skies with a tiny palette. */
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
+
+function mulberry(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* Dithered vertical gradient through a list of colour stops. */
+function paintDitherSky(ctx, w, h, stops) {
+  const img = ctx.createImageData(w, h);
+  const rgb = stops.map(hexToRgb);
+  const bands = rgb.length - 1;
+  for (let y = 0; y < h; y++) {
+    const t = (y / Math.max(1, h - 1)) * bands;
+    const i = Math.min(bands - 1, Math.floor(t));
+    // quantize each band to 4 steps, dither between neighbouring steps
+    const f = (t - i) * 4;
+    const step = Math.floor(f), frac = f - step;
+    for (let x = 0; x < w; x++) {
+      const s = Math.min(4, step + (frac > BAYER4[(y & 3) * 4 + (x & 3)] ? 1 : 0)) / 4;
+      const a = rgb[i], b = rgb[i + 1];
+      const o = (y * w + x) * 4;
+      img.data[o] = a[0] + (b[0] - a[0]) * s;
+      img.data[o + 1] = a[1] + (b[1] - a[1]) * s;
+      img.data[o + 2] = a[2] + (b[2] - a[2]) * s;
+      img.data[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/* Filled ridge line (mountains / hills) from a 1-D random walk. */
+function paintRidge(ctx, w, h, rnd, baseY, amp, rough, color, capColor) {
+  let y = baseY + (rnd() - 0.5) * amp;
+  let vy = 0;
+  const tops = [];
+  for (let x = 0; x < w; x++) {
+    vy += (rnd() - 0.5) * rough;
+    vy *= 0.9;
+    y += vy;
+    y += (baseY - y) * 0.03;
+    y = Math.max(baseY - amp, Math.min(baseY + amp, y));
+    tops.push(Math.round(y));
+  }
+  ctx.fillStyle = color;
+  for (let x = 0; x < w; x++) ctx.fillRect(x, tops[x], 1, h - tops[x]);
+  if (capColor) {
+    ctx.fillStyle = capColor;
+    for (let x = 0; x < w; x++) if (tops[x] < baseY - amp * 0.45) ctx.fillRect(x, tops[x], 1, 2 + (x % 3 === 0 ? 1 : 0));
+  }
+  return tops;
+}
+
+function paintPine(ctx, x, groundY, hgt, col, hi) {
+  ctx.fillStyle = col;
+  ctx.fillRect(x, groundY - 2, 1, 3);
+  for (let j = 0; j < hgt; j++) {
+    const half = Math.floor((j % Math.max(3, Math.floor(hgt / 3))) * 0.6 + j * 0.28);
+    ctx.fillRect(x - half, groundY - hgt + j, half * 2 + 1, 1);
+  }
+  if (hi) { ctx.fillStyle = hi; for (let j = 2; j < hgt; j += 3) ctx.fillRect(x - Math.floor(j * 0.25), groundY - hgt + j, 1, 1); }
+}
+
+/* Five battle biomes. Index order matches the old CSS BACKGROUND_STYLES
+   (lava, lagoon, forest, night, ice) so arenaBiomeForWave keeps the same
+   "two waves per backdrop" rhythm. */
+const BIOMES = [
+  { id: "volcano", sky: ["#1a0508", "#4a0f0c", "#a8321a", "#ff7a2c"], far: "#2a0c0c", mid: "#3d1410", ground: ["#6a2a1a", "#4a1c14", "#2a0e0a"], rim: "#ff9a4a", fx: "embers", glow: "#ff5a1a" },
+  { id: "lagoon", sky: ["#0d2a4a", "#1f5f8a", "#5ab4d0", "#ffd9a0"], far: "#2a5a78", mid: "#1d4a5e", ground: ["#e8c98a", "#c9a868", "#8a6e40"], rim: "#fff1c4", fx: "sparkle", glow: "#9fe8ff" },
+  { id: "forest", sky: ["#0e1f2a", "#1e3f3a", "#3f6a4a", "#9ac27a"], far: "#20403a", mid: "#16302a", ground: ["#4f8a3a", "#34602a", "#1e3a1a"], rim: "#a8e070", fx: "fireflies", glow: "#d8ff8a" },
+  { id: "night", sky: ["#05040f", "#140c2e", "#2e1a52", "#5a2e6e"], far: "#1c1236", mid: "#120a24", ground: ["#4a4058", "#302840", "#1a1424"], rim: "#9a8ac0", fx: "stars", glow: "#c9a8ff" },
+  { id: "ice", sky: ["#0a1a2e", "#1a3a5e", "#4a7eaa", "#cfe8f5"], far: "#6a8aaa", mid: "#3a5a7a", ground: ["#eaf6ff", "#bcd8ec", "#7a9cbc"], rim: "#ffffff", fx: "snow", glow: "#bff4ff" },
+];
+
+function arenaBiomeForWave(wave) {
+  const pairIndex = Math.floor((Math.max(1, wave) - 1) / 2);
+  return Math.floor(seededRandom01(pairIndex) * BIOMES.length);
+}
+
+/* Paints one biome's static layers at low resolution (1 art pixel each).
+   The stage scales it up with nearest-neighbour, so this runs once per
+   biome change / resize rather than per frame. Returns the canvas plus
+   anything the animated layer needs (star positions, ground line). */
+function paintBiome(biomeIdx, bw, bh, groundY) {
+  const B = BIOMES[biomeIdx];
+  const c = makeTextureCanvas(bw, bh);
+  const ctx = c.getContext("2d");
+  const rnd = mulberry(1000 + biomeIdx * 77);
+  paintDitherSky(ctx, bw, groundY + 2, B.sky);
+  const extra = { stars: [] };
+
+  if (B.id === "night" || B.id === "ice" || B.id === "forest") {
+    const n = B.id === "night" ? 60 : 24;
+    for (let i = 0; i < n; i++) extra.stars.push({ x: Math.floor(rnd() * bw), y: Math.floor(rnd() * groundY * 0.55), p: rnd() * 6.28, big: rnd() < 0.15 });
+  }
+  if (B.id === "night") {
+    // moon with crater dither
+    const mx = Math.floor(bw * 0.78), my = Math.floor(bh * 0.2), r = Math.max(6, Math.floor(bh * 0.1));
+    for (let y = -r - 3; y <= r + 3; y++) for (let x = -r - 3; x <= r + 3; x++) {
+      const d = Math.hypot(x, y);
+      if (d <= r) { ctx.fillStyle = (x + y) % 5 === 0 && d < r - 2 ? "#d8d0b0" : (x < -r * 0.3 && y < 0 ? "#fffbe8" : "#f0e8c8"); ctx.fillRect(mx + x, my + y, 1, 1); }
+      else if (d <= r + 3 && ((x + y) & 1)) { ctx.fillStyle = "#6a5a9a"; ctx.fillRect(mx + x, my + y, 1, 1); }
+    }
+  }
+  if (B.id === "lagoon") {
+    const sx = Math.floor(bw * 0.25), sy = Math.floor(groundY * 0.62), r = Math.max(7, Math.floor(bh * 0.1));
+    for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r) { ctx.fillStyle = y < -r / 3 ? "#fff6c8" : "#ffd68a"; ctx.fillRect(sx + x, sy + y, 1, 1); }
+  }
+  if (B.id === "volcano") {
+    const r = Math.max(8, Math.floor(bh * 0.12)), sx = Math.floor(bw * 0.2), sy = Math.floor(groundY * 0.3);
+    for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r && ((x ^ y) & 1 || x * x + y * y < r * r * 0.6)) { ctx.fillStyle = "#ff5a2a"; ctx.fillRect(sx + x, sy + y, 1, 1); }
+  }
+  if (B.id === "ice") {
+    // aurora ribbons
+    for (let band = 0; band < 3; band++) {
+      const col = ["#5affc8", "#5ad8ff", "#a88aff"][band];
+      for (let x = 0; x < bw; x++) {
+        const y = Math.floor(groundY * (0.18 + band * 0.08) + Math.sin(x / (9 + band * 3) + band) * 4);
+        ctx.globalAlpha = 0.35; ctx.fillStyle = col; ctx.fillRect(x, y, 1, 3 + ((x >> 2) % 3));
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // far range
+  const farY = Math.floor(groundY * 0.55);
+  paintRidge(ctx, bw, bh, rnd, farY, groundY * 0.2, 1.6, B.far, B.id === "ice" || B.id === "night" ? shiftHex(B.far, 0.45) : null);
+  if (B.id === "volcano") {
+    // volcano cone with lava crown and a lava river
+    const vx = Math.floor(bw * 0.62), top = Math.floor(groundY * 0.28), base = groundY;
+    for (let y = top; y < base; y++) {
+      const half = Math.floor(5 + (y - top) * 0.9);
+      ctx.fillStyle = "#3a1210"; ctx.fillRect(vx - half, y, half * 2, 1);
+      ctx.fillStyle = "#4e1a14"; ctx.fillRect(vx - half, y, Math.floor(half * 0.6), 1);
+    }
+    ctx.fillStyle = "#ffb04a"; ctx.fillRect(vx - 5, top, 10, 1);
+    ctx.fillStyle = "#ff5a1a"; ctx.fillRect(vx - 4, top + 1, 8, 1);
+    let lx = vx;
+    for (let y = top + 2; y < base; y++) { lx += Math.round((rnd() - 0.45) * 1.6); ctx.fillStyle = y % 3 ? "#ff5a1a" : "#ffb04a"; ctx.fillRect(lx, y, 2, 1); }
+  }
+
+  // mid layer
+  const midY = Math.floor(groundY * 0.82);
+  const midTops = paintRidge(ctx, bw, bh, rnd, midY, groundY * 0.08, 1.2, B.mid, null);
+  if (B.id === "forest" || B.id === "ice") {
+    for (let x = 2; x < bw; x += 4 + Math.floor(rnd() * 5)) paintPine(ctx, x, midTops[x] + 3, 10 + Math.floor(rnd() * 12), shiftHex(B.mid, -0.25), B.id === "ice" ? "#e8f6ff" : shiftHex(B.mid, 0.25));
+  }
+  if (B.id === "night") {
+    // castle silhouette with lit windows
+    const cx = Math.floor(bw * 0.18), baseY = midTops[cx] + 2, col = "#0a0616";
+    ctx.fillStyle = col;
+    ctx.fillRect(cx - 10, baseY - 14, 20, 16);
+    [[-12, 22], [10, 18], [-2, 28]].forEach(([dx, hh]) => {
+      ctx.fillRect(cx + dx, baseY - hh, 5, hh);
+      for (let i = 0; i < 5; i += 2) ctx.fillRect(cx + dx + i, baseY - hh - 2, 1, 2);
+    });
+    ctx.fillStyle = "#ffcf5a";
+    [[-11, 16], [11, 12], [0, 22], [-5, 8], [5, 8]].forEach(([dx, dy]) => ctx.fillRect(cx + dx, baseY - dy, 1, 2));
+  }
+  if (B.id === "lagoon") {
+    // sea band with light streaks, then palm silhouettes
+    const seaY = Math.floor(groundY * 0.72);
+    ctx.fillStyle = "#1f6f98"; ctx.fillRect(0, seaY, bw, groundY - seaY + 2);
+    ctx.fillStyle = "#2f8fb8"; for (let y = seaY + 2; y < groundY; y += 3) ctx.fillRect(0, y, bw, 1);
+    [Math.floor(bw * 0.08), Math.floor(bw * 0.92)].forEach((px, k) => {
+      const lean = k ? -1 : 1;
+      ctx.fillStyle = "#3a2a1a";
+      for (let j = 0; j < 22; j++) ctx.fillRect(px + Math.round(Math.sin(j / 9) * 3 * lean), groundY - j, 2, 1);
+      const tx = px + Math.round(Math.sin(21 / 9) * 3 * lean), ty = groundY - 22;
+      ctx.fillStyle = "#1e5a2a";
+      for (let a = 0; a < 6; a++) { const ang = -Math.PI + a * (Math.PI / 5); for (let r = 0; r < 9; r++) ctx.fillRect(tx + Math.round(Math.cos(ang) * r), ty + Math.round(Math.sin(ang) * r * 0.5 + r * r * 0.05), 2, 1); }
+    });
+  }
+  if (B.id === "volcano") {
+    for (let x = 0; x < bw; x += 7 + Math.floor(rnd() * 8)) {
+      const hh = 4 + Math.floor(rnd() * 8);
+      ctx.fillStyle = "#1e0806";
+      for (let j = 0; j < hh; j++) ctx.fillRect(x - Math.floor((hh - j) / 3), midTops[Math.min(bw - 1, x)] - j + 2, 1 + Math.floor((hh - j) / 1.5), 1);
+    }
+  }
+
+  // ground platform: rim highlight, top face, textured body
+  const [gTop, gMid, gDark] = B.ground;
+  ctx.fillStyle = gMid; ctx.fillRect(0, groundY, bw, bh - groundY);
+  ctx.fillStyle = gTop; ctx.fillRect(0, groundY, bw, 2);
+  ctx.fillStyle = B.rim; for (let x = 0; x < bw; x += 1) if ((x * 7) % 11 < 6) ctx.fillRect(x, groundY, 1, 1);
+  for (let y = groundY + 3; y < bh; y++) for (let x = 0; x < bw; x++) {
+    const v = rnd();
+    const t = (y - groundY) / Math.max(1, bh - groundY);
+    if (v < 0.08 + t * 0.35 && BAYER4[(y & 3) * 4 + (x & 3)] < t + 0.2) { ctx.fillStyle = gDark; ctx.fillRect(x, y, 1, 1); }
+    else if (v > 0.985) { ctx.fillStyle = gTop; ctx.fillRect(x, y, 1, 1); }
+  }
+  if (B.id === "forest" || B.id === "lagoon") {
+    ctx.fillStyle = B.id === "forest" ? "#7ac04a" : "#f5deaa";
+    for (let x = 1; x < bw; x += 3 + Math.floor(rnd() * 4)) { ctx.fillRect(x, groundY - 1, 1, 1); if (rnd() < 0.5) ctx.fillRect(x + 1, groundY - 2, 1, 2); }
+  }
+  if (B.id === "volcano") {
+    ctx.fillStyle = "#ff7a2c";
+    for (let i = 0; i < 6; i++) { let x = Math.floor(rnd() * bw), y = groundY + 3 + Math.floor(rnd() * (bh - groundY - 4)); for (let k = 0; k < 6; k++) { ctx.fillRect(x, y, 1, 1); x += 1; y += rnd() < 0.5 ? 0 : (rnd() < 0.5 ? -1 : 1); } }
+  }
+  extra.groundY = groundY;
+  return { canvas: c, extra };
+}
+
+/* Dark corners so the combatants sit in a pool of light. Baked once. */
+function makeVignette(w, h, rgb = "8,4,16", strength = 0.6) {
+  const c = makeTextureCanvas(w, h);
+  const ctx = c.getContext("2d");
+  const g = ctx.createRadialGradient(w / 2, h * 0.62, Math.min(w, h) * 0.25, w / 2, h * 0.55, Math.max(w, h) * 0.75);
+  g.addColorStop(0, `rgba(${rgb},0)`);
+  g.addColorStop(1, `rgba(${rgb},${strength})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  return c;
+}
+
+const AURA_FX = {
+  aura: { colors: ["#ffd08a", "#ff7a2c", "#ff3b1a"], vy: -0.05, glow: "#ff7a2c" },
+  sparkle: { colors: ["#ffffff", "#fff3a8", "#ffd76b"], vy: -0.015, glow: "#fff3a8", twinkle: true },
+  frostaura: { colors: ["#ffffff", "#bff4ff", "#7fd8ff"], vy: 0.02, glow: "#7fd8ff" },
+  rainbowaura: { colors: null, vy: -0.03, glow: "#ff8aff" },
+};
+
 /* ---------- the stage ---------- */
 const BattleStage = {
   ready: false,
@@ -6582,75 +7394,92 @@ const BattleStage = {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.dragonStrips = []; this.enemyStrips = [];
-    this.popups = []; this.effects = [];
+    this.dragonFlash = []; this.enemyFlash = [];
+    this.popups = []; this.effects = []; this.parts = []; this.fx = [];
     this._enemySprite = null; this._enemySpriteKey = null;
     this._palette = ELEMENT_PALETTES.starter; this._mountPalette = null; this._hero = "boy";
     this._enemyKind = "text"; this._enemyName = null; this._chestMode = "idle";
     this._chestEnemyRef = null; this._chestWasOpen = false;
-    this.playerLayer = { x: 0, y: 0, scale: 1 };
-    this.enemyLayer = { x: 0, y: 0, scale: 1 };
+    this._trackRef = null; this._trackHp = 0; this._deadRef = null;
+    this._biome = -1; this._bg = null; this._bgPrev = null; this._bgFadeStart = 0;
+    this._aura = null; this._enemyGlow = "#ffffff"; this._isBoss = false; this._poisoned = false; this._charging = false;
+    this.playerLayer = { x: 0, y: 0, scale: 1, alpha: 1 };
+    this.enemyLayer = { x: 0, y: 0, scale: 1, alpha: 1 };
     this.enemyText = makeSprite("text", { text: "", fontSize: 40, color: "#ffffff", originY: 1, baseline: "bottom" });
-    this.playerAura = makeSprite("text", { text: "", fontSize: 40, alpha: 0.55, visible: false });
     this.playerAccessory = makeSprite("text", { text: "", fontSize: 20 });
     this.playerPet = makeSprite("text", { text: "", fontSize: 20 });
-    this.auraPulse = 1;
-    this.shakeUntil = 0; this.flashUntil = 0;
+    this.shakeUntil = 0; this.shakeMag = 0; this.flashUntil = 0; this.whiteUntil = 0;
+    this.enemyFlashUntil = 0; this.playerFlashUntil = 0;
+    this._last = 0; this._spawnAcc = 0;
     this.ready = true;
   },
 
   layout(w, h) {
     this.W = w; this.H = h;
     this.unit = Math.max(1, (h * 0.6) / DRAGON_ART_GRID);
-    this.playerBase = { x: w * 0.28, y: h * 0.93 };
-    this.enemyBase = { x: w * 0.74, y: h * 0.90 };
+    this.ap = Math.max(2, Math.round(h / 84));          // CSS px per background art pixel
+    this.bw = Math.ceil(w / this.ap); this.bh = Math.ceil(h / this.ap);
+    this.groundArtY = Math.floor(this.bh * 0.8);
+    this.groundY = this.groundArtY * this.ap;
+    this.playerBase = { x: w * 0.3, y: h * 0.93 };
+    this.enemyBase = { x: w * 0.74, y: h * 0.92 };
     this.dragonOriginX = -(DRAGON_ART_GRID * this.unit) / 2;
     this.dragonOriginY = -(DRAGON_ART_GRID * this.unit) + this.unit * 5;
     this.playerLayer.x = this.playerBase.x; this.playerLayer.y = this.playerBase.y;
     this.enemyLayer.x = this.enemyBase.x; this.enemyLayer.y = this.enemyBase.y;
     const enemyFont = Math.round(Math.min(w * 0.32, h * 0.62));
     this.enemyText.fontSize = enemyFont;
-    this.playerAura.fontSize = Math.round(enemyFont * 1.05);
-    this.playerAura.y = this.dragonOriginY * 0.55;
     this.playerAccessory.fontSize = Math.round(this.unit * 4);
     this.playerAccessory.x = DRAGON_ART_GRID * this.unit * 0.28;
     this.playerAccessory.y = this.dragonOriginY - this.unit;
     this.playerPet.fontSize = Math.round(this.unit * 4);
     this.playerPet.x = this.dragonOriginX - this.unit;
     this.playerPet.y = -this.unit;
-    this.lineWidth = Math.max(1, this.unit * 0.5);
-    this._cachedPaletteKey = null; this._cachedChestKey = null; this._enemySpriteKey = null;
+    this.vignette = makeVignette(w, h);
+    this.bossVignette = makeVignette(w, h, "255,30,10", 0.85);
+    this._cachedPaletteKey = null; this._enemySpriteKey = null; this._biome = -1; this._bgPrev = null;
     this.rebuildCaches();
   },
 
+  setBiome(idx) {
+    if (idx === this._biome || !this.bw) return;
+    const first = this._biome === -1;
+    this._bgPrev = first ? null : this._bg;
+    this._biome = idx;
+    this._bg = paintBiome(idx, this.bw, this.bh, this.groundArtY);
+    this._bgFadeStart = performance.now();
+    this.parts = this.parts.filter((p) => !p.ambient);
+  },
+
   rebuildCaches() {
-    const ox = this.dragonOriginX, oy = this.dragonOriginY, u = this.unit;
-    if (u === undefined) return;
+    if (this.unit === undefined) return;
     const paletteKey = `${this._hero || "boy"}|` + (this._mountPalette
       ? `${this._mountPalette.body}|${this._mountPalette.dark}|${this._mountPalette.belly}|${this._mountPalette.wing}|${this._mountPalette.horn}`
-      : "onfoot");
+      : "onfoot") + `|${this._swordTier || 0}`;
     if (paletteKey !== this._cachedPaletteKey) { this._cachedPaletteKey = paletteKey; this.bakePlayer(); }
-    if (this._chestMode !== this._cachedChestKey) {
-      this._cachedChestKey = this._chestMode;
-      this._chestCache = buildPartsCache(chestPixelParts(this._chestMode), ox, oy, u);
+    let wantKey = null, wantSprite = null;
+    if (this._enemyKind === "chest") {
+      wantKey = "__chest_" + this._chestMode;
+      wantSprite = { art: this._chestMode === "open" ? PIX_CHEST_OPEN : PIX_CHEST_IDLE, palette: CHEST_PIX_PALETTE, sizePct: 0.62 };
+    } else if (this._enemyName && PIX_ENEMY_ART[this._enemyName]) {
+      wantKey = this._enemyName; wantSprite = PIX_ENEMY_ART[this._enemyName];
     }
-    const wantEnemy = this._enemyKind === "chest" ? null : (this._enemyName || null);
-    const wantSprite = wantEnemy ? (PIX_ENEMY_ART[wantEnemy] || null) : null;
-    const wantKey = wantSprite ? wantEnemy : null;
     if (wantKey !== this._enemySpriteKey) { this._enemySpriteKey = wantKey; this._enemySprite = wantSprite; this.bakeEnemy(); }
   },
 
   bakePlayer() {
     const u = this.unit;
     if (!u || !isFinite(u)) return;
-    this.dragonStrips = [];
+    this.dragonStrips = []; this.dragonFlash = [];
     const mounted = !!this._mountPalette;
     const rider = heroSprite(this._hero, mounted);
+    const heroPal = heroPaletteForTier(this._swordTier || 0);
     const targetH = DRAGON_ART_GRID * u;
     const scale = mounted ? pixScaleFor(PIX_DRAGON, targetH) : pixScaleFor(rider, targetH * 0.78);
     this._pixScale = scale;
     const overhangY = mounted ? Math.max(0, -SADDLE_Y) : 0;
-    const texW = (mounted ? PIX_DRAGON.w : rider.w) * scale;
-    const texH = ((mounted ? PIX_DRAGON.h : rider.h) + overhangY) * scale;
+    const texW = ((mounted ? PIX_DRAGON.w : rider.w) + 2) * scale;
+    const texH = ((mounted ? PIX_DRAGON.h : rider.h) + overhangY + 2) * scale;
     if (texW <= 0 || texW > 4096 || texH > 4096) return;
     const frames = mounted ? PIX_DRAGON.frames.length : rider.frames.length;
     for (let f = 0; f < frames; f++) {
@@ -6658,15 +7487,16 @@ const BattleStage = {
       const cx = c.getContext("2d");
       cx.imageSmoothingEnabled = false;
       if (mounted) {
-        paintPixelFrame(cx, PIX_DRAGON, f, this._mountPalette, scale, 0, overhangY * scale);
-        paintPixelFrame(cx, rider, f % rider.frames.length, HERO_PALETTE, scale, SADDLE_X * scale, (SADDLE_Y + overhangY) * scale);
+        paintPixelFrame(cx, PIX_DRAGON, f, this._mountPalette, scale, scale, (overhangY + 1) * scale);
+        paintPixelFrame(cx, rider, f % rider.frames.length, heroPal, scale, (SADDLE_X + 1) * scale, (SADDLE_Y + overhangY + 1) * scale);
       } else {
-        paintPixelFrame(cx, rider, f, HERO_PALETTE, scale, 0, 0);
+        paintPixelFrame(cx, rider, f, heroPal, scale, scale, scale);
       }
       this.dragonStrips.push(makeSprite("image", { canvas: c, originX: 0, originY: 0 }));
+      this.dragonFlash.push(makeSprite("image", { canvas: makeFlashCanvas(c), originX: 0, originY: 0 }));
     }
     this._stripBaseX = Math.round(this.dragonOriginX + (targetH - texW) / 2);
-    this._stripBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH);
+    this._stripBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH + scale);
   },
 
   /* sizePct lets minions (e.g. Ooze Spawn) render smaller than a full-size
@@ -6674,56 +7504,202 @@ const BattleStage = {
   bakeEnemy() {
     const u = this.unit;
     if (!u || !isFinite(u)) return;
-    this.enemyStrips = [];
+    this.enemyStrips = []; this.enemyFlash = [];
     const sprite = this._enemySprite;
     if (!sprite) return;
     const fullH = DRAGON_ART_GRID * u;
     const targetH = fullH * (sprite.sizePct || 1);
     const scale = pixScaleFor(sprite.art, targetH);
-    const texW = sprite.art.w * scale, texH = sprite.art.h * scale;
+    const texW = (sprite.art.w + 2) * scale, texH = (sprite.art.h + 2) * scale;
     if (texW <= 0 || texW > 4096) return;
     for (let f = 0; f < sprite.art.frames.length; f++) {
       const c = makeTextureCanvas(texW, texH);
       const cx = c.getContext("2d");
       cx.imageSmoothingEnabled = false;
-      paintPixelFrame(cx, sprite.art, f, sprite.palette, scale, 0, 0);
+      paintPixelFrame(cx, sprite.art, f, sprite.palette, scale, scale, scale);
       this.enemyStrips.push(makeSprite("image", { canvas: c, originX: 0, originY: 0 }));
+      this.enemyFlash.push(makeSprite("image", { canvas: makeFlashCanvas(c), originX: 0, originY: 0 }));
     }
     this._enemyPixScale = scale;
     this._enemyBaseX = Math.round(this.dragonOriginX + (fullH - texW) / 2);
-    this._enemyBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH);
+    this._enemyBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH + scale);
   },
 
+  /* ---------- particles ---------- */
+  spawn(p) {
+    if (this.parts.length > 420) return;
+    this.parts.push(Object.assign({ vx: 0, vy: 0, g: 0, life: 600, age: 0, size: this.ap, color: "#fff", drag: 1 }, p));
+  },
+  burst(x, y, colors, count, speed, opts = {}) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const v = speed * (0.35 + Math.random() * 0.65);
+      this.spawn(Object.assign({
+        x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - (opts.up || 0),
+        g: opts.g ?? 0.0009, life: (opts.life || 520) * (0.6 + Math.random() * 0.6),
+        color: colors[(Math.random() * colors.length) | 0], size: this.ap * (Math.random() < 0.3 ? 2 : 1), drag: 0.985,
+      }, opts.extra || {}));
+    }
+  },
+
+  updateParticles(dt) {
+    for (let i = this.parts.length - 1; i >= 0; i--) {
+      const p = this.parts[i];
+      p.age += dt;
+      if (p.age >= p.life) { this.parts.splice(i, 1); continue; }
+      p.vy += p.g * dt;
+      p.vx *= Math.pow(p.drag, dt / 16); p.vy *= Math.pow(p.drag, dt / 16);
+      if (p.wobble) p.vx += Math.sin((p.age + p.seed) / 260) * p.wobble;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+    }
+  },
+
+  drawParticles(ctx, now, front) {
+    const ap = this.ap;
+    for (const p of this.parts) {
+      if (!!p.front !== front) continue;
+      const t = p.age / p.life;
+      let a = p.fadeIn ? Math.min(1, p.age / 250) * (1 - t) : (t > 0.6 ? 1 - (t - 0.6) / 0.4 : 1);
+      if (p.twinkle) a *= 0.5 + 0.5 * Math.sin(now / 90 + p.seed);
+      if (a <= 0) continue;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = p.hue !== undefined ? `hsl(${(p.hue + now / 6) % 360},95%,65%)` : p.color;
+      const s = p.size;
+      const x = Math.round(p.x / ap) * ap, y = Math.round(p.y / ap) * ap;
+      if (p.shape === "plus" && s >= ap) {
+        ctx.fillRect(x - ap, y, ap * 3, ap); ctx.fillRect(x, y - ap, ap, ap * 3);
+      } else if (p.shape === "ring") {
+        ctx.fillRect(x - ap, y, ap, ap); ctx.fillRect(x + ap, y, ap, ap); ctx.fillRect(x, y - ap, ap, ap); ctx.fillRect(x, y + ap, ap, ap);
+      } else {
+        ctx.fillRect(x, y, s, s);
+      }
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  spawnAmbient(dt, now) {
+    const B = BIOMES[this._biome];
+    if (!B) return;
+    this._spawnAcc += dt;
+    const every = { embers: 90, sparkle: 260, fireflies: 320, stars: 900, snow: 70 }[B.fx] || 400;
+    while (this._spawnAcc > every) {
+      this._spawnAcc -= every;
+      const W = this.W, H = this.H;
+      if (B.fx === "embers") this.spawn({ ambient: true, x: Math.random() * W, y: H + 4, vx: (Math.random() - 0.5) * 0.02, vy: -0.03 - Math.random() * 0.05, life: 5000, color: Math.random() < 0.5 ? "#ffb04a" : "#ff5a1a", wobble: 0.0006, seed: Math.random() * 999, fadeIn: true });
+      else if (B.fx === "snow") this.spawn({ ambient: true, x: Math.random() * W * 1.2, y: -4, vx: -0.012, vy: 0.025 + Math.random() * 0.03, life: 9000, color: "#ffffff", wobble: 0.0004, seed: Math.random() * 999, fadeIn: true, size: this.ap * (Math.random() < 0.25 ? 2 : 1) });
+      else if (B.fx === "fireflies") this.spawn({ ambient: true, x: Math.random() * W, y: this.groundY * (0.4 + Math.random() * 0.55), vx: (Math.random() - 0.5) * 0.02, vy: (Math.random() - 0.5) * 0.01, life: 4200, color: "#e8ff8a", wobble: 0.0008, seed: Math.random() * 999, fadeIn: true, twinkle: true });
+      else if (B.fx === "sparkle") this.spawn({ ambient: true, x: Math.random() * W, y: this.groundY * (0.74 + Math.random() * 0.2), life: 900, color: "#ffffff", twinkle: true, seed: Math.random() * 999, fadeIn: true, shape: Math.random() < 0.3 ? "plus" : null });
+      else if (B.fx === "stars") this.spawn({ ambient: true, x: Math.random() * W, y: Math.random() * this.groundY * 0.4, vx: -0.35, vy: 0.12, life: 420, color: "#ffffff", drag: 1 });
+    }
+    // Effect-driven ambient: aura, poison bubbles, boss wind-up.
+    if (this._aura && Math.random() < dt / 70) {
+      const A = AURA_FX[this._aura];
+      const x = this.playerLayer.x + (Math.random() - 0.5) * this.unit * 30;
+      const y = this.playerLayer.y + this.dragonOriginY * (0.1 + Math.random() * 0.8);
+      this.spawn({ x, y, vx: (Math.random() - 0.5) * 0.02, vy: A.vy - Math.random() * 0.02, life: 1100, color: A.colors ? A.colors[(Math.random() * A.colors.length) | 0] : "#fff", hue: A.colors ? undefined : Math.random() * 360, twinkle: !!A.twinkle, seed: Math.random() * 999, fadeIn: true, shape: A.twinkle && Math.random() < 0.4 ? "plus" : null });
+    }
+    if (this._poisoned && Math.random() < dt / 160) {
+      this.spawn({ x: this.enemyLayer.x + (Math.random() - 0.5) * this.unit * 20, y: this.enemyLayer.y - this.unit * 6, vy: -0.04, life: 1300, color: Math.random() < 0.5 ? "#7cff5a" : "#b06aff", wobble: 0.0005, seed: Math.random() * 999, shape: "ring", front: true });
+    }
+    if (this._charging && Math.random() < dt / 30) {
+      const a = Math.random() * Math.PI * 2, r = this.unit * 26;
+      const cx = this.enemyLayer.x, cy = this.enemyLayer.y + this.dragonOriginY * 0.5;
+      this.spawn({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.7, vx: -Math.cos(a) * 0.12, vy: -Math.sin(a) * 0.09, life: 520, color: Math.random() < 0.5 ? "#7de0c4" : "#c9a8ff", front: true });
+    }
+  },
+
+  /* ---------- frame ---------- */
   draw(now) {
     const ctx = this.ctx;
     if (!ctx || !this.unit) return;
+    const dt = Math.min(50, now - (this._last || now)); this._last = now;
+    this.spawnAmbient(dt, now);
+    this.updateParticles(dt);
+    ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, this.W, this.H);
     let sx = 0, sy = 0;
     if (now < this.shakeUntil) {
-      const mag = this.unit * 0.5;
-      sx = (Math.random() - 0.5) * mag; sy = (Math.random() - 0.5) * mag;
+      const mag = this.unit * (this.shakeMag || 0.5);
+      sx = Math.round((Math.random() - 0.5) * mag); sy = Math.round((Math.random() - 0.5) * mag);
     }
     ctx.save(); ctx.translate(sx, sy);
-    this.auraPulse = 1 + Math.sin(now / 450) * 0.08;
+    this.drawBackground(ctx, now);
+    this.drawParticles(ctx, now, false);
     this.drawPlayer(ctx, now);
     this.drawEnemy(ctx, now);
-    for (const p of this.popups) drawSprite(ctx, p);
     for (const e of this.effects) drawSprite(ctx, e);
+    this.drawFx(ctx, now);
+    this.drawParticles(ctx, now, true);
+    for (const p of this.popups) drawSprite(ctx, p);
     ctx.restore();
+    if (this.vignette) ctx.drawImage(this.vignette, 0, 0, this.W, this.H);
+    if (this._isBoss && this.bossVignette) {
+      // pulsing red edges: "danger" without muddying the scene itself
+      ctx.globalAlpha = 0.45 + 0.3 * Math.sin(now / 300);
+      ctx.drawImage(this.bossVignette, 0, 0, this.W, this.H);
+      ctx.globalAlpha = 1;
+    }
     if (now < this.flashUntil) {
       const remain = (this.flashUntil - now) / 350;
       ctx.fillStyle = `rgba(255,40,40,${0.35 * remain})`;
       ctx.fillRect(0, 0, this.W, this.H);
     }
+    if (now < this.whiteUntil) {
+      ctx.fillStyle = `rgba(255,255,240,${0.55 * (this.whiteUntil - now) / 140})`;
+      ctx.fillRect(0, 0, this.W, this.H);
+    }
   },
 
-  groundShadow(ctx, rx, ry) {
+  drawBackground(ctx, now) {
+    if (!this._bg) return;
+    const W = this.bw * this.ap, H = this.bh * this.ap;
+    const fade = this._bgPrev ? Math.min(1, (now - this._bgFadeStart) / 700) : 1;
+    if (this._bgPrev && fade < 1) ctx.drawImage(this._bgPrev.canvas, 0, 0, W, H);
+    else this._bgPrev = null;
+    ctx.globalAlpha = fade;
+    ctx.drawImage(this._bg.canvas, 0, 0, W, H);
+    ctx.globalAlpha = 1;
+    const ap = this.ap;
+    for (const st of this._bg.extra.stars) {
+      const tw = Math.sin(now / 400 + st.p);
+      if (tw < -0.3) continue;
+      ctx.globalAlpha = 0.5 + tw * 0.5;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(st.x * ap, st.y * ap, ap, ap);
+      if (st.big && tw > 0.6) { ctx.fillRect((st.x - 1) * ap, st.y * ap, ap * 3, ap); ctx.fillRect(st.x * ap, (st.y - 1) * ap, ap, ap * 3); }
+    }
+    ctx.globalAlpha = 1;
+    const B = BIOMES[this._biome];
+    if (B && B.id === "volcano") {
+      ctx.globalAlpha = 0.1 + 0.07 * Math.sin(now / 520);
+      ctx.fillStyle = "#ff5a1a"; ctx.fillRect(0, this.groundY - ap * 8, this.W, ap * 8);
+      ctx.globalAlpha = 1;
+    }
+    if (B && B.id === "lagoon") {
+      ctx.fillStyle = "#c8f4ff";
+      for (let i = 0; i < 7; i++) {
+        const x = ((i * 53 + now / 40) % (this.W + 40)) - 20;
+        const y = this.groundY - ap * (2 + (i % 4) * 2);
+        ctx.globalAlpha = 0.6; ctx.fillRect(Math.round(x / ap) * ap, y, ap * 3, ap);
+      }
+      ctx.globalAlpha = 1;
+    }
+  },
+
+  groundShadow(ctx, rx, ry, glow) {
+    const cx = this.dragonOriginX + 24 * this.unit, cy = this.dragonOriginY + 46 * this.unit;
+    if (glow) {
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.ellipse(cx, cy, rx * this.unit * 1.25, ry * this.unit * 1.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    // stepped (pixel) shadow instead of a soft blur
+    const ap = this.ap;
     for (let i = 3; i >= 1; i--) {
-      ctx.fillStyle = "rgba(0,0,0,0.13)";
-      ctx.beginPath();
-      ctx.ellipse(this.dragonOriginX + 24 * this.unit, this.dragonOriginY + 46 * this.unit,
-                  rx * this.unit * (i / 3), ry * this.unit * (i / 3), 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillStyle = "rgba(0,0,0,0.16)";
+      const w = Math.round(rx * this.unit * (i / 3) / ap) * ap, h = Math.max(ap, Math.round(ry * this.unit * (i / 3) / ap) * ap);
+      ctx.fillRect(Math.round((cx - w) / ap) * ap, Math.round((cy - h / 2) / ap) * ap, w * 2, h);
     }
   },
 
@@ -6731,20 +7707,26 @@ const BattleStage = {
     ctx.save();
     ctx.translate(this.playerLayer.x, this.playerLayer.y);
     if (this.playerLayer.scale !== 1) ctx.scale(this.playerLayer.scale, this.playerLayer.scale);
-    if (this.playerAura.visible && this.playerAura.text) {
-      const saved = this.playerAura.scale;
-      this.playerAura.scale = this.auraPulse;
-      drawSprite(ctx, this.playerAura);
-      this.playerAura.scale = saved;
+    const aura = this._aura ? AURA_FX[this._aura] : null;
+    this.groundShadow(ctx, 15, 2.6, aura ? (aura.glow) : null);
+    if (aura) {
+      const cy = this.dragonOriginY * 0.45;
+      const g = ctx.createRadialGradient(0, cy, 0, 0, cy, this.unit * 26);
+      const col = this._aura === "rainbowaura" ? `hsl(${(now / 6) % 360},90%,65%)` : aura.glow;
+      g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.globalAlpha = 0.28 + 0.08 * Math.sin(now / 400);
+      ctx.fillStyle = g; ctx.fillRect(-this.unit * 28, cy - this.unit * 28, this.unit * 56, this.unit * 56);
+      ctx.globalAlpha = 1;
     }
-    this.groundShadow(ctx, 15, 2.6);
     const scale = this._pixScale || 1;
     const n = Math.max(1, this.dragonStrips.length);
     const frame = Math.floor(now / 380) % n;
     const bobPx = Math.sin(now / 500) > 0 ? 1 : 0;
-    for (let i = 0; i < this.dragonStrips.length; i++) {
-      const img = this.dragonStrips[i];
-      img.visible = i === frame;
+    const flash = now < this.playerFlashUntil;
+    const strips = flash ? this.dragonFlash : this.dragonStrips;
+    const img = strips[frame];
+    if (img) {
+      img.visible = true; img.alpha = this.playerLayer.alpha;
       img.x = this._stripBaseX; img.y = this._stripBaseY - bobPx * scale;
       drawSprite(ctx, img);
     }
@@ -6754,43 +7736,95 @@ const BattleStage = {
   },
 
   drawEnemy(ctx, now) {
+    const active = getActiveEnemy();
+    if (active && this._deadRef === active && !active.isChest) return;
     ctx.save();
     ctx.translate(this.enemyLayer.x, this.enemyLayer.y);
     if (this.enemyLayer.scale !== 1) ctx.scale(this.enemyLayer.scale, this.enemyLayer.scale);
-    this.groundShadow(ctx, 14, 2.4);
+    ctx.globalAlpha = this.enemyLayer.alpha;
+    this.groundShadow(ctx, 14, 2.4, this._enemyGlow);
+    ctx.globalAlpha = this.enemyLayer.alpha;
     const hasPixel = this.enemyStrips.length > 0;
     if (hasPixel) {
       const scale = this._enemyPixScale || 1;
       const n = this.enemyStrips.length;
       const frame = Math.floor(now / 420) % n;
-      const bobPx = Math.sin(now / 560) > 0 ? 1 : 0;
-      for (let i = 0; i < n; i++) {
-        const img = this.enemyStrips[i];
-        img.visible = i === frame;
+      const idle = this._enemyKind === "chest" && this._chestMode === "idle";
+      const bobPx = idle ? (Math.sin(now / 260) > 0.6 ? 1 : 0) : (Math.sin(now / 560) > 0 ? 1 : 0);
+      const flash = now < this.enemyFlashUntil;
+      const img = (flash ? this.enemyFlash : this.enemyStrips)[frame];
+      if (img) {
+        img.visible = true; img.alpha = this.enemyLayer.alpha;
         img.x = this._enemyBaseX; img.y = this._enemyBaseY - bobPx * scale;
         drawSprite(ctx, img);
+      }
+      if (this._enemyKind === "chest" && this._chestMode === "open" && Math.random() < 0.3) {
+        // loot glitter while the lid is open
+        this.spawn({ x: this.enemyLayer.x + (Math.random() - 0.5) * this.unit * 12, y: this.enemyLayer.y + this.dragonOriginY * 0.35, vy: -0.05, life: 700, color: Math.random() < 0.5 ? "#fff3a8" : "#ffcf3a", twinkle: true, seed: Math.random() * 999, front: true });
       }
     } else if (this._enemyKind === "text") {
       drawSprite(ctx, this.enemyText);
     }
-    if (this._enemyKind === "chest" && this._chestCache) {
-      const bob = this._chestMode === "idle" ? Math.sin(now / 500) * this.unit * 0.3 : 0;
-      for (const part of this._chestCache) {
-        for (const L of part.layers) {
-          ctx.globalAlpha = part.alpha;
-          ctx.fillStyle = L.color;
-          drawGeomCtx(ctx, L.geom, bob, false);
-        }
-        ctx.globalAlpha = 1;
-        if (part.hasOutline) {
-          ctx.lineWidth = this.lineWidth; ctx.strokeStyle = DRAGON_OUTLINE;
-          drawGeomCtx(ctx, part.outline, bob, true);
-        }
-      }
-    }
+    ctx.globalAlpha = 1;
     ctx.restore();
   },
 
+  /* Short-lived vector-free effects: slash arcs, impact stars, rings. All
+     plotted on the background art grid so they share the sprites' pixel
+     size instead of looking like smooth vector overlays. */
+  drawFx(ctx, now) {
+    const ap = this.ap;
+    const plot = (x, y, s = 1) => ctx.fillRect(Math.round(x / ap) * ap, Math.round(y / ap) * ap, ap * s, ap * s);
+    for (let i = this.fx.length - 1; i >= 0; i--) {
+      const f = this.fx[i];
+      const t = (now - f.t0) / f.dur;
+      if (t < 0) continue;
+      if (t >= 1) { this.fx.splice(i, 1); continue; }
+      if (f.type === "slash") {
+        const r = this.unit * 16;
+        const a0 = -2.4, a1 = 0.5;
+        const head = a0 + (a1 - a0) * Math.min(1, t * 1.8);
+        const tail = a0 + (a1 - a0) * Math.max(0, t * 1.8 - 0.6);
+        for (let a = tail; a <= head; a += 0.05) {
+          const k = (a - tail) / Math.max(0.001, head - tail);
+          const thick = Math.round(1 + k * 2);
+          ctx.fillStyle = k > 0.75 ? "#ffffff" : (k > 0.35 ? "#fff3a8" : "#ffb04a");
+          ctx.globalAlpha = 1 - t * 0.6;
+          for (let j = 0; j < thick; j++) plot(f.x + Math.cos(a) * (r - j * ap), f.y + Math.sin(a) * (r - j * ap) * 0.8);
+        }
+        ctx.globalAlpha = 1;
+      } else if (f.type === "star") {
+        const len = this.unit * (4 + 10 * Math.sin(Math.min(1, t * 1.6) * Math.PI));
+        ctx.fillStyle = t < 0.3 ? "#ffffff" : f.color;
+        ctx.globalAlpha = 1 - t;
+        for (let k = 0; k < 8; k++) {
+          const a = k * Math.PI / 4 + 0.2;
+          const L = k % 2 ? len * 0.55 : len;
+          for (let d = 0; d < L; d += ap) plot(f.x + Math.cos(a) * d, f.y + Math.sin(a) * d, d < L * 0.35 ? 2 : 1);
+        }
+        ctx.globalAlpha = 1;
+      } else if (f.type === "ring") {
+        const r = this.unit * f.r * (0.2 + t);
+        ctx.fillStyle = f.color; ctx.globalAlpha = 1 - t;
+        const steps = Math.max(16, Math.round(r / ap * 6));
+        for (let k = 0; k < steps; k++) { const a = (k / steps) * Math.PI * 2; plot(f.x + Math.cos(a) * r, f.y + Math.sin(a) * r * 0.75); }
+        ctx.globalAlpha = 1;
+      } else if (f.type === "fireball") {
+        const e = EASE.cubicIn(Math.min(1, t));
+        const x = f.x0 + (f.x1 - f.x0) * e;
+        const y = f.y0 + (f.y1 - f.y0) * e - Math.sin(e * Math.PI) * this.unit * 8;
+        const R = Math.round(this.unit * (2.4 + e * 1.8) / ap);
+        const rings = [["#d8321f", R + 1], ["#ff7a1c", R], ["#ffcf3a", R - 1], ["#fff3b0", Math.max(1, R - 2)]];
+        for (const [col, rr] of rings) {
+          ctx.fillStyle = col;
+          for (let yy = -rr; yy <= rr; yy++) for (let xx = -rr; xx <= rr; xx++) if (xx * xx + yy * yy <= rr * rr + (now / 60 % 2)) plot(x + xx * ap, y + yy * ap);
+        }
+        for (let k = 0; k < 3; k++) this.spawn({ x: x - ap * 2, y: y + (Math.random() - 0.5) * ap * 4, vx: -0.05 - Math.random() * 0.08, vy: (Math.random() - 0.5) * 0.04, life: 380, color: ["#ffcf3a", "#ff7a1c", "#d8321f", "#5a2a1a"][(Math.random() * 4) | 0], front: true });
+      }
+    }
+  },
+
+  /* ---------- state sync ---------- */
   syncFromState() {
     if (!this.ready) return;
     const levelInfo = levelFromXP(S.xp);
@@ -6801,15 +7835,21 @@ const BattleStage = {
     const accessory = COSMETICS.find((c) => c.id === S.equippedAccessory);
     const pet = COSMETICS.find((c) => c.id === S.equippedPet);
     this._hero = S.hero || "boy";
+    this._swordTier = getSwordTier();
     this._mountPalette = creature && ELEMENT_PALETTES[creature.id]
       ? ELEMENT_PALETTES[creature.id] : (creature ? ELEMENT_PALETTES.starter : null);
     this._palette = creature && ELEMENT_PALETTES[creature.id]
       ? ELEMENT_PALETTES[creature.id] : hueRotatePalette(ELEMENT_PALETTES.starter, this._hue);
-    this.playerAura.visible = !!aura; this.playerAura.text = aura ? aura.emoji : "";
+    this._aura = aura ? aura.id : null;
     this.playerAccessory.text = accessory ? accessory.emoji : "";
     this.playerPet.text = pet ? pet.emoji : "";
+    this.setBiome(arenaBiomeForWave(S.wave));
     const activeEnemy = getActiveEnemy();
+    this._isBoss = !!(activeEnemy && activeEnemy.isBoss && activeEnemy.hp > 0);
+    this._poisoned = !!(activeEnemy && activeEnemy.poisonTurns > 0 && activeEnemy.hp > 0);
+    this._charging = !!(activeEnemy && activeEnemy.charging > 0);
     if (activeEnemy) {
+      this._enemyGlow = activeEnemy.glow || "#ffffff";
       if (activeEnemy.isChest) {
         if (this._chestEnemyRef !== activeEnemy) { this._chestEnemyRef = activeEnemy; this._chestWasOpen = false; }
         this._enemyKind = "chest"; this._enemyName = null;
@@ -6818,6 +7858,9 @@ const BattleStage = {
           this._chestWasOpen = true;
           killTweensOf(this.enemyLayer);
           tweenTo(this.enemyLayer, { scale: { from: 1, to: 1.2 } }, { duration: 220, yoyo: true, ease: "quadOut" });
+          const cx = this.enemyBase.x, cy = this.enemyBase.y + this.dragonOriginY * 0.35;
+          this.burst(cx, cy, ["#ffcf3a", "#fff3a8", "#f2c440", "#ffffff"], 46, 0.28, { up: 0.22, g: 0.0011, life: 1100, extra: { front: true } });
+          this.fx.push({ type: "ring", x: cx, y: cy, r: 18, color: "#fff3a8", t0: performance.now(), dur: 450 });
         }
         this._chestMode = nowOpen ? "open" : "idle";
       } else {
@@ -6828,66 +7871,146 @@ const BattleStage = {
       }
     }
     this.rebuildCaches();
+    this.trackEnemyLife(activeEnemy);
   },
 
+  /* Detects a kill (hp crossed to 0 on the enemy we were watching) and a
+     new arrival (the active enemy object changed), which is what drives
+     the dissolve-into-pixels death and the drop-in entrance. */
+  trackEnemyLife(active) {
+    if (!active) return;
+    if (active !== this._trackRef) {
+      const first = this._trackRef === null;
+      this._trackRef = active; this._trackHp = active.hp;
+      if (!first && active.hp > 0) this.enemyEnter(active);
+      return;
+    }
+    if (this._trackHp > 0 && active.hp <= 0 && !active.isChest) this.enemyDie();
+    this._trackHp = active.hp;
+  },
+
+  enemyEnter(enemy) {
+    killTweensOf(this.enemyLayer);
+    this.enemyLayer.x = this.enemyBase.x;
+    tweenTo(this.enemyLayer, { y: { from: this.enemyBase.y - this.H * 0.6, to: this.enemyBase.y }, alpha: { from: 0, to: 1 } }, {
+      duration: 380, ease: "cubicIn",
+      onComplete: () => {
+        this.shakeUntil = performance.now() + 160; this.shakeMag = enemy.isBoss ? 1.4 : 0.6;
+        this.burst(this.enemyBase.x, this.enemyBase.y - this.ap, BIOMES[this._biome] ? BIOMES[this._biome].ground : ["#aaa"], enemy.isBoss ? 30 : 16, 0.16, { up: 0.1, g: 0.0008, life: 500 });
+      },
+    });
+  },
+
+  enemyDie() {
+    const strip = this.enemyStrips[0];
+    this._deadRef = this._trackRef;
+    const ox = this.enemyLayer.x + (this._enemyBaseX || 0), oy = this.enemyLayer.y + (this._enemyBaseY || 0);
+    const glow = this._enemyGlow || "#ffffff";
+    if (strip && strip.canvas) {
+      // Sample the sprite on its own pixel grid; every opaque sprite pixel
+      // becomes a particle that keeps that pixel's colour.
+      const c = strip.canvas, sc = this._enemyPixScale || 1;
+      let data = null;
+      try { data = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; } catch (e) { data = null; }
+      if (data) {
+        const step = Math.max(sc, Math.round(this.ap));
+        for (let y = 0; y < c.height; y += step) for (let x = 0; x < c.width; x += step) {
+          const o = (y * c.width + x) * 4;
+          if (data[o + 3] < 128 || Math.random() < 0.35) continue;
+          this.spawn({
+            x: ox + x, y: oy + y, vx: (Math.random() - 0.5) * 0.12, vy: -0.05 - Math.random() * 0.14,
+            g: 0.00025, life: 700 + Math.random() * 700, size: step,
+            color: `rgb(${data[o]},${data[o + 1]},${data[o + 2]})`, drag: 0.99, front: true,
+          });
+        }
+      }
+    }
+    const cx = this.enemyBase.x, cy = this.enemyBase.y + this.dragonOriginY * 0.45;
+    this.fx.push({ type: "ring", x: cx, y: cy, r: 22, color: glow, t0: performance.now(), dur: 500 });
+    this.burst(cx, cy, ["#ffcf3a", "#fff3a8"], 14, 0.22, { up: 0.18, g: 0.001, life: 900, extra: { front: true, shape: "plus" } });
+  },
+
+  /* ---------- combat hooks (called through BattleFX) ---------- */
   playerAttack() {
     killTweensOf(this.playerLayer);
     tweenTo(this.playerLayer, { x: this.playerBase.x + this.unit * 22 }, { duration: 175, yoyo: true, ease: "quadOut" });
+    const now = performance.now();
+    this.fx.push({ type: "slash", x: this.enemyBase.x - this.unit * 2, y: this.enemyBase.y + this.dragonOriginY * 0.5, t0: now + 130, dur: 260 });
+    for (let k = 0; k < 8; k++) this.spawn({ x: this.playerBase.x - this.unit * 6, y: this.playerBase.y - this.ap * (1 + Math.random() * 3), vx: -0.04 - Math.random() * 0.05, vy: -0.02, life: 300, color: "#e8e0f0" });
   },
   playerHit() {
     const now = performance.now();
-    this.shakeUntil = now + 300; this.flashUntil = now + 350;
+    this.shakeUntil = now + 300; this.shakeMag = 0.8; this.flashUntil = now + 350;
+    this.playerFlashUntil = now + 110;
     killTweensOf(this.playerLayer);
     tweenTo(this.playerLayer, { x: this.playerBase.x - this.unit * 6 }, { duration: 55, yoyo: true, repeat: 3, ease: "sineInOut" });
+    const cx = this.playerBase.x, cy = this.playerBase.y + this.dragonOriginY * 0.5;
+    this.burst(cx, cy, ["#ff5a4a", "#ffffff", "#ffb04a"], 16, 0.25, { life: 420 });
   },
   enemyAttack() {
     killTweensOf(this.enemyLayer);
+    this.enemyLayer.alpha = 1;
     tweenTo(this.enemyLayer, { x: this.enemyBase.x - this.W * 0.18 }, { duration: 175, yoyo: true, ease: "quadOut" });
   },
   enemyHit() {
+    const now = performance.now();
     killTweensOf(this.enemyLayer); killTweensOf(this.enemyText);
+    this.enemyLayer.alpha = 1; this.enemyLayer.y = this.enemyBase.y;
+    this.enemyFlashUntil = now + 110;
     tweenTo(this.enemyText, { alpha: { from: 1, to: 0.25 } }, { duration: 60, yoyo: true, repeat: 1 });
-    tweenTo(this.enemyLayer, { scale: { from: 1, to: 1.15 } }, { duration: 90, yoyo: true, ease: "quadOut" });
+    tweenTo(this.enemyLayer, { scale: { from: 1, to: 1.12 }, x: { from: this.enemyBase.x + this.unit * 3, to: this.enemyBase.x } }, { duration: 90, yoyo: true, ease: "quadOut" });
+    const cx = this.enemyBase.x, cy = this.enemyBase.y + this.dragonOriginY * 0.5;
+    const glow = this._enemyGlow || "#ffffff";
+    this.burst(cx, cy, [glow, "#ffffff", "#fff3a8"], 22, 0.3, { life: 480, extra: { front: true } });
+    this.shakeUntil = now + 120; this.shakeMag = 0.4;
   },
   fireballCast() {
-    const startY = this.playerBase.y + this.dragonOriginY * 0.55;
-    const endY = this.enemyBase.y + this.dragonOriginY * 0.45;
-    const fire = makeSprite("text", { text: "🔥", fontSize: Math.round(this.unit * 6), x: this.playerBase.x, y: startY, scale: 0.7 });
-    this.effects.push(fire);
-    tweenTo(fire, { x: this.enemyBase.x, y: endY, rotation: (320 * Math.PI) / 180, scale: 1.5 }, {
-      duration: 500, ease: "cubicIn",
-      onComplete: () => { const i = this.effects.indexOf(fire); if (i >= 0) this.effects.splice(i, 1); },
-    });
+    const now = performance.now();
+    const x0 = this.playerBase.x + this.unit * 8, y0 = this.playerBase.y + this.dragonOriginY * 0.7;
+    const x1 = this.enemyBase.x, y1 = this.enemyBase.y + this.dragonOriginY * 0.45;
+    this.fx.push({ type: "fireball", x0, y0, x1, y1, t0: now, dur: 500 });
+    setTimeout(() => {
+      const t = performance.now();
+      this.fx.push({ type: "ring", x: x1, y: y1, r: 26, color: "#ffcf3a", t0: t, dur: 420 });
+      this.fx.push({ type: "ring", x: x1, y: y1, r: 16, color: "#ff5a1a", t0: t + 60, dur: 420 });
+      this.burst(x1, y1, ["#fff3b0", "#ffcf3a", "#ff7a1c", "#d8321f", "#5a2a1a"], 60, 0.42, { up: 0.08, g: 0.0007, life: 700, extra: { front: true } });
+      this.whiteUntil = t + 140; this.shakeUntil = t + 320; this.shakeMag = 1.3;
+    }, 490);
   },
   showPopup(text, side, kind) {
     const base = side === "enemy" ? this.enemyBase : this.playerBase;
-    const colors = { dmg: "#ff6b5b", heal: "#6ee7a8", poison: "#6ee76e", crit: "#ffd700" };
+    const colors = { dmg: "#ff6b5b", heal: "#6ee7a8", poison: "#9cff6a", crit: "#ffd700" };
     const color = colors[kind] || "#fff0e0";
-    const fontSize = kind === "crit" ? Math.round(this.unit * 8.4) : Math.round(this.unit * 6.9);
+    const fontSize = kind === "crit" ? Math.round(this.unit * 9) : Math.round(this.unit * 7.2);
+    // Stagger popups that land at the same moment so "WEAK!" and the damage
+    // number don't print on top of each other.
+    const stack = this.popups.filter((q) => q._side === side && q._age < 400).length;
     const p = makeSprite("text", {
-      text, fontSize, color, x: base.x, y: base.y + this.dragonOriginY * 0.85,
-      glow: color, glowBlur: 12, stroke: "#140d10", strokeWidth: Math.max(2, Math.round(this.unit * 0.9)),
+      text, fontSize, color, x: base.x + (stack % 2 ? this.unit * 7 : 0), y: base.y + this.dragonOriginY * 0.85 - stack * fontSize * 0.9,
+      stroke: "#140d10", strokeWidth: Math.max(3, Math.round(this.unit * 1.3)),
+      fontFamily: "'Pixelify Sans', monospace", fontWeight: 700, scale: 1.8, _side: side, _age: 0,
     });
     this.popups.push(p);
+    tweenTo(p, { scale: 1, _age: 400 }, { duration: 160, ease: "quadOut" });
     tweenTo(p, { y: p.y - this.unit * 14 }, {
-      duration: 2600, ease: "cubicOut",
+      delay: 120, duration: 2400, ease: "cubicOut",
       onComplete: () => { const i = this.popups.indexOf(p); if (i >= 0) this.popups.splice(i, 1); },
     });
-    tweenTo(p, { alpha: { from: 1, to: 0 } }, { delay: 1100, duration: 1500 });
+    tweenTo(p, { alpha: { from: 1, to: 0 } }, { delay: 1100, duration: 1400 });
+    if (kind === "crit") { const now = performance.now(); this.whiteUntil = now + 120; this.shakeUntil = now + 260; this.shakeMag = 1.1; }
+    if (kind === "heal") this.burst(base.x, base.y + this.dragonOriginY * 0.4, ["#6ee7a8", "#c8ffe0"], 12, 0.08, { up: 0.08, g: -0.00005, life: 900, extra: { shape: "plus" } });
   },
   showImpact(side) {
     const base = side === "enemy" ? this.enemyBase : this.playerBase;
-    const s = makeSprite("text", { text: "💥", fontSize: Math.round(this.unit * 5), x: base.x, y: base.y + this.dragonOriginY * 0.6, scale: 0.3, alpha: 0 });
-    this.effects.push(s);
-    tweenTo(s, { alpha: 1, scale: 1.35 }, {
-      duration: 150, ease: "quadOut",
-      onComplete: () => tweenTo(s, { scale: 1, alpha: 0 }, {
-        duration: 250,
-        onComplete: () => { const i = this.effects.indexOf(s); if (i >= 0) this.effects.splice(i, 1); },
-      }),
-    });
+    this.fx.push({ type: "star", x: base.x, y: base.y + this.dragonOriginY * 0.55, color: side === "enemy" ? "#ffcf3a" : "#ff5a4a", t0: performance.now(), dur: 280 });
   },
 };
+
+/* The rider's palette with the sword recoloured to the owned DMG tier. */
+function heroPaletteForTier(tier) {
+  const t = SWORD_TIERS[Math.max(0, Math.min(SWORD_TIERS.length - 1, tier || 0))];
+  return Object.assign({}, HERO_PALETTE, { bladeColor: t.blade, hiltColor: t.hilt });
+}
 
 /* ---------- plumbing: host element, loop, resize sync ---------- */
 const battleStageHost = document.createElement("div");
@@ -6924,7 +8047,7 @@ function frameLoop(now) {
   requestAnimationFrame(frameLoop);
   const dt = Math.min(50, now - (lastFrame || now));
   lastFrame = now;
-  if (!stageAwake || !BattleStage.ready) return;
+  if (!stageAwake || !BattleStage.ready || document.hidden) return;
   updateTweens(dt);
   BattleStage.draw(now);
 }
