@@ -228,8 +228,9 @@ const HD_BACK = (() => {
    rider and a pommel horn in front, girth strap round the belly, and the
    stirrup leather down to the rider's boot. The stirrup iron is drawn
    after the rider so the boot sits IN it. */
-const HD_RIDER_Y = 67;                                  // rider's seat height (see drawHDRider)
-const HD_SOLE = { x: 108 + (125 - 108) * 1.3, y: HD_RIDER_Y + (95 - 74) * 1.3 };   // ball of the boot
+const HD_RIDER_SCALE = 1.1;                             // rider size relative to the dragon
+const HD_RIDER_Y = 66.5;                                // rider's seat height (see drawHDRider)
+const HD_SOLE = { x: 108 + (125 - 108) * HD_RIDER_SCALE, y: HD_RIDER_Y + (95 - 74) * HD_RIDER_SCALE };   // ball of the boot
 function drawHDSaddle(ctx, H) {
   const leather = "#6b3f22", leatherLo = "#3e2414";
   const cloth = H.saddle || hdShift(H.cape, -0.15);
@@ -281,7 +282,7 @@ function drawHDStirrup(ctx, H) {
 function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
   drawHDSaddle(ctx, H);
   // drawn around its seat (108, 74), placed on the dragon's shoulders
-  ctx.save(); ctx.translate(108 + ox, HD_RIDER_Y + oy); ctx.scale(1.3, 1.3); ctx.translate(-108, -74);   // seated in the saddle
+  ctx.save(); ctx.translate(108 + ox, HD_RIDER_Y + oy); ctx.scale(HD_RIDER_SCALE, HD_RIDER_SCALE); ctx.translate(-108, -74);   // seated in the saddle
   const girl = H.hero === "girl";
   const sway = Math.sin(t * Math.PI * 2) * 1.5;
   // Riders wear a short scarf that streams back from the neck instead of
@@ -437,5 +438,5 @@ function hdRender(draw, fit, cssW, cssH, dpr, pixel = HD_PIXEL) {
   return out;
 }
 
-const HD_DRAGON_FIT = { x: -30, y: -46, w: 272, h: 184 };
+const HD_DRAGON_FIT = { x: -26, y: -40, w: 262, h: 176 };
 const HD_HERO_FIT = { x: 10, y: 0, w: 70, h: 98 };
