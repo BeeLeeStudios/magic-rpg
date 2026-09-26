@@ -25,11 +25,10 @@ Porkbun, Squarespace Domains and others all work.
 1. app.netlify.com → Add new site → *Deploy manually* → drag the `site` folder in.
 2. Domain management → add `dragonsvsmath.com` and follow the DNS instructions.
 
-**GitHub Pages** (free for public repos; private repos need a paid plan)
-1. Repo Settings → Pages → deploy from a branch, folder `/site`. (GitHub
-   Pages only offers `/` or `/docs`, so for this layout use a small Pages
-   Action, or Cloudflare/Netlify instead.)
-2. `site/CNAME` already contains `dragonsvsmath.com`.
+**GitHub Pages** also works, but it only publishes from the repo root or
+`/docs` (or through a deploy workflow), and needs a public repo on the free
+plan, so Cloudflare or Netlify is simpler here. `site/CNAME` is already set
+to `dragonsvsmath.com` if you go that way.
 
 HTTPS is automatic on all three.
 
