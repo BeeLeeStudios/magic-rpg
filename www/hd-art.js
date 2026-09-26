@@ -10,7 +10,7 @@
    ===================================================================== */
 
 const HD_INK = "#1a0f1e";           // outline colour
-const HD_PIXEL = 1;                 // CSS px per art pixel (1 = "light pixel")
+const HD_PIXEL = 2;                 // CSS px per art pixel (2 = "medium pixel", chosen by the owner)
 
 function hdShift(hex, amt) {
   const n = parseInt(hex.slice(1), 16);
@@ -106,8 +106,12 @@ function drawHDDragon(ctx, P, t = 0) {
   };
 
   const legPart = (hip, knee, foot, w, col) => {
-    const tube = hdTube(hdBez(hip, knee, knee, foot, 10), w, w * 0.5);
+    // muscled thigh at the hip (drawn first, the leg grows out of it)
+    const ang = Math.atan2(knee[1] - hip[1], knee[0] - hip[0]);
+    hdFill(ctx, (c) => { c.ellipse(hip[0], hip[1], w * 0.95, w * 0.7, ang, 0, Math.PI * 2); }, col, 2);
+    const tube = hdTube(hdBez([hip[0] + Math.cos(ang) * w * 0.4, hip[1] + Math.sin(ang) * w * 0.4], knee, knee, foot, 10), w * 0.85, w * 0.5);
     hdFill(ctx, (c) => hdPoly(c, tube.poly), col, 2);
+    hdFill(ctx, (c) => { c.ellipse(hip[0], hip[1], w * 0.95 - 1.2, w * 0.7 - 1.2, ang, 0, Math.PI * 2); }, col, 0);   // hide the seam
     [-5, 0, 5].forEach((dx) => hdFill(ctx, (c) => {
       c.moveTo(foot[0] + dx - 2.5, foot[1] - 1); c.quadraticCurveTo(foot[0] + dx + 5, foot[1] + 2, foot[0] + dx + 2, foot[1] + 11);
       c.quadraticCurveTo(foot[0] + dx + 7, foot[1] + 3, foot[0] + dx + 3, foot[1] - 2);
@@ -205,8 +209,11 @@ function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
   ctx.save(); ctx.translate(108 + ox, 68 + oy); ctx.scale(1.3, 1.3); ctx.translate(-108, -74);
   const girl = H.hero === "girl";
   const sway = Math.sin(t * Math.PI * 2) * 1.5;
-  // flowing hair / cape behind
-  hdFill(ctx, (c) => { c.moveTo(104, 50); c.quadraticCurveTo(84, 52 + sway, 72, 66 + sway); c.quadraticCurveTo(84, 62, 90, 70); c.quadraticCurveTo(96, 60, 108, 64); }, hdGrad(ctx, 72, 50, 108, 70, [[0, hdShift(H.cape, -0.3)], [1, H.cape]]), 1.8);
+  // Riders wear a short scarf that streams back from the neck instead of
+  // a full cape -- a cape filled the space between the wings and fought
+  // with them visually.
+  hdFill(ctx, (c) => { c.moveTo(106, 44); c.quadraticCurveTo(96, 42 + sway, 84, 44 + sway * 2); c.lineTo(86, 48 + sway * 2); c.quadraticCurveTo(96, 47 + sway, 106, 49); }, hdGrad(ctx, 84, 42, 106, 50, [[0, hdShift(H.cape, -0.25)], [1, H.cape]]), 1.5);
+  hdFill(ctx, (c) => { c.moveTo(105, 47); c.quadraticCurveTo(98, 50 + sway, 90, 54 + sway * 2); c.lineTo(92, 57 + sway * 2); c.quadraticCurveTo(99, 53 + sway, 106, 51); }, hdShift(H.cape, -0.15), 1.5);
   if (girl) hdFill(ctx, (c) => { c.moveTo(108, 26); c.quadraticCurveTo(94, 30, 88, 44 + sway); c.quadraticCurveTo(86, 52, 80, 56 + sway); c.quadraticCurveTo(92, 52, 98, 46); c.quadraticCurveTo(102, 38, 110, 34); }, hdGrad(ctx, 80, 26, 110, 56, [[0, hdShift(H.hair, -0.25)], [1, hdShift(H.hair, 0.15)]]), 1.6);
   // thigh astride, boot down the flank
   hdFill(ctx, (c) => { c.moveTo(100, 70); c.quadraticCurveTo(116, 68, 124, 74); c.lineTo(122, 82); c.quadraticCurveTo(110, 80, 100, 80); }, hdGrad(ctx, 0, 68, 0, 82, [[0, hdShift(H.leather, 0.2)], [1, H.leather]]), 1.8);
@@ -260,7 +267,11 @@ function drawHDHeroStanding(ctx, H, t = 0) {
   const girl = H.hero === "girl";
   const sway = Math.sin(t * Math.PI * 2);
   // cape
-  hdFill(ctx, (c) => { c.moveTo(34, 40); c.quadraticCurveTo(18, 56 + sway, 16, 84); c.lineTo(34, 82); c.quadraticCurveTo(34, 60, 42, 44); }, hdGrad(ctx, 16, 40, 40, 84, [[0, hdShift(H.cape, -0.3)], [1, H.cape]]), 1.8);
+  // cape: dark lining on the inside edge and a gold trim, so it reads as
+  // a separate piece of cloth from the tunic and skirt
+  hdFill(ctx, (c) => { c.moveTo(34, 40); c.quadraticCurveTo(18, 56 + sway, 16, 84); c.lineTo(34, 82); c.quadraticCurveTo(34, 60, 42, 44); }, hdGrad(ctx, 16, 40, 40, 84, [[0, hdShift(H.cape, -0.1)], [1, hdShift(H.cape, 0.1)]]), 1.8);
+  hdFill(ctx, (c) => { c.moveTo(36, 44); c.quadraticCurveTo(30, 62, 29, 82); c.lineTo(34, 82); c.quadraticCurveTo(34, 60, 42, 44); }, hdShift(H.cape, -0.45), 0);
+  ctx.strokeStyle = H.hilt; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(17.5, 82.5); ctx.lineTo(33.5, 81.5); ctx.stroke();
   if (girl) hdFill(ctx, (c) => { c.moveTo(38, 20); c.quadraticCurveTo(26, 28, 26, 52 + sway); c.quadraticCurveTo(30, 58, 34, 52); c.quadraticCurveTo(34, 36, 42, 26); }, hdGrad(ctx, 26, 20, 42, 58, [[0, hdShift(H.hair, -0.25)], [1, H.hair]]), 1.6);
   // legs (sturdy) + boots
   hdFill(ctx, (c) => { c.roundRect(34, 70, 11, 22, 4); }, hdGrad(ctx, 0, 70, 0, 92, [[0, H.leather], [1, hdShift(H.leather, -0.3)]]), 1.8);
@@ -269,10 +280,15 @@ function drawHDHeroStanding(ctx, H, t = 0) {
   hdFill(ctx, (c) => { c.moveTo(46, 90); c.lineTo(59, 90); c.quadraticCurveTo(66, 92, 65, 97); c.lineTo(46, 97); }, "#33252c", 1.6);
   // torso
   hdFill(ctx, (c) => { c.moveTo(34, 40); c.quadraticCurveTo(46, 34, 58, 40); c.lineTo(60, 72); c.quadraticCurveTo(46, 76, 33, 72); c.quadraticCurveTo(31, 56, 34, 40); }, hdGrad(ctx, 33, 36, 60, 76, [[0, hdShift(H.armor, 0.35)], [0.5, H.armor], [1, hdShift(H.armor, -0.3)]]), 2);
-  if (girl) hdFill(ctx, (c) => { c.moveTo(32, 66); c.lineTo(61, 66); c.lineTo(64, 80); c.lineTo(29, 80); }, hdGrad(ctx, 0, 66, 0, 80, [[0, H.cape], [1, hdShift(H.cape, -0.25)]]), 1.6);
+  if (girl) {
+    // skirt in deep purple with a gold hem -- clearly not the pink cape
+    const skirt = H.skirt || "#4a2a78";
+    hdFill(ctx, (c) => { c.moveTo(32, 66); c.lineTo(61, 66); c.quadraticCurveTo(64, 74, 65, 81); c.lineTo(28, 81); c.quadraticCurveTo(29, 74, 32, 66); }, hdGrad(ctx, 0, 66, 0, 81, [[0, hdShift(skirt, 0.2)], [1, skirt]]), 1.6);
+    hdFill(ctx, (c) => { c.roundRect(28.5, 78, 36, 3, 1.2); }, H.hilt, 0);
+  }
   hdFill(ctx, (c) => { c.roundRect(33, 62, 27, 5, 2); }, "#3a2418", 1.3);
   hdFill(ctx, (c) => { c.roundRect(44, 61.5, 5, 6, 1); }, H.hilt, 0);
-  hdFill(ctx, (c) => { c.moveTo(46, 46); c.lineTo(51, 51); c.lineTo(46, 56); c.lineTo(41, 51); }, H.cape, 1.1);
+  hdFill(ctx, (c) => { c.moveTo(40, 52); c.lineTo(44, 56); c.lineTo(40, 60); c.lineTo(36, 56); }, H.cape, 1.1);
   // head
   hdFill(ctx, (c) => { c.roundRect(43, 31, 7, 7, 2); }, hdShift(H.skin, -0.12), 1.4);
   hdFill(ctx, (c) => { c.ellipse(47, 21, 10, 11, 0, 0, Math.PI * 2); }, hdGrad(ctx, 38, 10, 56, 32, [[0, hdShift(H.skin, 0.12)], [1, hdShift(H.skin, -0.1)]]), 1.8);
@@ -293,8 +309,9 @@ function drawHDHeroStanding(ctx, H, t = 0) {
       c.lineTo(47, 8); c.lineTo(52, 2); c.lineTo(54, 9); c.lineTo(60, 9); c.quadraticCurveTo(52, 13, 48, 19); c.quadraticCurveTo(44, 17, 42, 27);
     }, hdGrad(ctx, 0, 2, 0, 27, [[0, hdShift(H.hair, 0.4)], [1, H.hair]]), 1.6);
   }
-  // arm and sword held up in front
-  hdFill(ctx, (c) => { c.moveTo(50, 44); c.quadraticCurveTo(60, 46, 64, 52); c.lineTo(60, 56); c.quadraticCurveTo(56, 51, 49, 52); }, hdGrad(ctx, 0, 44, 0, 56, [[0, hdShift(H.armor, 0.25)], [1, H.armor]]), 1.6);
+  // arm and sword held up in front, joined to the body by a shoulder guard
+  hdFill(ctx, (c) => { c.moveTo(48, 45); c.quadraticCurveTo(60, 45, 65, 51); c.lineTo(61, 56); c.quadraticCurveTo(56, 52, 48, 53); }, hdGrad(ctx, 0, 44, 0, 56, [[0, hdShift(H.armor, 0.25)], [1, H.armor]]), 1.6);
+  hdFill(ctx, (c) => { c.ellipse(51, 42.5, 6, 4.2, -0.15, 0, Math.PI * 2); }, hdGrad(ctx, 0, 38, 0, 47, [[0, hdShift(H.armor, 0.45)], [1, hdShift(H.armor, -0.1)]]), 1.5);
   const bx = 66, by = 50;
   hdFill(ctx, (c) => { c.moveTo(bx, by); c.lineTo(bx + 12, by - 42); c.lineTo(bx + 14, by - 47); c.lineTo(bx + 15, by - 41); c.lineTo(bx + 4, by + 1); },
     hdGrad(ctx, bx, by, bx + 14, by - 46, [[0, hdShift(H.blade, -0.25)], [0.5, H.blade], [1, "#ffffff"]]), 1.4);
