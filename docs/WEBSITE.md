@@ -5,16 +5,22 @@
 build step and no tracking. It's hosted on your own VPS, for free, with
 free HTTPS.
 
+## Free web address
+
+Go to https://www.duckdns.org, sign in (Google or GitHub), create the
+subdomain **dragonsvsmath**, and set its IP to your VPS's IP address.
+The site's address is then **https://dragonsvsmath.duckdns.org**, free.
+
 ## One-time setup on the VPS (about 2 minutes)
 
 1. Copy `deploy/setup-vps.sh` to the VPS (or paste it into a new file there),
    then run:
 
    ```bash
-   sudo bash setup-vps.sh
+   sudo bash setup-vps.sh dragonsvsmath.duckdns.org
    ```
 
-   With no domain, the site gets a free address based on the server's IP,
+   With no name at all (`sudo bash setup-vps.sh`), the site gets a free address based on the server's IP,
    for example `https://203-0-113-7.sslip.io`, with a real HTTPS certificate.
    If you buy a domain later, point it at the VPS and run
    `sudo bash setup-vps.sh yourdomain.com`.

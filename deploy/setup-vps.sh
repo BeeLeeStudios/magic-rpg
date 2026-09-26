@@ -2,7 +2,8 @@
 # =====================================================================
 # Dragons vs Math website -- one-time setup on your own VPS.
 #
-#   sudo bash setup-vps.sh                 # free address: <your-ip>.sslip.io
+#   sudo bash setup-vps.sh dragonsvsmath.duckdns.org   # free name from duckdns.org
+#   sudo bash setup-vps.sh                 # no name at all: <your-ip>.sslip.io
 #   sudo bash setup-vps.sh dragonsvsmath.com   # later, if you buy a domain
 #
 # What it does (Debian/Ubuntu, or Fedora/RHEL-family):
@@ -27,7 +28,7 @@ IP=$(curl -4 -fsS --max-time 10 https://api.ipify.org || hostname -I | awk '{pri
 DOMAIN="${1:-${IP//./-}.sslip.io}"
 # A real domain also answers on www. (point both DNS "A" records at this server)
 SITE_ADDRS="$DOMAIN"
-case "$DOMAIN" in *.sslip.io|www.*) ;; *) SITE_ADDRS="$DOMAIN, www.$DOMAIN" ;; esac
+case "$DOMAIN" in *.sslip.io|*.duckdns.org|www.*) ;; *) SITE_ADDRS="$DOMAIN, www.$DOMAIN" ;; esac
 echo "==> Website address will be: https://$DOMAIN"
 if [ -n "${1:-}" ]; then
   RESOLVED=$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}')
