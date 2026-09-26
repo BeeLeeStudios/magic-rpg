@@ -100,48 +100,22 @@ function drawHDDragon(ctx, P, t = 0) {
         ctx.beginPath(); ctx.moveTo(wrist[0], wrist[1]); ctx.quadraticCurveTo(mx, my, tp[0], tp[1]); ctx.stroke();
       });
     });
-    const armCol = far ? hdShift(dark, -0.2) : hdGrad(ctx, 0, wrist[1], 0, sy, [[0, hdShift(body, 0.2)], [1, dark]]);
-    const up = hdTube(hdBez([sx, sy], elbow, elbow, elbow, 6), 14 * k, 10 * k);
-    const fore = hdTube(hdBez(elbow, wrist, wrist, wrist, 6), 10 * k, 7 * k);
-    hdFill(ctx, (c) => hdPoly(c, up.poly), armCol, 2.2);
-    hdFill(ctx, (c) => hdPoly(c, fore.poly), armCol, 2.2);
-    hdFill(ctx, (c) => { c.arc(elbow[0], elbow[1], 5.5 * k, 0, Math.PI * 2); }, armCol, 2);
-    hdFill(ctx, (c) => { c.arc(wrist[0], wrist[1], 4.2 * k, 0, Math.PI * 2); }, armCol, 2);
+    const arm = hdTube(hdBez([sx, sy], elbow, elbow, wrist, 10), 13 * k, 7 * k);
+    hdFill(ctx, (c) => hdPoly(c, arm.poly), far ? hdShift(dark, -0.2) : hdGrad(ctx, 0, wrist[1], 0, sy, [[0, hdShift(body, 0.2)], [1, dark]]), 2.2);
     hdFill(ctx, (c) => { c.moveTo(wrist[0] - 3, wrist[1] - 2); c.lineTo(wrist[0] + dir * 6, wrist[1] - 14); c.lineTo(wrist[0] + 3, wrist[1] + 1); }, horn, 1.5);
   };
 
-  // tapered limb segment with a rounded joint at its end
-  const seg = (p0, p1, w0, w1, col) => {
-    const t = hdTube(hdBez(p0, [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2], [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2], p1, 6), w0, w1);
-    hdFill(ctx, (c) => hdPoly(c, t.poly), col, 2);
-  };
-  const joint = (pt, r, col) => hdFill(ctx, (c) => { c.arc(pt[0], pt[1], r, 0, Math.PI * 2); }, col, 0);
-  // foot: padded toes pointing along `ang`, each with a curved claw
-  const paw = (pt, ang, sz, col) => {
-    [-0.55, 0, 0.55].forEach((spread) => {
-      const a2 = ang + spread * 0.9, tx = pt[0] + Math.cos(a2) * sz, ty = pt[1] + Math.sin(a2) * sz;
-      hdFill(ctx, (c) => { c.ellipse((pt[0] + tx) / 2, (pt[1] + ty) / 2, sz * 0.62, sz * 0.32, a2, 0, Math.PI * 2); }, col, 1.6);
-      const cx = tx + Math.cos(a2) * sz * 0.2, cy = ty + Math.sin(a2) * sz * 0.2;
-      hdFill(ctx, (c) => {
-        c.moveTo(cx - Math.sin(a2) * 2, cy + Math.cos(a2) * 2);
-        c.quadraticCurveTo(cx + Math.cos(a2) * 6, cy + Math.sin(a2) * 6 - 1, cx + Math.cos(a2 + 0.9) * 7, cy + Math.sin(a2 + 0.9) * 7);
-        c.lineTo(cx + Math.sin(a2) * 2, cy - Math.cos(a2) * 2);
-      }, horn, 1.1);
-    });
-  };
-  // front leg: shoulder muscle, upper arm, elbow, forearm, paw (tucked in flight)
-  const frontLeg = (sh, el, wr, w, col) => {
-    seg(sh, el, w * 1.1, w * 0.72, col); joint(el, w * 0.36, col);
-    seg(el, wr, w * 0.72, w * 0.55, col); joint(wr, w * 0.28, col);
-    paw(wr, Math.atan2(wr[1] - el[1], wr[0] - el[0]) + 0.5, w * 0.62, col);
-
-  };
-  // hind leg: big thigh, shin to the hock, long foot, toes (trailing in flight)
-  const hindLeg = (hip, knee, hock, foot, w, col) => {
-    seg(knee, hock, w * 0.62, w * 0.45, col); joint(hock, w * 0.24, col);
-    seg(hock, foot, w * 0.45, w * 0.36, col);
-    paw(foot, Math.atan2(foot[1] - hock[1], foot[0] - hock[0]) + 0.9, w * 0.5, col);
-    seg(hip, knee, w * 1.1, w * 0.62, col); joint(knee, w * 0.32, col);
+  const legPart = (hip, knee, foot, w, col) => {
+    // muscled thigh at the hip (drawn first, the leg grows out of it)
+    const ang = Math.atan2(knee[1] - hip[1], knee[0] - hip[0]);
+    hdFill(ctx, (c) => { c.ellipse(hip[0], hip[1], w * 0.95, w * 0.7, ang, 0, Math.PI * 2); }, col, 2);
+    const tube = hdTube(hdBez([hip[0] + Math.cos(ang) * w * 0.4, hip[1] + Math.sin(ang) * w * 0.4], knee, knee, foot, 10), w * 0.85, w * 0.5);
+    hdFill(ctx, (c) => hdPoly(c, tube.poly), col, 2);
+    hdFill(ctx, (c) => { c.ellipse(hip[0], hip[1], w * 0.95 - 1.2, w * 0.7 - 1.2, ang, 0, Math.PI * 2); }, col, 0);   // hide the seam
+    [-5, 0, 5].forEach((dx) => hdFill(ctx, (c) => {
+      c.moveTo(foot[0] + dx - 2.5, foot[1] - 1); c.quadraticCurveTo(foot[0] + dx + 5, foot[1] + 2, foot[0] + dx + 2, foot[1] + 11);
+      c.quadraticCurveTo(foot[0] + dx + 7, foot[1] + 3, foot[0] + dx + 3, foot[1] - 2);
+    }, horn, 1.2));
   };
 
   drawWing(+1);                                          // far wing, behind everything
@@ -162,9 +136,20 @@ function drawHDDragon(ctx, P, t = 0) {
   const tp = tailPts[tailPts.length - 1];
   hdFill(ctx, (c) => { c.moveTo(tp[0] - 3, tp[1] - 3); c.lineTo(tp[0] + 12, tp[1] - 8); c.lineTo(tp[0] + 7, tp[1] + 1); c.lineTo(tp[0] + 14, tp[1] + 9); c.lineTo(tp[0] - 3, tp[1] + 4); }, dark, 2);
 
-  // far legs (in shadow)
-  hindLeg([86, 100], [92, 124], [78, 130], [72, 141], 17, hdShift(dark, -0.2));
-  frontLeg([150, 102], [158, 122], [170, 125], 12, hdShift(dark, -0.2));
+  // far legs, tucked back in flight
+  legPart([88, 102], [74, 114], [62, 124], 18, hdShift(dark, -0.2));
+  legPart([146, 98], [156, 110], [150, 122], 13, hdShift(dark, -0.2));
+
+  // ---- torso ----
+  hdFill(ctx, (c) => { c.ellipse(114, 88, 48, 25, -0.1, 0, Math.PI * 2); },
+    hdGrad(ctx, 0, 62, 0, 114, [[0, hdShift(body, 0.3)], [0.45, body], [1, dark]]), 2.4);
+  ctx.save(); ctx.beginPath(); ctx.ellipse(114, 88, 48, 25, -0.1, 0, Math.PI * 2); ctx.clip();
+  hdFill(ctx, (c) => { c.ellipse(120, 108, 40, 13, -0.1, 0, Math.PI * 2); }, hdGrad(ctx, 0, 96, 0, 118, [[0, hdShift(belly, 0.12)], [1, hdShift(belly, -0.18)]]), 1.6);
+  ctx.strokeStyle = hdShift(belly, -0.38); ctx.lineWidth = 1.2;
+  for (let i = -4; i <= 4; i++) { ctx.beginPath(); ctx.moveTo(120 + i * 8, 96 - i * 0.8); ctx.quadraticCurveTo(122 + i * 8, 104 - i * 0.8, 120 + i * 8, 116); ctx.stroke(); }
+  ctx.strokeStyle = hdShift(body, 0.25); ctx.lineWidth = 1; ctx.globalAlpha = 0.45;
+  for (let r = 0; r < 3; r++) for (let q = 0; q < 8; q++) { ctx.beginPath(); ctx.arc(80 + q * 10 + (r % 2) * 5, 74 + r * 7, 4, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke(); }
+  ctx.restore();
 
   // ---- neck: thick S-curve, cream throat plates on the underside ----
   const neckPts = hdBez([144, 84], [166, 76], [154, 46], [180, 38], 18);
@@ -176,46 +161,9 @@ function drawHDDragon(ctx, P, t = 0) {
   ctx.strokeStyle = hdShift(belly, -0.35); ctx.lineWidth = 1; ctx.globalAlpha = 1;
   neck.right.forEach(([x, y], i) => { if (i % 2 || i < 2) return; const [nx, ny] = neck.normals[neck.normals.length - 1 - i] || [0, 0]; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + nx * 7, y + ny * 7); ctx.stroke(); });
   ctx.restore();
-  // near legs, drawn BEFORE the torso so they grow out from under the body
-  const legCol = hdGrad(ctx, 0, 100, 0, 142, [[0, hdShift(body, 0.1)], [1, dark]]);
-  hindLeg([96, 100], [106, 128], [94, 136], [90, 148], 20, legCol);
-  frontLeg([142, 102], [148, 126], [160, 131], 15, legCol);
-
-  // ---- torso: deep chest bulging forward, back dipping at the shoulders,
-  //      waist tapering into the hips and tail ----
-  const torso = (c) => {
-    c.moveTo(70, 82);
-    c.bezierCurveTo(88, 70, 110, 70, 124, 68);
-    c.bezierCurveTo(140, 66, 157, 74, 159, 88);
-    c.bezierCurveTo(161, 101, 151, 111, 136, 113);
-    c.bezierCurveTo(116, 117, 94, 115, 80, 107);
-    c.bezierCurveTo(71, 102, 65, 98, 66, 91);
-    c.closePath();
-  };
-  hdFill(ctx, torso, hdGrad(ctx, 0, 64, 0, 116, [[0, hdShift(body, 0.3)], [0.45, body], [1, dark]]), 2.4);
-  ctx.save(); ctx.beginPath(); torso(ctx); ctx.clip();
-  // shoulder and haunch muscles: soft highlight with a shadow crease
-  hdFill(ctx, (c) => { c.ellipse(140, 86, 15, 12, 0.4, 0, Math.PI * 2); }, "rgba(255,255,255,0.10)", 0);
-  hdFill(ctx, (c) => { c.ellipse(92, 92, 16, 13, -0.3, 0, Math.PI * 2); }, "rgba(255,255,255,0.08)", 0);
-  ctx.strokeStyle = hdShift(dark, -0.1); ctx.lineWidth = 1.4; ctx.globalAlpha = 0.6;
-  ctx.beginPath(); ctx.arc(92, 92, 15, 0.2, 1.6); ctx.stroke();
-  ctx.beginPath(); ctx.arc(140, 86, 14, 0.9, 2.2); ctx.stroke();
-  ctx.globalAlpha = 1;
-  // belly plates: a band following the underside, from chest to hips
-  ctx.strokeStyle = belly; ctx.lineWidth = 16; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.moveTo(158, 96); ctx.bezierCurveTo(152, 112, 118, 118, 80, 110); ctx.stroke();
-  ctx.strokeStyle = hdShift(belly, -0.38); ctx.lineWidth = 1.2;
-  for (let i = 0; i < 10; i++) {
-    const t2 = i / 9, x = 156 - t2 * 72, y = 102 + Math.sin(t2 * Math.PI) * 10;
-    ctx.beginPath(); ctx.moveTo(x, y - 6); ctx.quadraticCurveTo(x + 2, y + 1, x, y + 8); ctx.stroke();
-  }
-  // scale texture
-  ctx.strokeStyle = hdShift(body, 0.25); ctx.lineWidth = 1; ctx.globalAlpha = 0.45;
-  for (let r = 0; r < 3; r++) for (let q = 0; q < 8; q++) { ctx.beginPath(); ctx.arc(82 + q * 10 + (r % 2) * 5, 78 + r * 7, 4, Math.PI * 0.1, Math.PI * 0.9); ctx.stroke(); }
-  ctx.restore();
-
   // spines: back ridge and along the neck
-  const spines = [[78, 70, 8, 0, -1], [90, 66, 10, 0, -1], [102, 64, 11, 0, -1], [114, 63, 11, 0, -1], [126, 64, 10, 0, -1]];
+  // (no back spines between x 90 and 132 -- the saddle sits there)
+  const spines = [[70, 74, 7, 0, -1], [80, 70, 8, 0, -1]];
   for (let i = 1; i < 17; i += 2) { const [nx, ny, w] = neck.normals[i], [x, y] = neckPts[i]; spines.push([x + nx * w, y + ny * w, 9 - i * 0.3, nx, ny]); }
   spines.forEach(([x, y, sz, nx, ny]) => hdFill(ctx, (c) => {
     c.moveTo(x - ny * sz * 0.5, y + nx * sz * 0.5); c.lineTo(x + nx * sz * 1.25 - sz * 0.35, y + ny * sz * 1.25); c.lineTo(x + ny * sz * 0.5, y - nx * sz * 0.5);
@@ -245,7 +193,9 @@ function drawHDDragon(ctx, P, t = 0) {
   [[hx - 10, hy + 4], [hx - 13, hy - 2], [hx - 12, hy + 10]].forEach(([x, y], q) => hdFill(ctx, (c) => { c.moveTo(x, y - 3); c.lineTo(x - 11 + q * 2, y + 1); c.lineTo(x, y + 3); }, horn, 1.2));
   ctx.restore();
 
-
+  // near legs, tucked back
+  legPart([100, 104], [84, 118], [72, 128], 21, hdGrad(ctx, 0, 100, 0, 130, [[0, body], [1, dark]]));
+  legPart([150, 100], [162, 114], [156, 126], 15, hdGrad(ctx, 0, 98, 0, 128, [[0, body], [1, dark]]));
 
   drawWing(-1);                                          // near wing: over the back, behind the rider
 }
@@ -259,40 +209,79 @@ function drawHDDragon(ctx, P, t = 0) {
    trim, leather seat with a raised cantle and pommel horn, girth strap
    around the belly, and the stirrup leather. The stirrup iron itself is
    drawn after the rider so it wraps the boot. */
+/* The dragon's back line (top edge of its torso ellipse), so the saddle
+   hugs the body instead of floating above it. */
+const HD_BACK = (() => {
+  const cx = 114, cy = 88, rx = 48, ry = 25, rot = -0.1, top = {};
+  for (let i = 0; i < 1440; i++) {
+    const t = (i / 1440) * Math.PI * 2;
+    const x = cx + rx * Math.cos(t) * Math.cos(rot) - ry * Math.sin(t) * Math.sin(rot);
+    const y = cy + rx * Math.cos(t) * Math.sin(rot) + ry * Math.sin(t) * Math.cos(rot);
+    const k = Math.round(x);
+    if (top[k] === undefined || y < top[k]) top[k] = y;
+  }
+  return (x) => top[Math.round(x)] ?? 64;
+})();
+
+/* Saddle on the dragon's back (dragon coordinates): blanket draped over
+   the back and down the flank, leather seat with a tall cantle behind the
+   rider and a pommel horn in front, girth strap round the belly, and the
+   stirrup leather down to the rider's boot. The stirrup iron is drawn
+   after the rider so the boot sits IN it. */
+const HD_RIDER_Y = 67;                                  // rider's seat height (see drawHDRider)
+const HD_SOLE = { x: 108 + (125 - 108) * 1.3, y: HD_RIDER_Y + (95 - 74) * 1.3 };   // ball of the boot
 function drawHDSaddle(ctx, H) {
   const leather = "#6b3f22", leatherLo = "#3e2414";
   const cloth = H.saddle || hdShift(H.cape, -0.15);
-  // girth strap around the belly
-  hdFill(ctx, (c) => { c.moveTo(112, 72); c.lineTo(117, 72); c.lineTo(122, 112); c.lineTo(117, 112); }, hdGrad(ctx, 0, 72, 0, 112, [[0, leather], [1, leatherLo]]), 1.4);
-  hdFill(ctx, (c) => { c.roundRect(115, 99, 7, 6, 1.2); }, H.hilt, 1.1);
-  // blanket lying on the back and hanging down the flank, gold-trimmed hem
+  const B = HD_BACK;
+  // girth strap from the saddle round the belly
+  hdFill(ctx, (c) => { c.moveTo(113, B(113)); c.lineTo(118, B(118)); c.lineTo(123, 110); c.lineTo(118, 111); }, hdGrad(ctx, 0, 62, 0, 111, [[0, leather], [1, leatherLo]]), 1.4);
+  hdFill(ctx, (c) => { c.roundRect(116.5, 97, 7, 6, 1.2); }, H.hilt, 1.1);
+  // blanket: follows the back, hangs ~19 units down the side, scalloped gold hem
   hdFill(ctx, (c) => {
-    c.moveTo(88, 71); c.quadraticCurveTo(110, 66, 134, 70);
-    c.lineTo(133, 88); c.quadraticCurveTo(127, 92, 121, 89); c.quadraticCurveTo(114, 93, 107, 89); c.quadraticCurveTo(100, 93, 93, 88);
-    c.lineTo(90, 80); c.closePath();
-  }, hdGrad(ctx, 0, 66, 0, 92, [[0, hdShift(cloth, 0.2)], [1, hdShift(cloth, -0.2)]]), 1.6);
+    c.moveTo(92, B(92) - 1);
+    for (let x = 94; x <= 136; x += 2) c.lineTo(x, B(x) - 1.5);
+    c.lineTo(135, B(135) + 18);
+    for (let i = 0; i < 6; i++) {
+      const x0 = 135 - i * 7, x1 = x0 - 7;
+      c.quadraticCurveTo((x0 + x1) / 2, B((x0 + x1) / 2) + 23, x1, B(x1) + 18);
+    }
+    c.closePath();
+  }, hdGrad(ctx, 0, 60, 0, 86, [[0, hdShift(cloth, 0.2)], [1, hdShift(cloth, -0.25)]]), 1.6);
   ctx.strokeStyle = H.hilt; ctx.lineWidth = 1.8; ctx.lineJoin = "round";
-  ctx.beginPath(); ctx.moveTo(94, 86); ctx.quadraticCurveTo(100, 90.5, 107, 86.8); ctx.quadraticCurveTo(114, 90.5, 121, 86.8); ctx.quadraticCurveTo(127, 89.5, 132, 86); ctx.stroke();
-  // seat: tall cantle behind the rider, dip, pommel horn in front
+  ctx.beginPath(); ctx.moveTo(135, B(135) + 16);
+  for (let i = 0; i < 6; i++) { const x0 = 135 - i * 7, x1 = x0 - 7; ctx.quadraticCurveTo((x0 + x1) / 2, B((x0 + x1) / 2) + 21, x1, B(x1) + 16); }
+  ctx.stroke();
+  // leather seat: base sits on the blanket, tall cantle at the back, dip, pommel horn
   hdFill(ctx, (c) => {
-    c.moveTo(90, 74); c.quadraticCurveTo(85, 62, 90, 58); c.quadraticCurveTo(96, 57, 97, 64);
-    c.quadraticCurveTo(112, 71, 127, 64); c.quadraticCurveTo(128, 56, 132, 55); c.quadraticCurveTo(136, 57, 134, 63);
-    c.quadraticCurveTo(135, 71, 132, 76); c.quadraticCurveTo(110, 79, 90, 74);
-  }, hdGrad(ctx, 0, 55, 0, 78, [[0, "#a86a3c"], [0.5, leather], [1, leatherLo]]), 1.8);
+    c.moveTo(93, B(93) + 2);
+    c.quadraticCurveTo(89, B(93) - 9, 94, B(94) - 13);
+    c.quadraticCurveTo(99, B(99) - 12, 99, B(99) - 5);
+    c.quadraticCurveTo(110, B(110) - 1, 121, B(121) - 5);
+    c.quadraticCurveTo(122, B(122) - 12, 126, B(126) - 12);
+    c.quadraticCurveTo(129, B(129) - 11, 128, B(128) - 5);
+    c.quadraticCurveTo(131, B(131) - 1, 130, B(130) + 3);
+    c.quadraticCurveTo(111, B(111) + 6, 93, B(93) + 2);
+  }, hdGrad(ctx, 0, 48, 0, 68, [[0, "#a86a3c"], [0.5, leather], [1, leatherLo]]), 1.8);
   ctx.strokeStyle = "#d09a68"; ctx.lineWidth = 1; ctx.setLineDash([2, 1.6]);
-  ctx.beginPath(); ctx.moveTo(93, 72.5); ctx.quadraticCurveTo(111, 76.5, 131, 72.5); ctx.stroke(); ctx.setLineDash([]);
-  hdFill(ctx, (c) => { c.arc(132.5, 56, 2.4, 0, Math.PI * 2); }, H.hilt, 1);
-  // stirrup leather down to the boot
-  hdFill(ctx, (c) => { c.moveTo(119, 74); c.lineTo(122, 74); c.lineTo(127, 97); c.lineTo(124, 97); }, leatherLo, 1.1);
+  ctx.beginPath(); ctx.moveTo(95, B(95) + 1); ctx.quadraticCurveTo(111, B(111) + 4.5, 128, B(128) + 1.5); ctx.stroke(); ctx.setLineDash([]);
+  hdFill(ctx, (c) => { c.arc(126.5, B(126) - 12.5, 2.3, 0, Math.PI * 2); }, H.hilt, 1);
+  // stirrup leather from the seat down to the boot
+  hdFill(ctx, (c) => { c.moveTo(120, B(120) + 2); c.lineTo(123, B(123) + 2); c.lineTo(HD_SOLE.x + 1.5, HD_SOLE.y - 3); c.lineTo(HD_SOLE.x - 1.5, HD_SOLE.y - 3); }, leatherLo, 1.1);
 }
+/* Stirrup iron, drawn over the boot so the foot is IN the stirrup. */
 function drawHDStirrup(ctx, H) {
-  hdFill(ctx, (c) => { c.moveTo(119, 96); c.quadraticCurveTo(119, 103, 126, 103); c.quadraticCurveTo(133, 103, 133, 96); c.lineTo(130.5, 96); c.quadraticCurveTo(130.5, 100.5, 126, 100.5); c.quadraticCurveTo(121.5, 100.5, 121.5, 96); }, H.hilt, 1.2);
+  const x = HD_SOLE.x, y = HD_SOLE.y;
+  hdFill(ctx, (c) => {
+    c.moveTo(x - 6.5, y - 4); c.quadraticCurveTo(x - 7, y + 4, x, y + 4); c.quadraticCurveTo(x + 7, y + 4, x + 6.5, y - 4);
+    c.lineTo(x + 4.2, y - 4); c.quadraticCurveTo(x + 4.5, y + 1.6, x, y + 1.6); c.quadraticCurveTo(x - 4.5, y + 1.6, x - 4.2, y - 4);
+  }, hdGrad(ctx, 0, y - 4, 0, y + 4, [[0, "#fff0b0"], [1, H.hilt]]), 1.2);
 }
 
 function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
   drawHDSaddle(ctx, H);
   // drawn around its seat (108, 74), placed on the dragon's shoulders
-  ctx.save(); ctx.translate(108 + ox, 73 + oy); ctx.scale(1.3, 1.3); ctx.translate(-108, -74);   // seated in the saddle
+  ctx.save(); ctx.translate(108 + ox, HD_RIDER_Y + oy); ctx.scale(1.3, 1.3); ctx.translate(-108, -74);   // seated in the saddle
   const girl = H.hero === "girl";
   const sway = Math.sin(t * Math.PI * 2) * 1.5;
   // Riders wear a short scarf that streams back from the neck instead of
@@ -448,5 +437,5 @@ function hdRender(draw, fit, cssW, cssH, dpr, pixel = HD_PIXEL) {
   return out;
 }
 
-const HD_DRAGON_FIT = { x: -30, y: -46, w: 272, h: 208 };
+const HD_DRAGON_FIT = { x: -30, y: -46, w: 272, h: 184 };
 const HD_HERO_FIT = { x: 10, y: 0, w: 70, h: 98 };
