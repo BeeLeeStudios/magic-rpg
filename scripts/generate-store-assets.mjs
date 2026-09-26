@@ -53,7 +53,7 @@ async function drawArt(width, height, kind, file) {
     const rider = (scale, x, y, hero = 'boy') => {
       const over = Math.max(0, -SADDLE_Y);
       paintPixelFrame(ctx, PIX_DRAGON, 0, fire, scale, x, y + over * scale);
-      paintPixelFrame(ctx, heroSprite(hero, true), 0, heroPaletteForTier(3), scale, x + SADDLE_X * scale, y + (SADDLE_Y + over) * scale);
+      paintPixelFrame(ctx, heroSprite(hero, true), 0, heroPaletteForTier(3, hero), scale, x + SADDLE_X * scale, y + (SADDLE_Y + over) * scale);
     };
     const pixelText = (text, size, x, y, fill, align = 'center') => {
       ctx.font = `700 ${size}px 'Pixelify Sans', monospace`;

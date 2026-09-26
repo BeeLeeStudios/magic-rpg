@@ -1339,6 +1339,29 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .potion-btn.ready.poison-ready { --b-face: #8b5cf6; --b-hi: #c4b5fd; --b-lo: #4c1d95; --b-text: #16072e; border: none; }
 .potion-charge-note { color: var(--text-dim); font-weight: 900; margin-top: 10px; }
 
+/* Answer streak: the problem card catches fire. */
+.problem-card.on-fire {
+  box-shadow: 0 -3px 0 #ff7a1c, 0 3px 0 #ff7a1c, -3px 0 0 #ff7a1c, 3px 0 0 #ff7a1c,
+              inset 0 3px 0 #2d2344, inset 0 -3px 0 #0a0612, 0 0 22px 2px rgba(255,122,28,0.55);
+  animation: fireGlow 0.5s steps(2) infinite;
+}
+.problem-card.blazing { animation-duration: 0.25s; }
+.problem-card.on-fire .streak { font-size: 16px; color: #ffcf3a; }
+@keyframes fireGlow {
+  50% { box-shadow: 0 -3px 0 #ffcf3a, 0 3px 0 #ffcf3a, -3px 0 0 #ffcf3a, 3px 0 0 #ffcf3a,
+                    inset 0 3px 0 #2d2344, inset 0 -3px 0 #0a0612, 0 0 32px 6px rgba(255,160,40,0.7); }
+}
+
+/* Level up: rotating rays of light behind the reward card. */
+.levelup-overlay::before {
+  content: ""; position: absolute; left: 50%; top: 45%; width: 220vmax; height: 220vmax;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, rgba(255,215,110,0.16) 0deg 9deg, transparent 9deg 22.5deg);
+  animation: raysSpin 14s linear infinite;
+  pointer-events: none;
+}
+@keyframes raysSpin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
 /* ---------- shop ---------- */
 .shop-overlay { background: rgba(8,4,16,0.82); padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom)); }
 .shop-coins { font-family: var(--font-ui); font-size: 18px; color: var(--gold); text-shadow: 0 2px 0 var(--ink); }
@@ -1378,7 +1401,8 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 .info-card ul { padding-left: 20px; margin: 6px 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .logo, .journey-btn, .boss-portrait, .problem .q, .fireball-btn.ready, .player-fill.low { animation: none !important; }
+  .logo, .journey-btn, .boss-portrait, .problem .q, .fireball-btn.ready, .player-fill.low,
+  .problem-card.on-fire, .levelup-overlay::before { animation: none !important; }
 }
 
 </style>
@@ -2647,6 +2671,7 @@ function beginBossFight() {
 
 function announceBandChange(change) {
   if (!change || change.type !== "promote") return;
+  setTimeout(() => Sound.play("rankup"), 400);
   const band = getBand(change.band);
   S.bandBanner = change.jumped
     ? `🌟 MATH RANK UP x2 — ${band.name}! ${band.desc}`
@@ -2740,6 +2765,7 @@ function spawnWave(wave, level) {
       // player has to press FIGHT to continue, so the moment can't be
       // missed and the fight starts when they're ready.
       S.bossIntro = { name: base.name };
+      setTimeout(() => Sound.play("boss"), 150);
       S.locked = true;
     }
   }
@@ -2851,6 +2877,7 @@ function handleWaveClear() {
     };
     setTimeout(() => {
       S.banner = null;
+      Sound.play("levelup");
       S.levelUpData = {
         level: newLevelInfo.level,
         // Dragon level no longer controls the math; show the kid's
@@ -3135,6 +3162,7 @@ function handleAnswer(val) {
   const correct = val === S.problem.answer;
   S.lastAnswerCorrect = correct;
   S.pick = { val, correct, answer: S.problem.answer };
+  Sound.play(correct ? "correct" : "wrong");
 
   // Timing drives both the mastery check and the speed damage bonus.
   const elapsed = Math.max(0, Date.now() - (S.problemShownAt || Date.now()));
@@ -3492,7 +3520,7 @@ function paintHeroPortraits() {
     const scale = Math.max(1, Math.floor(Math.min(cv.width / sprite.w, cv.height / sprite.h)));
     const ox = Math.round((cv.width - sprite.w * scale) / 2);
     const oy = Math.round((cv.height - sprite.h * scale) / 2);
-    paintPixelFrame(ctx, sprite, 0, HERO_PALETTE, scale, ox, oy);
+    paintPixelFrame(ctx, sprite, 0, heroPaletteForTier(0, cv.dataset.hero), scale, ox, oy);
   });
 }
 
@@ -3536,6 +3564,7 @@ function titleHTML() {
           <div class="journey-sub">${sub}</div>
           <button class="journey-btn" data-action="start-game">START</button>
           <div class="journey-links">
+            <button class="btn ghost" data-action="toggle-sound" aria-label="Sound">${Sound.muted ? "🔇" : "🔊"}</button>
             <button class="btn ghost" data-action="open-shop">🛒 Shop</button>
             <button class="btn ghost" data-action="switch-save">💾 Saves</button>
           </div>
@@ -3626,7 +3655,7 @@ function titleRiderFrames(cache) {
   const key = (S.hero || "boy") + pal.body + getSwordTier();
   if (cache.riderKey === key) return cache.rider;
   const rider = heroSprite(S.hero || "boy", true);
-  const heroPal = heroPaletteForTier(getSwordTier());
+  const heroPal = heroPaletteForTier(getSwordTier(), S.hero);
   const over = Math.max(0, -SADDLE_Y);
   cache.rider = PIX_DRAGON.frames.map((_, f) => {
     const c = makeTextureCanvas(PIX_DRAGON.w + 2, PIX_DRAGON.h + over + 2);
@@ -3727,6 +3756,7 @@ function playingHTML() {
     <div class="topbar">
       <span class="wave-chip">Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</span>
       <span class="topbar-actions">
+        <button class="icon-btn" data-action="toggle-sound" aria-label="${Sound.muted ? "Sound off" : "Sound on"}">${Sound.muted ? "🔇" : "🔊"}</button>
         <button class="icon-btn" data-action="switch-save">💾</button>
         <button class="icon-btn" data-action="open-shop">🪙 ${S.coins} · 🛒</button>
       </span>
@@ -3781,8 +3811,8 @@ function playingHTML() {
       <div class="hpbar" data-bar="player"><div class="hpghost" style="width:${pPct}%"></div><div class="hpfill player-fill${pPct <= 30 ? " low" : ""}" style="width:${pPct}%"></div></div>
     </div>
 
-    <div class="problem-card">
-      <div class="streak">${S.streak > 1 ? `🔥 ${S.streak} in a row` : "&nbsp;"}</div>
+    <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 6 ? " blazing" : ""}">
+      <div class="streak">${S.streak >= 6 ? `🔥 UNSTOPPABLE! ${S.streak} in a row 🔥` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
       <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span></div>
       <div class="choices">
         ${S.choices.map((c) => `
@@ -4029,6 +4059,7 @@ root.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
+  if (action !== "answer" && action !== "toggle-sound") Sound.play("tap");
   if (action === "start-game") startGame();
   else if (action === "open-shop") { S.shopOpen = true; render(); }
   else if (action === "close-shop") { S.shopOpen = false; render(); }
@@ -4052,6 +4083,7 @@ root.addEventListener("click", (e) => {
   else if (action === "cancel-delete-save") cancelDeleteSave();
   else if (action === "add-save") addSave();
   else if (action === "switch-save") switchSave();
+  else if (action === "toggle-sound") { Sound.toggle(); render(); }
   else if (action === "open-info") { S.screen = "info"; render(); }
   else if (action === "close-info") { S.screen = "saveselect"; render(); }
 });
@@ -4787,6 +4819,15 @@ const PIX_HERO_GIRL_SEAT = { w: 22, h: 26, frames: [
     ],
 ] };
 const HERO_PALETTE = {"skin": "#f0bd8a", "hairM": "#3a2d4a", "hairF": "#a84f28", "armor": "#7d8c9c", "clothM": "#a8382e", "clothF": "#3f7fae", "leather": "#7a4c28", "gold": "#e0a832", "dark2": "#241a2e", "bladeColor": "#7d8c9c", "hiltColor": "#7a4c28"};
+
+/* Per-hero colour schemes, so the two heroes read as different people at
+   a glance even at thumbnail size (they share a body shape): the boy is a
+   blue-steel knight with a red cape; the girl wears violet plate, a pink
+   skirt and a gold tiara, with a long copper braid (see decorateGirl). */
+const HERO_PALETTES = {
+  boy: Object.assign({}, HERO_PALETTE, { armor: "#6f90c4", clothM: "#d0392b", hairM: "#2e2440", leather: "#6e4526" }),
+  girl: Object.assign({}, HERO_PALETTE, { armor: "#a57ad8", clothF: "#ee5a9a", hairF: "#a8402a", leather: "#7a3f5e", gold: "#f2c440" }),
+};
 
 const PIX_GOBLIN = { w: 32, h: 36, frames: [
     [
@@ -6682,6 +6723,39 @@ const PIX_SLOT_KEY = {
   B: "bladeColor", H: "hiltColor",
 };
 
+/* Gives the girl a silhouette of her own instead of only a recolour: a
+   gold tiara with a pink gem across the top of her hair and, when
+   standing, a long braid hanging past her shoulder with a bow at the end.
+   Applied to the sprite data once at load, so every renderer (battle,
+   title, hero picker, store art) gets it for free. */
+function decorateGirl(sprite, withBraid) {
+  sprite.frames = sprite.frames.map((rows) => {
+    const g = rows.map((r) => r.match(/../g));
+    const hairTop = g.findIndex((r) => r.filter((c) => c[0] === "f").length >= 6);
+    if (hairTop < 0) return rows;
+    // tiara band over the hair, gem in the middle
+    const cols = g[hairTop].map((c, i) => (c[0] === "f" ? i : -1)).filter((i) => i >= 0);
+    const mid = Math.round((cols[0] + cols[cols.length - 1]) / 2);
+    for (let i = mid - 3; i <= mid + 3; i++) if (g[hairTop][i] && g[hairTop][i][0] === "f") g[hairTop][i] = i === mid ? "C0" : "g0";
+    // three crown points above the band
+    for (const i of [mid - 2, mid, mid + 2]) if (hairTop > 0 && g[hairTop - 1][i] === "..") g[hairTop - 1][i] = i === mid ? "W1" : "g0";
+    if (withBraid) {
+      // braid two pixels wide, just outside the armour's left edge
+      const x = Math.max(0, cols[0] - 2);
+      for (let y = hairTop + 8; y < hairTop + 19 && y < g.length; y++) {
+        if (g[y][x] === "..") g[y][x] = (y % 2) ? "f1" : "f0";
+        if (g[y][x + 1] === ".." ) g[y][x + 1] = (y % 2) ? "f2" : "f1";
+      }
+      const end = hairTop + 19;
+      if (end < g.length && g[end][x] === "..") g[end][x] = "C0";
+      if (end < g.length && x > 0 && g[end][x - 1] === "..") g[end][x - 1] = "C1";
+    }
+    return g.map((r) => r.join(""));
+  });
+}
+decorateGirl(PIX_HERO_GIRL, true);
+decorateGirl(PIX_HERO_GIRL_SEAT, false);
+
 /* Where the seated rider lands on the mount, in sprite-pixel coordinates.
    The dragon's body was lengthened between the wing root and the neck
    specifically to make room for this, so the rider covers neither. */
@@ -7076,6 +7150,81 @@ function makeTextureCanvas(w, h) {
   c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h));
   return c;
 }
+
+/* ================= SOUND =================
+   Retro sound effects synthesized with the Web Audio API -- no audio
+   files, so nothing to download and it works fully offline. The mute
+   choice is a per-device setting kept in its own storage key, separate
+   from the save slots. Audio can only start after a tap (browser/WebView
+   autoplay rules), so the context is created lazily on first use. */
+const Sound = {
+  ctx: null,
+  muted: (() => { try { return localStorage.getItem("dvmMuted") === "1"; } catch (e) { return false; } })(),
+  ensure() {
+    if (this.muted) return null;
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      this.ctx = new AC();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = 0.28;
+      this.master.connect(this.ctx.destination);
+    }
+    if (this.ctx.state === "suspended") this.ctx.resume();
+    return this.ctx;
+  },
+  toggle() {
+    this.muted = !this.muted;
+    try { localStorage.setItem("dvmMuted", this.muted ? "1" : "0"); } catch (e) {}
+    if (!this.muted) this.play("tap");
+  },
+  tone(freq, dur, { type = "square", at = 0, to = null, vol = 0.5 } = {}) {
+    const ctx = this.ctx, t = ctx.currentTime + at;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(this.master);
+    o.start(t); o.stop(t + dur + 0.02);
+  },
+  noise(dur, { at = 0, vol = 0.4, from = 3000, to = 300 } = {}) {
+    const ctx = this.ctx, t = ctx.currentTime + at;
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf;
+    f.type = "lowpass"; f.frequency.setValueAtTime(from, t); f.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.connect(f); f.connect(g); g.connect(this.master);
+    src.start(t); src.stop(t + dur + 0.02);
+  },
+  play(name) {
+    if (!this.ensure()) return;
+    try {
+      switch (name) {
+        case "tap": this.tone(740, 0.05, { vol: 0.25 }); break;
+        case "swing": this.noise(0.12, { vol: 0.25, from: 6000, to: 1200 }); break;
+        case "hit": this.noise(0.1, { vol: 0.5, from: 2500, to: 200 }); this.tone(220, 0.12, { to: 90, vol: 0.35 }); break;
+        case "crit": this.noise(0.14, { vol: 0.55 }); [880, 1175, 1568].forEach((f, i) => this.tone(f, 0.08, { at: i * 0.05, vol: 0.3 })); break;
+        case "correct": this.tone(660, 0.07, { vol: 0.3 }); this.tone(990, 0.1, { at: 0.06, vol: 0.3 }); break;
+        case "wrong": this.tone(220, 0.25, { type: "sawtooth", to: 110, vol: 0.3 }); break;
+        case "hurt": this.noise(0.18, { vol: 0.5, from: 1500, to: 100 }); this.tone(160, 0.2, { type: "triangle", to: 60, vol: 0.5 }); break;
+        case "fireball": this.noise(0.45, { vol: 0.35, from: 800, to: 4000 }); this.tone(200, 0.4, { type: "sawtooth", to: 600, vol: 0.12 }); break;
+        case "boom": this.noise(0.5, { vol: 0.7, from: 1800, to: 60 }); this.tone(90, 0.4, { type: "triangle", to: 40, vol: 0.6 }); break;
+        case "defeat": [523, 392, 330, 262].forEach((f, i) => this.tone(f, 0.09, { at: i * 0.06, vol: 0.25 })); this.noise(0.3, { at: 0.05, vol: 0.25, from: 4000, to: 500 }); break;
+        case "coin": this.tone(988, 0.07, { vol: 0.3 }); this.tone(1319, 0.18, { at: 0.07, vol: 0.3 }); break;
+        case "levelup": [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.tone(f, i === 5 ? 0.35 : 0.1, { at: i * 0.09, vol: 0.3 })); break;
+        case "rankup": [659, 831, 988, 1319].forEach((f, i) => this.tone(f, 0.12, { at: i * 0.08, type: "triangle", vol: 0.45 })); break;
+        case "boss": this.tone(110, 0.9, { type: "sawtooth", to: 55, vol: 0.35 }); this.noise(0.9, { vol: 0.3, from: 600, to: 80 }); break;
+        case "fire": this.noise(0.3, { vol: 0.25, from: 1200, to: 3500 }); [392, 523, 659].forEach((f, i) => this.tone(f, 0.08, { at: i * 0.05, vol: 0.2 })); break;
+      }
+    } catch (e) { /* audio is decoration; never let it break the game */ }
+  },
+};
 
 /* ---------- pixel helpers shared by the stage, title and icons ---------- */
 
@@ -7477,7 +7626,7 @@ const BattleStage = {
     this.dragonStrips = []; this.dragonFlash = [];
     const mounted = !!this._mountPalette;
     const rider = heroSprite(this._hero, mounted);
-    const heroPal = heroPaletteForTier(this._swordTier || 0);
+    const heroPal = heroPaletteForTier(this._swordTier || 0, this._hero);
     const targetH = DRAGON_ART_GRID * u;
     const scale = mounted ? pixScaleFor(PIX_DRAGON, targetH) : pixScaleFor(rider, targetH * 0.78);
     this._pixScale = scale;
@@ -7601,6 +7750,16 @@ const BattleStage = {
       const x = this.playerLayer.x + (Math.random() - 0.5) * this.unit * 30;
       const y = this.playerLayer.y + this.dragonOriginY * (0.1 + Math.random() * 0.8);
       this.spawn({ x, y, vx: (Math.random() - 0.5) * 0.02, vy: A.vy - Math.random() * 0.02, life: 1100, color: A.colors ? A.colors[(Math.random() * A.colors.length) | 0] : "#fff", hue: A.colors ? undefined : Math.random() * 360, twinkle: !!A.twinkle, seed: Math.random() * 999, fadeIn: true, shape: A.twinkle && Math.random() < 0.4 ? "plus" : null });
+    }
+    // Answer streak: flames lick up around the hero (bigger at 6+).
+    if (this._fire && Math.random() < dt / (this._fire > 1 ? 14 : 30)) {
+      const spread = this.unit * (this._fire > 1 ? 26 : 18);
+      this.spawn({
+        x: this.playerLayer.x + (Math.random() - 0.5) * spread, y: this.playerLayer.y - Math.random() * this.unit * 4,
+        vx: (Math.random() - 0.5) * 0.02, vy: -0.06 - Math.random() * 0.07, life: 650 + Math.random() * 400,
+        color: ["#fff3b0", "#ffcf3a", "#ff7a1c", "#d8321f"][(Math.random() * 4) | 0], wobble: 0.0008, seed: Math.random() * 999,
+        size: this.ap * (Math.random() < 0.35 ? 2 : 1),
+      });
     }
     if (this._poisoned && Math.random() < dt / 160) {
       this.spawn({ x: this.enemyLayer.x + (Math.random() - 0.5) * this.unit * 20, y: this.enemyLayer.y - this.unit * 6, vy: -0.04, life: 1300, color: Math.random() < 0.5 ? "#7cff5a" : "#b06aff", wobble: 0.0005, seed: Math.random() * 999, shape: "ring", front: true });
@@ -7852,6 +8011,9 @@ const BattleStage = {
     this._isBoss = !!(activeEnemy && activeEnemy.isBoss && activeEnemy.hp > 0);
     this._poisoned = !!(activeEnemy && activeEnemy.poisonTurns > 0 && activeEnemy.hp > 0);
     this._charging = !!(activeEnemy && activeEnemy.charging > 0);
+    const fireLevel = S.streak >= 6 ? 2 : S.streak >= 3 ? 1 : 0;
+    if (fireLevel > (this._fire || 0)) Sound.play("fire");
+    this._fire = fireLevel;
     if (activeEnemy) {
       this._enemyGlow = activeEnemy.glow || "#ffffff";
       if (activeEnemy.isChest) {
@@ -7863,6 +8025,7 @@ const BattleStage = {
           killTweensOf(this.enemyLayer);
           tweenTo(this.enemyLayer, { scale: { from: 1, to: 1.2 } }, { duration: 220, yoyo: true, ease: "quadOut" });
           const cx = this.enemyBase.x, cy = this.enemyBase.y + this.dragonOriginY * 0.35;
+          Sound.play("coin");
           this.burst(cx, cy, ["#ffcf3a", "#fff3a8", "#f2c440", "#ffffff"], 46, 0.28, { up: 0.22, g: 0.0011, life: 1100, extra: { front: true } });
           this.fx.push({ type: "ring", x: cx, y: cy, r: 18, color: "#fff3a8", t0: performance.now(), dur: 450 });
         }
@@ -7906,6 +8069,7 @@ const BattleStage = {
   },
 
   enemyDie() {
+    Sound.play("defeat");
     const strip = this.enemyStrips[0];
     this._deadRef = this._trackRef;
     const ox = this.enemyLayer.x + (this._enemyBaseX || 0), oy = this.enemyLayer.y + (this._enemyBaseY || 0);
@@ -7936,6 +8100,7 @@ const BattleStage = {
 
   /* ---------- combat hooks (called through BattleFX) ---------- */
   playerAttack() {
+    Sound.play("swing");
     killTweensOf(this.playerLayer);
     tweenTo(this.playerLayer, { x: this.playerBase.x + this.unit * 22 }, { duration: 175, yoyo: true, ease: "quadOut" });
     const now = performance.now();
@@ -7943,6 +8108,7 @@ const BattleStage = {
     for (let k = 0; k < 8; k++) this.spawn({ x: this.playerBase.x - this.unit * 6, y: this.playerBase.y - this.ap * (1 + Math.random() * 3), vx: -0.04 - Math.random() * 0.05, vy: -0.02, life: 300, color: "#e8e0f0" });
   },
   playerHit() {
+    Sound.play("hurt");
     const now = performance.now();
     this.shakeUntil = now + 300; this.shakeMag = 0.8; this.flashUntil = now + 350;
     this.playerFlashUntil = now + 110;
@@ -7957,6 +8123,7 @@ const BattleStage = {
     tweenTo(this.enemyLayer, { x: this.enemyBase.x - this.W * 0.18 }, { duration: 175, yoyo: true, ease: "quadOut" });
   },
   enemyHit() {
+    Sound.play("hit");
     const now = performance.now();
     killTweensOf(this.enemyLayer); killTweensOf(this.enemyText);
     this.enemyLayer.alpha = 1; this.enemyLayer.y = this.enemyBase.y;
@@ -7969,6 +8136,7 @@ const BattleStage = {
     this.shakeUntil = now + 120; this.shakeMag = 0.4;
   },
   fireballCast() {
+    Sound.play("fireball");
     const now = performance.now();
     const x0 = this.playerBase.x + this.unit * 8, y0 = this.playerBase.y + this.dragonOriginY * 0.7;
     const x1 = this.enemyBase.x, y1 = this.enemyBase.y + this.dragonOriginY * 0.45;
@@ -7979,6 +8147,7 @@ const BattleStage = {
       this.fx.push({ type: "ring", x: x1, y: y1, r: 16, color: "#ff5a1a", t0: t + 60, dur: 420 });
       this.burst(x1, y1, ["#fff3b0", "#ffcf3a", "#ff7a1c", "#d8321f", "#5a2a1a"], 60, 0.42, { up: 0.08, g: 0.0007, life: 700, extra: { front: true } });
       this.whiteUntil = t + 140; this.shakeUntil = t + 320; this.shakeMag = 1.3;
+      Sound.play("boom");
     }, 490);
   },
   showPopup(text, side, kind) {
@@ -8001,7 +8170,7 @@ const BattleStage = {
       onComplete: () => { const i = this.popups.indexOf(p); if (i >= 0) this.popups.splice(i, 1); },
     });
     tweenTo(p, { alpha: { from: 1, to: 0 } }, { delay: 1100, duration: 1400 });
-    if (kind === "crit") { const now = performance.now(); this.whiteUntil = now + 120; this.shakeUntil = now + 260; this.shakeMag = 1.1; }
+    if (kind === "crit") { Sound.play("crit"); const now = performance.now(); this.whiteUntil = now + 120; this.shakeUntil = now + 260; this.shakeMag = 1.1; }
     if (kind === "heal") this.burst(base.x, base.y + this.dragonOriginY * 0.4, ["#6ee7a8", "#c8ffe0"], 12, 0.08, { up: 0.08, g: -0.00005, life: 900, extra: { shape: "plus" } });
   },
   showImpact(side) {
@@ -8011,9 +8180,10 @@ const BattleStage = {
 };
 
 /* The rider's palette with the sword recoloured to the owned DMG tier. */
-function heroPaletteForTier(tier) {
+function heroPaletteForTier(tier, hero) {
   const t = SWORD_TIERS[Math.max(0, Math.min(SWORD_TIERS.length - 1, tier || 0))];
-  return Object.assign({}, HERO_PALETTE, { bladeColor: t.blade, hiltColor: t.hilt });
+  const base = HERO_PALETTES[hero === "girl" ? "girl" : "boy"];
+  return Object.assign({}, base, { bladeColor: t.blade, hiltColor: t.hilt });
 }
 
 /* ---------- plumbing: host element, loop, resize sync ---------- */
