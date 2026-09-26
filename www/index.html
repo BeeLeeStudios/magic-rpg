@@ -1206,6 +1206,25 @@ h1, .journey-title, .shop-header h2, .levelup-card h2 {
 }
 .hero-card span { display: block; text-shadow: 0 2px 0 var(--ink); }
 
+.name-field { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 10px 0 8px; }
+.name-field span { color: var(--gold); font-weight: 900; font-size: 15px; }
+.name-field input {
+  width: min(260px, 90%); padding: 12px 14px; border-radius: 14px; border: 3px solid #e0a838;
+  background: #150e22; color: #fff; font: 900 20px var(--font-ui); text-align: center; outline: none;
+  -webkit-user-select: text; user-select: text;
+}
+.name-field input:focus { box-shadow: 0 0 0 3px rgba(224,168,56,0.4); }
+.dmg-plus { color: #ffcf3a; }
+
+/* ---------- settings ---------- */
+.settings-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(8,4,16,0.82); }
+.settings-card { width: 100%; max-width: 380px; padding: 20px 18px; }
+.settings-card h2 { margin: 0 0 14px; text-align: center; font-size: 28px; font-weight: 900; color: var(--gold); text-shadow: 0 3px 0 var(--ink); }
+.shop-item-emoji.px-icon.sword-icon { width: 54px; height: 54px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0; font-weight: 900; font-size: 16px; }
+.setting-row input[type=range] { flex: 1; accent-color: #ffb04a; height: 28px; }
+.vol-label { min-width: 48px; text-align: right; color: var(--gold); }
+
 /* ---------- journey / title ---------- */
 .journey { height: min(calc(100vh - 24px - var(--safe-top) - var(--safe-bottom)), 780px); min-height: 480px; }
 .journey-bg { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; }
@@ -1519,7 +1538,7 @@ const MATH_BANDS = [
         return { a, op: "+", b, answer: a + b };
       }
       const a = randInt(3, 9) * 10;
-      const b = randInt(1, a / 10) * 10;
+      const b = randInt(1, a / 10 - 1) * 10;   // never 40 - 40: always leaves some tens
       return { a, op: "-", b, answer: a - b };
     },
     // Treating tens as ones (30+20 -> 5) is THE error to catch here.
@@ -2367,12 +2386,15 @@ function seededRandom01(n) {
    rider's actual held blade recolors to match the highest tier owned
    (see SWORD_TIERS / getSwordTier below), so buying one is a look you
    can see on the battlefield, not just a stat. */
+/* Swords are tiers, not stacking upgrades: each one is stronger than the
+   last (+1, +2 ... +5 DMG) and you wield exactly one at a time -- the
+   equipped sword sets both your bonus damage and the blade you see. */
 const DMG_UPGRADES = [
-  { id: "dmg1", name: "Iron Sword",       emoji: "🗡️", cost: 25,  levelReq: 1, type: "dmg" },
-  { id: "dmg2", name: "Steel Sword",      emoji: "⚔️", cost: 45,  levelReq: 2, type: "dmg" },
-  { id: "dmg3", name: "Flame Sword",      emoji: "🔥", cost: 70,  levelReq: 3, type: "dmg" },
-  { id: "dmg4", name: "Storm Sword",      emoji: "⚡", cost: 100, levelReq: 4, type: "dmg" },
-  { id: "dmg5", name: "Dragonfang Blade", emoji: "🐉", cost: 140, levelReq: 5, type: "dmg" },
+  { id: "dmg1", name: "Iron Sword",       emoji: "🗡️", cost: 25,  levelReq: 1, type: "dmg", bonus: 1, perk: "Sturdy and sharp" },
+  { id: "dmg2", name: "Steel Sword",      emoji: "⚔️", cost: 60,  levelReq: 2, type: "dmg", bonus: 2, perk: "Polished steel shine" },
+  { id: "dmg3", name: "Flame Sword",      emoji: "🔥", cost: 110, levelReq: 3, type: "dmg", bonus: 3, perk: "Burns with living fire" },
+  { id: "dmg4", name: "Storm Sword",      emoji: "⚡", cost: 170, levelReq: 4, type: "dmg", bonus: 4, perk: "Crackles with lightning" },
+  { id: "dmg5", name: "Dragonfang Blade", emoji: "🐉", cost: 250, levelReq: 5, type: "dmg", bonus: 5, perk: "Forged from a dragon's fang" },
 ];
 
 /* Blade/hilt colours for the rider's sword, keyed by how many DMG
@@ -2388,8 +2410,12 @@ const SWORD_TIERS = [
   { blade: "#e0335a", hilt: "#f0c14a" }, // 5: Dragonfang Blade -- crimson, rich gold
 ];
 
-/* How many DMG upgrades the active save owns, clamped to the tier table. */
-function getSwordTier() { return Math.min(SWORD_TIERS.length - 1, getDmgBonus()); }
+/* Tier of the equipped sword (0 = starting sword), which picks the blade
+   colours and battlefield effects. */
+function getSwordTier() {
+  const i = DMG_UPGRADES.findIndex((u) => u.id === S.equippedSword);
+  return i < 0 ? 0 : Math.min(SWORD_TIERS.length - 1, i + 1);
+}
 
 /* ---------- level-up reward cards ----------
    The skill tree is gone. Instead, every level-up offers the dragon 3
@@ -2600,6 +2626,7 @@ const S = {
   equippedAura: null,
   equippedCreature: null,
   equippedPet: null,
+  equippedSword: null,
   levelUpData: null,
   pendingAdvance: null,
   // Math progression. mathBand is what the kid has proven; mastery holds
@@ -2693,7 +2720,10 @@ function addImpact(side) {
 
 function isOwned(id) { return !!S.ownedCosmetics[id]; }
 function isUpgradeOwned(id) { return !!S.ownedUpgrades[id]; }
-function getDmgBonus() { return DMG_UPGRADES.filter((u) => S.ownedUpgrades[u.id]).length; }
+function getDmgBonus() {
+  const sw = DMG_UPGRADES.find((u) => u.id === S.equippedSword && S.ownedUpgrades[u.id]);
+  return sw ? sw.bonus : 0;
+}
 
 /* % of your attack damage the equipped pet adds on top, every time you attack. */
 function getPetDmgPercent() {
@@ -2916,6 +2946,9 @@ function selectSave(id) {
   S.equippedAura = (d && d.equippedAura) || null;
   S.equippedCreature = (d && d.equippedCreature) || null;
   S.equippedPet = (d && d.equippedPet) || null;
+  // Saves from before swords were equippable wield the best one they own.
+  S.equippedSword = (d && d.equippedSword !== undefined) ? d.equippedSword
+    : ((DMG_UPGRADES.filter((u) => S.ownedUpgrades[u.id]).pop() || {}).id || null);
   // Each kid's math progression rides with their slot. Saves written
   // before bands existed have no mastery data and start at band 1.
   S.hero = (d && (d.hero === "girl" || d.hero === "boy")) ? d.hero : null;
@@ -2995,6 +3028,7 @@ function saveActiveSlot() {
     equippedAura: S.equippedAura,
     equippedCreature: S.equippedCreature,
     equippedPet: S.equippedPet,
+    equippedSword: S.equippedSword,
     bestWave: Math.max(prevBestWave, S.wave),
     bestScore: Math.max(prevBestScore, S.score),
     // Snapshot of the battle in progress (current wave, monster(s), HP,
@@ -3409,6 +3443,7 @@ function buyItem(item) {
     Sound.play("buy");
     S.coins -= item.cost;
     S.ownedUpgrades[item.id] = true;
+    S.equippedSword = item.id;          // a new sword goes straight into your hand
     saveActiveSlot();
     render();
     return;
@@ -3427,6 +3462,13 @@ function buyItem(item) {
 }
 
 function toggleEquip(item) {
+  if (item.type === "dmg") {
+    if (!isUpgradeOwned(item.id)) return;
+    S.equippedSword = S.equippedSword === item.id ? null : item.id;
+    saveActiveSlot();
+    render();
+    return;
+  }
   if (!isOwned(item.id)) return;
   if (item.type === "accessory") {
     S.equippedAccessory = S.equippedAccessory === item.id ? null : item.id;
@@ -3480,10 +3522,11 @@ function saveSelectHTML() {
   return `
   <div class="card title-card">
     <div class="title-emoji">📜</div>
-    <h1>Choose Your Dragon</h1>
+    <h1>Choose Your Save</h1>
     <p class="sub">Select a save file to continue your saga, or begin a new one.</p>
     <div class="save-list">${items}</div>
     <button class="btn ghost" data-action="add-save" ${SAVES.slots.length >= 12 ? "disabled" : ""}>➕ New Save Slot</button>
+    <button class="btn ghost" data-action="open-settings">⚙️ Settings</button>
     <button class="parent-link" data-action="open-info">For Parents · Privacy</button>
   </div>`;
 }
@@ -3507,7 +3550,12 @@ function heroSelectHTML() {
   return `
     <div class="card">
       <h1 class="hero-title">Choose Your Hero</h1>
-      <p class="hero-sub">You'll find a dragon to ride later on.</p>
+      <label class="name-field">
+        <span>Your name</span>
+        <input id="hero-name" type="text" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false"
+          placeholder="Type your name" value="${esc(playerName() === "Hero" ? "" : playerName())}">
+      </label>
+      <p class="hero-sub">Then pick your hero. You'll find a dragon to ride later on.</p>
       <div class="hero-pick">
         <button class="hero-card" onclick="pickHero('boy')">
           <canvas class="hero-portrait" data-hero="boy" width="96" height="152"></canvas>
@@ -3530,8 +3578,20 @@ function paintHeroPortraits() {
   });
 }
 
+/* The hero's name is the save slot's name. Untouched slots are still
+   called "Slot 1" etc., which would read oddly in battle, so show "Hero". */
+function playerName() {
+  const slot = SAVES.slots.find((x) => x.id === S.activeSaveId);
+  const n = slot && slot.name ? slot.name.trim() : "";
+  return n && !/^Slot \d+$/.test(n) ? n : "Hero";
+}
+
 function pickHero(which) {
   Sound.play("tap");
+  const input = document.getElementById("hero-name");
+  const typed = input ? input.value.trim().slice(0, 14) : "";
+  const slot = SAVES.slots.find((x) => x.id === S.activeSaveId);
+  if (slot && typed) slot.name = typed;
   S.hero = which === "girl" ? "girl" : "boy";
   saveActiveSlot();
   flushSaves();
@@ -3571,13 +3631,34 @@ function titleHTML() {
           <div class="journey-sub">${sub}</div>
           <button class="journey-btn" data-action="start-game">START</button>
           <div class="journey-links">
-            <button class="btn ghost" data-action="toggle-sound" aria-label="Sound">${Sound.muted ? "🔇" : "🔊"}</button>
+            <button class="btn ghost" data-action="open-settings" aria-label="Settings">⚙️</button>
             <button class="btn ghost" data-action="open-shop">🛒 Shop</button>
             <button class="btn ghost" data-action="switch-save">💾 Saves</button>
           </div>
         </div>
       </div>
     </div>`;
+}
+
+/* Settings: sound on/off and volume. The slider updates the volume live
+   (see the "input" listener) without re-rendering, so dragging is smooth. */
+function settingsHTML() {
+  return `
+  <div class="settings-overlay">
+    <div class="card settings-card">
+      <h2>Settings</h2>
+      <div class="setting-row">
+        <span>Sound</span>
+        <button class="btn shop-btn ${Sound.muted ? "equip" : "equipped"}" data-action="toggle-sound">${Sound.muted ? "🔇 Off" : "🔊 On"}</button>
+      </div>
+      <div class="setting-row">
+        <span>Volume</span>
+        <input id="volume-slider" type="range" min="0" max="100" step="5" value="${Sound.volume}" ${Sound.muted ? "disabled" : ""} aria-label="Volume">
+        <span class="vol-label" id="volume-label">${Sound.volume}%</span>
+      </div>
+      <button class="btn primary big" data-action="close-settings">Done</button>
+    </div>
+  </div>`;
 }
 
 /* In-app privacy notice. Google Play requires the policy to be reachable
@@ -3776,7 +3857,7 @@ function playingHTML() {
     <div class="topbar">
       <span class="wave-chip">Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</span>
       <span class="topbar-actions">
-        <button class="icon-btn" data-action="toggle-sound" aria-label="${Sound.muted ? "Sound off" : "Sound on"}">${Sound.muted ? "🔇" : "🔊"}</button>
+        <button class="icon-btn" data-action="open-settings" aria-label="Settings">⚙️</button>
         <button class="icon-btn" data-action="switch-save">💾</button>
         <button class="icon-btn" data-action="open-shop">🪙 ${S.coins} · 🛒</button>
       </span>
@@ -3825,7 +3906,7 @@ function playingHTML() {
 
     <div class="combatant player-row">
       <div class="name-row">
-        <span class="cname">Your Dragon</span>
+        <span class="cname">${esc(playerName())}</span>
         <span class="hp-num">${Math.max(0, S.playerHP)}/${S.playerMaxHP}</span>
       </div>
       <div class="hpbar" data-bar="player"><div class="hpghost" style="width:${pPct}%"></div><div class="hpfill player-fill${pPct <= 30 ? " low" : ""}" style="width:${pPct}%"></div></div>
@@ -3860,7 +3941,7 @@ function gameOverHTML() {
   return `
   <div class="card title-card">
     <div class="title-emoji">💀</div>
-    <h1>Your Dragon Has Fallen</h1>
+    <h1>${esc(playerName())} Has Fallen</h1>
     <p class="sub">You reached wave ${S.wave} with a score of ${S.score}.</p>
     <button class="btn primary big" data-action="start-game">Try Again</button>
     <button class="btn ghost" data-action="open-shop">🛒 Open Shop</button>
@@ -3873,8 +3954,9 @@ function upgradeItemHTML(item) {
   const owned = isUpgradeOwned(item.id);
   const locked = level < item.levelReq;
   let actionBtn;
+  const equipped = S.equippedSword === item.id;
   if (owned) {
-    actionBtn = `<button class="btn shop-btn equipped" disabled>Owned ✓</button>`;
+    actionBtn = `<button class="btn shop-btn ${equipped ? "equipped" : "equip"}" data-action="toggle-equip" data-kind="dmg" data-id="${item.id}">${equipped ? "Equipped ✓" : "Equip"}</button>`;
   } else if (locked) {
     actionBtn = `<button class="btn shop-btn buy" disabled>🔒 Lv.${item.levelReq}</button>`;
   } else {
@@ -3882,10 +3964,10 @@ function upgradeItemHTML(item) {
   }
   return `
     <div class="shop-item">
-      <div class="shop-item-emoji px-icon"><canvas data-pix="sword:${DMG_UPGRADES.indexOf(item) + 1}" width="36" height="36"></canvas></div>
+      <div class="shop-item-emoji px-icon sword-icon"><canvas data-pix="sword:${DMG_UPGRADES.indexOf(item) + 1}" width="36" height="36"></canvas></div>
       <div class="shop-item-info">
         <div class="shop-item-name">${item.name}</div>
-        <div class="shop-item-type">+1 DMG · Requires Lv.${item.levelReq}</div>
+        <div class="shop-item-type"><strong class="dmg-plus">+${item.bonus} DMG</strong> · ${item.perk}${owned ? "" : ` · Lv.${item.levelReq}`}</div>
       </div>
       ${actionBtn}
     </div>`;
@@ -3950,7 +4032,7 @@ function shopHTML() {
         <button class="close-btn" data-action="close-shop">✕</button>
       </div>
       <p class="shop-coins">🪙 ${S.coins} coins</p>
-      <div class="shop-section-title">⚔️ Power Upgrades <span class="dmg-total">(+${getDmgBonus()} DMG total)</span></div>
+      <div class="shop-section-title">⚔️ Swords <span class="dmg-total">(equipped: +${getDmgBonus()} DMG · one sword at a time)</span></div>
       <div class="shop-list">${upgradeItems}</div>
       <div class="shop-section-title">🐾 Pets <span class="dmg-total">${petBonus > 0 ? `(+${petBonus}% ATK active)` : "(none active)"}</span></div>
       <div class="shop-list">${petItems}</div>
@@ -3990,7 +4072,7 @@ function levelUpHTML() {
     <div class="levelup-card">
       <div class="levelup-emoji">🎉🐲🎉</div>
       <h2>Level ${d.level}!</h2>
-      <p>Your dragon reached <strong>Level ${d.level}</strong> — ${styleName}!</p>
+      <p>${esc(playerName())} reached <strong>Level ${d.level}</strong> — ${styleName}!</p>
       <p class="range-note">🎓 Math Rank ${d.rank.id}: ${d.rank.name} · ${d.rank.desc}</p>
       <p class="choose-note">Choose your reward:</p>
       <div class="levelup-choices">${cardsHtml}</div>
@@ -4025,6 +4107,7 @@ function renderNow() {
   else if (S.screen === "gameover") html += gameOverHTML();
   else if (S.screen === "info") html += infoHTML();
   if (S.shopOpen) html += shopHTML();
+  if (S.settingsOpen) html += settingsHTML();
   if (S.levelUpData) html += levelUpHTML();
   html += "</div>";
   if (S.bossIntro) html += bossIntroHTML();
@@ -4036,6 +4119,17 @@ function renderNow() {
   paintPixIcons();
   syncBattleStage();
 }
+
+root.addEventListener("input", (e) => {
+  if (e.target && e.target.id === "volume-slider") {
+    Sound.setVolume(Number(e.target.value));
+    const lab = document.getElementById("volume-label");
+    if (lab) lab.textContent = `${Sound.volume}%`;
+  }
+});
+root.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "volume-slider") Sound.play("coin");   // preview at the new level
+});
 
 /* render() rebuilds the DOM wholesale, which would make HP bars jump
    instead of animate. Before each rebuild, remember how wide every bar
@@ -4095,7 +4189,10 @@ root.addEventListener("click", (e) => {
       : COSMETICS.find((c) => c.id === btn.dataset.id);
     if (item) buyItem(item);
   }
-  else if (action === "toggle-equip") { const item = COSMETICS.find((c) => c.id === btn.dataset.id); if (item) toggleEquip(item); }
+  else if (action === "toggle-equip") {
+    const item = btn.dataset.kind === "dmg" ? DMG_UPGRADES.find((u) => u.id === btn.dataset.id) : COSMETICS.find((c) => c.id === btn.dataset.id);
+    if (item) toggleEquip(item);
+  }
   else if (action === "choose-levelup-card") chooseLevelUpCard(btn.dataset.id);
   else if (action === "select-save") selectSave(btn.dataset.id);
   else if (action === "rename-save") renameSave(btn.dataset.id);
@@ -4105,6 +4202,8 @@ root.addEventListener("click", (e) => {
   else if (action === "add-save") addSave();
   else if (action === "switch-save") switchSave();
   else if (action === "toggle-sound") { Sound.toggle(); render(); }
+  else if (action === "open-settings") { S.settingsOpen = true; render(); }
+  else if (action === "close-settings") { S.settingsOpen = false; render(); }
   else if (action === "open-info") { S.screen = "info"; render(); }
   else if (action === "close-info") { S.screen = "saveselect"; render(); }
 });
@@ -4128,6 +4227,7 @@ document.addEventListener("visibilitychange", () => {
   if (!App || !App.addListener) return;
   App.addListener("backButton", () => {
     if (S.bossIntro || S.levelUpData) return;           // must be answered on screen
+    if (S.settingsOpen) { S.settingsOpen = false; render(); return; }
     if (S.shopOpen) { S.shopOpen = false; render(); return; }
     if (S.screen === "info") { S.screen = "saveselect"; render(); return; }
     if (S.screen === "saveselect") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
@@ -6774,13 +6874,72 @@ function decorateGirl(sprite, withBraid) {
     return g.map((r) => r.join(""));
   });
 }
+/* Thicker legs: the original 3px legs read as sticks under a 14px torso.
+   Each leg gains a pixel on its outer side and the boots grow to match. */
+function thickenLegs(sprite) {
+  sprite.frames = sprite.frames.map((rows) => rows.map((row) => {
+    const c = row.match(/../g);
+    const isL = (i) => c[i] && c[i][0] === "L";
+    const isK = (i) => c[i] && c[i][0] === "k";
+    if (isL(9) && isL(10) && isL(11) && c[12] === ".." && isL(13) && isL(14) && isL(15)) {
+      c[8] = "L1"; c[16] = "L2";
+    } else if (isK(8) && isK(11) && c[12] === ".." && isK(13) && isK(16)) {
+      if (c[7] === "..") c[7] = "k1";
+      if (c[17] === "..") c[17] = "k2";
+    }
+    return c.join("");
+  }));
+}
+thickenLegs(PIX_HERO_BOY);
+thickenLegs(PIX_HERO_GIRL);
+
+/* Side-view riding pose. The old seated sprites faced the camera, so the
+   hero looked like they were sitting sideways on the dragon and staring at
+   the player. This rider faces right -- toward the enemy -- sits astride
+   the dragon's back with a leg hanging down its side, cape streaming
+   behind, and holds the sword out toward the foe. Built from rectangles so
+   both heroes (hair/cloth slots differ) come from one description. */
+function makeRiderSprite(hair, cloth, spiky) {
+  const frame = (flap) => gridSprite(22, 24, (set, rect) => {
+    // cape behind (flaps between frames)
+    rect(3, 11, 2, 1, cloth + "1"); rect(2 - flap, 12, 3, 4, cloth + "1"); rect(1 - flap, 16, 4, 2, cloth + "2"); rect(2 - flap, 18, 2, 1, cloth + "2");
+    // hair (back of the head is on the left, face on the right)
+    rect(7, 1, 4, 1, hair + "0"); rect(6, 2, 7, 1, hair + "1"); rect(5, 3, 9, 1, hair + "1");
+    rect(5, 4, 6, 1, hair + "1"); rect(4, 5, 6, 1, hair + "1"); rect(4, 6, 5, 1, hair + "1");
+    rect(4, 7, 5, 1, hair + "2"); rect(5, 8, 4, 1, hair + "2"); rect(6, 9, 2, 1, hair + "2");
+    if (spiky) { set(6, 0, hair + "1"); set(9, 0, hair + "0"); set(12, 1, hair + "1"); set(4, 3, hair + "1"); }
+    // face in profile: eye, nose, jaw
+    rect(11, 4, 3, 1, "s1"); rect(10, 5, 5, 1, "s1"); rect(9, 6, 6, 1, "s1"); rect(9, 7, 7, 1, "s1");
+    rect(9, 8, 6, 1, "s1"); rect(9, 9, 4, 1, "s2");
+    set(13, 6, "W1"); set(14, 6, "e1"); set(14, 8, "s2");
+    rect(9, 10, 3, 1, "s2");                                   // neck
+    // armoured torso with chest emblem and belt
+    rect(6, 11, 7, 1, "a0"); rect(5, 12, 8, 3, "a1"); rect(5, 15, 8, 1, "a2");
+    set(8, 13, cloth + "1"); set(9, 13, cloth + "1");
+    rect(5, 16, 8, 1, "L2"); set(10, 16, "g0");
+    // arm reaching forward, gloved hand on the hilt
+    rect(11, 12, 3, 2, "a1"); set(11, 11, "a0"); rect(14, 12, 2, 2, "L1");
+    // sword raised high and forward, clear of the dragon's neck
+    rect(15, 11, 3, 1, "g0"); set(16, 12, "H1");
+    [[16, 10], [16, 9], [17, 8], [17, 7], [18, 6], [18, 5], [19, 4], [19, 3], [20, 2]].forEach(([x, y]) => { set(x, y, "B1"); set(x + 1, y, "B2"); });
+    set(20, 1, "B0"); set(21, 1, "B1"); set(21, 0, "B0");
+    // sitting astride: thigh forward along the dragon's back, shin down its side
+    rect(6, 17, 9, 2, "L1"); rect(6, 18, 9, 1, "L2");
+    rect(12, 19, 3, 3, "L1"); rect(14, 19, 1, 3, "L2");
+    rect(12, 22, 4, 2, "k1"); set(16, 23, "k2");
+  });
+  return { w: 22, h: 24, frames: [frame(0), frame(1)] };
+}
+Object.assign(PIX_HERO_BOY_SEAT, makeRiderSprite("m", "c", true));
+Object.assign(PIX_HERO_GIRL_SEAT, makeRiderSprite("f", "C", false));
+
 decorateGirl(PIX_HERO_GIRL, true);
 decorateGirl(PIX_HERO_GIRL_SEAT, false);
 
 /* Where the seated rider lands on the mount, in sprite-pixel coordinates.
    The dragon's body was lengthened between the wing root and the neck
    specifically to make room for this, so the rider covers neither. */
-const SADDLE_X = 11, SADDLE_Y = -3;
+const SADDLE_X = 13, SADDLE_Y = 0;
 
 function heroSprite(hero, seated) {
   const boy = hero !== "girl";
@@ -6908,7 +7067,7 @@ function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy, layer = 
     return PIX_OUTLINE;
   };
 
-  if (layer !== "fill") for (let y = 0; y < h; y++) {
+  if (layer !== "fill" && layer !== "body") for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (filled(x, y)) continue;
       if (filled(x + 1, y) || filled(x - 1, y) || filled(x, y + 1) || filled(x, y - 1)) {
@@ -6926,6 +7085,7 @@ function paintPixelFrame(ctx, sprite, frameIdx, palette, scale, ox, oy, layer = 
       let col = colorAt(x, y);
       if (!col) continue;
       const isLine = ch === "e" || ch === "W";
+      // "body" = everything except the outer outline (used as a mask)
       if ((layer === "fill" && isLine) || (layer === "line" && !isLine)) continue;
       if (ch !== "e" && ch !== "W") {
         const topOpen = !filled(x, y - 1);
@@ -7076,6 +7236,7 @@ function riderSource(hero, mountPalette, tier, frame) {
   const dLine = one(PIX_DRAGON, frame, mountPalette, 1, over + 1, "line");
   const rFill = one(rider, frame, heroPal, SADDLE_X + 1, SADDLE_Y + over + 1, "fill");
   const rLine = one(rider, frame, heroPal, SADDLE_X + 1, SADDLE_Y + over + 1, "line");
+  const rBody = one(rider, frame, heroPal, SADDLE_X + 1, SADDLE_Y + over + 1, "body");
   // Each sprite's outline is removed where it would cross the OTHER
   // sprite's body, so rider and dragon don't get a tangle of dark lines
   // drawn through each other -- colour alone separates them there.
@@ -7083,43 +7244,44 @@ function riderSource(hero, mountPalette, tier, frame) {
   const fill = makeTextureCanvas(W, H), fctx = fill.getContext("2d");
   fctx.drawImage(dFill, 0, 0); fctx.drawImage(rFill, 0, 0);
   const line = makeTextureCanvas(W, H), lctx = line.getContext("2d");
-  lctx.drawImage(cut(dLine, rFill), 0, 0); lctx.drawImage(cut(rLine, dFill), 0, 0);
+  // (the rider's outline is only removed over dragon parts NOT covered by
+  // the rider itself, so the rider's eye and face lines always survive)
+  const dOnly = makeTextureCanvas(W, H), dctx = dOnly.getContext("2d");
+  dctx.drawImage(dFill, 0, 0); dctx.globalCompositeOperation = "destination-out"; dctx.drawImage(rBody, 0, 0);
+  const rInner = makeTextureCanvas(W, H), rictx = rInner.getContext("2d");
+  rictx.drawImage(rLine, 0, 0); rictx.globalCompositeOperation = "destination-in"; rictx.drawImage(rBody, 0, 0);
+  lctx.drawImage(cut(dLine, rFill), 0, 0); lctx.drawImage(cut(rLine, dOnly), 0, 0); lctx.drawImage(rInner, 0, 0);
   return { fill, line };
 }
 
-/* "Goo" edge smoothing: blur a layer, then push its alpha back toward
-   fully opaque / fully transparent. Staircase edges become smooth curves
-   (the classic metaball trick) while the edge itself stays clean. */
-function gooify(c, radius, detail = 0.35) {
+/* Crisp edge smoothing: the silhouette is traced from a blurred copy of
+   the image's ALPHA only, and used as a mask on the sharp image. Colours
+   are never blurred -- only the outer staircase edge is rounded off. */
+function smoothEdges(c, radius) {
   const w = c.width, h = c.height;
-  const b = makeTextureCanvas(w, h), bctx = b.getContext("2d");
-  bctx.filter = `blur(${Math.max(0.5, radius)}px)`;
-  bctx.drawImage(c, 0, 0);
-  bctx.filter = "none";
-  // keep a little of the original crisp detail inside the shape
-  if (detail > 0) { bctx.globalCompositeOperation = "source-atop"; bctx.globalAlpha = detail; bctx.drawImage(c, 0, 0); bctx.globalAlpha = 1; bctx.globalCompositeOperation = "source-over"; }
-  const img = bctx.getImageData(0, 0, w, h), d = img.data;
-  for (let i = 3; i < d.length; i += 4) {
-    const a = d[i] / 255;
-    if (a <= 0) continue;
-    const t = Math.min(1, Math.max(0, (a - 0.42) * 5 + 0.5));   // steep S-curve around the old edge
-    const k = a > 0 ? t / a : 0;
-    // colours are un-premultiplied by getImageData, so only alpha changes
-    d[i] = Math.round(t * 255);
-    if (k === 0) { d[i - 1] = d[i - 2] = d[i - 3] = 0; }
+  const m = makeTextureCanvas(w, h), mctx = m.getContext("2d");
+  mctx.filter = `blur(${Math.max(0.5, radius)}px)`;
+  mctx.drawImage(c, 0, 0);
+  const img = mctx.getImageData(0, 0, w, h), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const t = Math.min(1, Math.max(0, (d[i + 3] / 255 - 0.5) * 6 + 0.5));   // sharp, anti-aliased edge
+    d[i] = d[i + 1] = d[i + 2] = 255; d[i + 3] = Math.round(t * 255);
   }
-  bctx.putImageData(img, 0, 0);
-  return b;
+  mctx.putImageData(img, 0, 0);
+  const ctx = c.getContext("2d");
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(m, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+  return c;
 }
 
-/* Fill layer softened and edge-smoothed, volume-lit, then the (also
-   edge-smoothed) outline/eye layer on top. */
+/* Sharp EPX-smoothed fills, crisp outline/eye layer on top, rounded
+   silhouette, then a light touch of volume lighting. No colour blur. */
 function renderSprite(srcs, dw, dh) {
   const px = dw / srcs.fill.width;                      // screen pixels per sprite pixel
-  const out = addVolumeLight(gooify(renderSmooth(srcs.fill, dw, dh, 0.5, 0.4), px * 0.4, 0.55));
-  const line = gooify(renderSmooth(srcs.line, dw, dh, 0), px * 0.3, 0.6);
-  out.getContext("2d").drawImage(line, 0, 0);
-  return out;
+  const out = renderSmooth(srcs.fill, dw, dh, 0);
+  out.getContext("2d").drawImage(renderSmooth(srcs.line, dw, dh, 0), 0, 0);
+  return addVolumeLight(smoothEdges(out, px * 0.35));
 }
 
 /* Paints a smoothed source into a <canvas> element, sized to the canvas's
@@ -7372,6 +7534,14 @@ function makeTextureCanvas(w, h) {
 const Sound = {
   ctx: null,
   muted: (() => { try { return localStorage.getItem("dvmMuted") === "1"; } catch (e) { return false; } })(),
+  // 0-100, set in Settings. Kept separate from mute so unmuting restores it.
+  volume: (() => { try { const v = parseInt(localStorage.getItem("dvmVolume"), 10); return isNaN(v) ? 70 : Math.max(0, Math.min(100, v)); } catch (e) { return 70; } })(),
+  gainFor() { return 0.4 * (this.volume / 100); },
+  setVolume(v) {
+    this.volume = Math.max(0, Math.min(100, Math.round(v)));
+    try { localStorage.setItem("dvmVolume", String(this.volume)); } catch (e) {}
+    if (this.master) this.master.gain.value = this.gainFor();
+  },
   ensure() {
     if (this.muted) return null;
     if (!this.ctx) {
@@ -7379,7 +7549,7 @@ const Sound = {
       if (!AC) return null;
       this.ctx = new AC();
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.28;
+      this.master.gain.value = this.gainFor();
       this.master.connect(this.ctx.destination);
     }
     if (this.ctx.state === "suspended") this.ctx.resume();
@@ -7495,14 +7665,45 @@ function chestRows(open) {
 const PIX_CHEST_IDLE = { w: 28, h: 24, frames: [chestRows(false)] };
 const PIX_CHEST_OPEN = { w: 28, h: 24, frames: [chestRows(true)] };
 
-/* Sword icons for the shop's power upgrades, recoloured per SWORD_TIERS. */
-const PIX_SWORD = { w: 16, h: 16, frames: [gridSprite(16, 16, (set) => {
-  for (let i = 0; i < 10; i++) { set(5 + i, 10 - i, "B0"); set(5 + i, 11 - i, "B1"); set(6 + i, 11 - i, "B2"); }
-  set(15, 0, "B0");
-  [[2, 10], [3, 11], [4, 12], [5, 13], [6, 14], [3, 9], [7, 13]].forEach(([x, y]) => set(x, y, "g1"));
-  [[4, 11], [3, 12], [2, 13]].forEach(([x, y]) => set(x, y, "H1"));
-  set(1, 14, "g0"); set(2, 14, "g1"); set(1, 13, "g2");
-})] };
+/* Five distinct swords for the shop, one silhouette per tier:
+     1 Iron       plain short blade
+     2 Steel      long blade, wide guard, blue pommel gem
+     3 Flame      wavy blade licked with flame
+     4 Storm      zig-zag lightning blade with a white-hot core
+     5 Dragonfang curved fang blade, winged gold guard, red gem
+   Drawn diagonally (hilt bottom-left, tip top-right) on a 20x20 grid. */
+function swordIconRows(tier) {
+  return gridSprite(20, 20, (set) => {
+    const hx = 5, hy = 14;
+    const len = [0, 9, 12, 12, 12, 12][tier];
+    const perp = (i) => {                       // sideways wobble of the blade
+      if (tier === 3) return Math.round(Math.sin(i * 1.1) * 0.9);
+      if (tier === 4) return (Math.floor(i / 2) % 2) ? 1 : -1;
+      if (tier === 5) return -Math.round(((i / len) ** 2) * 3);
+      return 0;
+    };
+    for (let i = 1; i <= len; i++) {
+      const o = perp(i), x = hx + i + o, y = hy - i + o;
+      set(x, y, tier === 4 ? "W1" : "B1");              // storm: white-hot core
+      set(x + 1, y, "B2");                              // shaded edge
+      if (tier >= 2) set(x, y - 1, "B0");               // bright edge
+      if (tier === 3 && i % 3 === 0) { set(x - 1, y - 2, "g0"); set(x - 2, y - 3, "g1"); }   // flame licks
+      if (tier === 4 && i % 4 === 1) set(x + 2, y - 1, "B0");                                 // spark
+    }
+    const tip = len + 1, to = perp(len);
+    set(hx + tip + to, hy - tip + to, "B0");
+    // crossguard (perpendicular to the blade)
+    const g = tier === 1 ? 2 : 3;
+    for (let j = -g; j <= g; j++) set(hx + j, hy + j, tier === 5 && Math.abs(j) === g ? "g0" : "g1");
+    if (tier === 5) { set(hx - 3, hy - 4, "g0"); set(hx + 4, hy + 3, "g0"); set(hx - 4, hy - 2, "g1"); set(hx + 2, hy + 4, "g1"); }  // wings
+    // grip and pommel
+    for (let k = 1; k <= 3; k++) set(hx - k, hy + k, "H1");
+    set(hx - 4, hy + 4, tier >= 2 ? "C1" : "g1");
+    set(hx - 4, hy + 5, "g2"); set(hx - 5, hy + 4, "g2");
+  });
+}
+const SWORD_ICONS = [1, 2, 3, 4, 5].map((t) => ({ w: 20, h: 20, frames: [swordIconRows(t)] }));
+const SWORD_GEMS = ["#e0a832", "#5ab0ff", "#ffcf3a", "#bff4ff", "#ff2a4a"];
 
 /* Paints frame 0 of a pixel sprite into a canvas at the largest integer
    scale that fits, centred. Used for every small UI portrait: shop
@@ -7522,7 +7723,8 @@ function pixIconSpec(spec) {
   if (kind === "mount") return { art: PIX_DRAGON, palette: ELEMENT_PALETTES[key] || ELEMENT_PALETTES.starter };
   if (kind === "sword") {
     const t = SWORD_TIERS[Math.max(0, Math.min(SWORD_TIERS.length - 1, Number(key) || 0))];
-    return { art: PIX_SWORD, palette: { bladeColor: t.blade, hiltColor: t.hilt, gold: "#e0a832" } };
+    const tier = Math.max(1, Math.min(5, Number(key) || 1));
+    return { art: SWORD_ICONS[tier - 1], palette: { bladeColor: t.blade, hiltColor: t.hilt, gold: "#f2c440", clothF: SWORD_GEMS[tier - 1] } };
   }
   if (kind === "chest") return { art: PIX_CHEST_IDLE, palette: CHEST_PIX_PALETTE };
   return null;
@@ -7869,7 +8071,7 @@ const BattleStage = {
       disc.addColorStop(0, cel.core); disc.addColorStop(1, cel.edge);
       octx.fillStyle = disc; octx.beginPath(); octx.arc(x, y, r, 0, Math.PI * 2); octx.fill();
     }
-    octx.drawImage(renderSmooth(low.canvas, out.width, out.height, 0.85, 0.6), 0, 0);
+    octx.drawImage(renderSmooth(low.canvas, out.width, out.height, 0.35, 0.4), 0, 0);
     this._bg = { canvas: out, extra: low.extra };
     this._bgFadeStart = performance.now();
     this.parts = this.parts.filter((p) => !p.ambient);
@@ -7919,6 +8121,17 @@ const BattleStage = {
     }
     this._stripBaseX = Math.round(this.dragonOriginX + (targetH - texW) / 2);
     this._stripBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH + scale);
+    // Where the blade pixels are (relative to the texture), so the sword's
+    // glow, embers and sparks come off the actual blade.
+    const ox = mounted ? SADDLE_X + 1 : 1, oy = mounted ? SADDLE_Y + Math.max(0, -SADDLE_Y) + 1 : 1;
+    this._blade = [];
+    rider.frames[0].forEach((row, y) => row.match(/../g).forEach((c, x) => {
+      if (c[0] === "B") this._blade.push({ x: (ox + x + 0.5) * scale, y: (oy + y + 0.5) * scale });
+    }));
+    this._blade.sort((a, b) => a.y - b.y);   // [0] = tip
+    // Dragon's mouth (for the fireball) -- snout tip of PIX_DRAGON.
+    this._mouth = mounted ? { x: (1 + 47) * scale, y: (1 + 13) * scale } : (this._blade[0] || { x: texW, y: texH * 0.3 });
+    this._texW = texW; this._texH = texH;
   },
 
   /* sizePct lets minions (e.g. Ooze Spawn) render smaller than a full-size
@@ -7941,6 +8154,7 @@ const BattleStage = {
       this.enemyFlash.push(makeSprite("image", { canvas: makeFlashCanvas(tex), dw: texW, dh: texH, originX: 0, originY: 0 }));
     }
     this._enemyPixScale = scale;
+    this._eTexW = texW; this._eTexH = texH;
     this._enemyBaseX = Math.round(this.dragonOriginX + (fullH - texW) / 2);
     this._enemyBaseY = Math.round(this.dragonOriginY + DRAGON_ART_GRID * u - texH + scale);
   },
@@ -8023,6 +8237,19 @@ const BattleStage = {
       const x = this.playerLayer.x + (Math.random() - 0.5) * this.unit * 30;
       const y = this.playerLayer.y + this.dragonOriginY * (0.1 + Math.random() * 0.8);
       this.spawn({ x, y, vx: (Math.random() - 0.5) * 0.02, vy: A.vy - Math.random() * 0.02, life: 1100, color: A.colors ? A.colors[(Math.random() * A.colors.length) | 0] : "#fff", hue: A.colors ? undefined : Math.random() * 360, twinkle: !!A.twinkle, seed: Math.random() * 999, fadeIn: true, shape: A.twinkle && Math.random() < 0.4 ? "plus" : null });
+    }
+    // Sword effects by tier: glints (1-2), embers (3), sparks (4), dragon aura (5).
+    const tier = this._swordTier || 0;
+    if (this._blade && this._blade.length && tier > 0) {
+      const bx = this.playerLayer.x + this._stripBaseX, by = this.playerLayer.y + this._stripBaseY;
+      const pt = this._blade[(Math.random() * this._blade.length) | 0];
+      const rate = [0, 900, 600, 45, 35, 40][tier];
+      if (Math.random() < dt / rate) {
+        if (tier <= 2) this.spawn({ x: bx + pt.x, y: by + pt.y, life: 500, color: "#ffffff", twinkle: true, seed: Math.random() * 999, shape: "plus", size: this.ap * 1.2, front: true });
+        else if (tier === 3) this.spawn({ x: bx + pt.x, y: by + pt.y, vx: (Math.random() - 0.5) * 0.02, vy: -0.05 - Math.random() * 0.05, life: 600, color: ["#fff3b0", "#ffcf3a", "#ff7a1c", "#d8321f"][(Math.random() * 4) | 0], wobble: 0.0006, seed: Math.random() * 999, front: true });
+        else if (tier === 4) this.spawn({ x: bx + pt.x, y: by + pt.y, vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25, life: 180, color: Math.random() < 0.5 ? "#ffffff" : "#8fe9ff", drag: 0.9, front: true, size: this.ap * 0.8 });
+        else this.spawn({ x: bx + pt.x + (Math.random() - 0.5) * this.unit * 3, y: by + pt.y, vy: -0.03, life: 900, color: Math.random() < 0.6 ? "#ff2a4a" : "#f2c440", twinkle: true, seed: Math.random() * 999, fadeIn: true, front: true });
+      }
     }
     // Answer streak: flames lick up around the hero (bigger at 6+).
     if (this._fire && Math.random() < dt / (this._fire > 1 ? 14 : 30)) {
@@ -8154,6 +8381,14 @@ const BattleStage = {
       ctx.globalAlpha = 0.28 + 0.08 * Math.sin(now / 400);
       ctx.fillStyle = g; ctx.fillRect(-this.unit * 28, cy - this.unit * 28, this.unit * 56, this.unit * 56);
       ctx.globalAlpha = 1;
+    }
+    const tierGlow = [null, null, null, "255,122,28", "143,233,255", "255,42,74"][this._swordTier || 0];
+    if (tierGlow && this._blade && this._blade.length) {
+      const mid = this._blade[Math.floor(this._blade.length / 2)];
+      const gx = this._stripBaseX + mid.x, gy = this._stripBaseY + mid.y, R = this.unit * 9;
+      const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, R);
+      g.addColorStop(0, `rgba(${tierGlow},${0.45 + 0.15 * Math.sin(now / 180)})`); g.addColorStop(1, `rgba(${tierGlow},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, R, 0, Math.PI * 2); ctx.fill();
     }
     const scale = this._pixScale || 1;
     const n = Math.max(1, this.dragonStrips.length);
@@ -8301,7 +8536,7 @@ const BattleStage = {
           this._chestWasOpen = true;
           killTweensOf(this.enemyLayer);
           tweenTo(this.enemyLayer, { scale: { from: 1, to: 1.2 } }, { duration: 220, yoyo: true, ease: "quadOut" });
-          const cx = this.enemyBase.x, cy = this.enemyBase.y + this.dragonOriginY * 0.35;
+          const EB = this.enemyBox(), cx = EB.cx, cy = EB.cy;
           Sound.play("coin");
           this.burst(cx, cy, ["#ffcf3a", "#fff3a8", "#f2c440", "#ffffff"], 46, 0.28, { up: 0.22, g: 0.0011, life: 1100, extra: { front: true } });
           this.fx.push({ type: "ring", x: cx, y: cy, r: 18, color: "#fff3a8", t0: performance.now(), dur: 450 });
@@ -8371,19 +8606,44 @@ const BattleStage = {
         }
       }
     }
-    const cx = this.enemyBase.x, cy = this.enemyBase.y + this.dragonOriginY * 0.45;
+    const EB = this.enemyBox(), cx = EB.cx, cy = EB.cy;
     this.fx.push({ type: "ring", x: cx, y: cy, r: 22, color: glow, t0: performance.now(), dur: 500 });
     this.burst(cx, cy, ["#ffcf3a", "#fff3a8"], 14, 0.22, { up: 0.18, g: 0.001, life: 900, extra: { front: true, shape: "plus" } });
   },
 
-  /* ---------- combat hooks (called through BattleFX) ---------- */
+  /* ---------- geometry of the actual sprites ----------
+     All effects aim at these, so slashes, impacts, numbers and the fireball
+     land on the characters' bodies whatever their size. */
+  enemyBox() {
+    if (this._eTexW) {
+      const x = this.enemyBase.x + this._enemyBaseX, y = this.enemyBase.y + this._enemyBaseY;
+      return { x, y, w: this._eTexW, h: this._eTexH, cx: x + this._eTexW / 2, cy: y + this._eTexH * 0.55, top: y + this._eTexH * 0.12, left: x + this._eTexW * 0.12 };
+    }
+    const cy = this.enemyBase.y + this.dragonOriginY * 0.5;
+    return { cx: this.enemyBase.x, cy, top: this.enemyBase.y + this.dragonOriginY * 0.9, left: this.enemyBase.x - this.unit * 12 };
+  },
+  playerBox() {
+    const x = this.playerBase.x + (this._stripBaseX || 0), y = this.playerBase.y + (this._stripBaseY || 0);
+    const w = this._texW || this.unit * 30, h = this._texH || this.unit * 36;
+    return { x, y, w, h, cx: x + w * 0.5, cy: y + h * 0.55, top: y + h * 0.1, right: x + w * 0.9 };
+  },
+
+  /* ---------- combat hooks (called through BattleFX) ----------
+     Timings are matched to the game logic: a correct answer deals its
+     damage 350ms after the tap, and an enemy's hit lands 300ms after it
+     starts its attack -- so each lunge PEAKS exactly when the hit lands. */
   playerAttack() {
     Sound.play("swing");
     killTweensOf(this.playerLayer);
-    tweenTo(this.playerLayer, { x: this.playerBase.x + this.unit * 22 }, { duration: 175, yoyo: true, ease: "quadOut" });
+    const P = this.playerBox(), E = this.enemyBox();
+    const reach = Math.max(this.unit * 12, E.left - P.right + this.unit * 6);  // charge in and make contact
+    tweenTo(this.playerLayer, { x: this.playerBase.x + reach }, {
+      duration: 320, ease: "cubicIn",
+      onComplete: () => tweenTo(this.playerLayer, { x: this.playerBase.x }, { duration: 240, ease: "quadOut" }),
+    });
     const now = performance.now();
-    this.fx.push({ type: "slash", x: this.enemyBase.x - this.unit * 2, y: this.enemyBase.y + this.dragonOriginY * 0.5, t0: now + 130, dur: 260 });
-    for (let k = 0; k < 8; k++) this.spawn({ x: this.playerBase.x - this.unit * 6, y: this.playerBase.y - this.ap * (1 + Math.random() * 3), vx: -0.04 - Math.random() * 0.05, vy: -0.02, life: 300, color: "#e8e0f0" });
+    this.fx.push({ type: "slash", x: E.cx, y: E.cy, t0: now + 250, dur: 280 });
+    for (let k = 0; k < 8; k++) this.spawn({ x: P.x + P.w * 0.2, y: P.y + P.h * (0.75 + Math.random() * 0.2), vx: -0.04 - Math.random() * 0.05, vy: -0.02, life: 300, color: "#e8e0f0" });
   },
   playerHit() {
     Sound.play("hurt");
@@ -8392,14 +8652,19 @@ const BattleStage = {
     this.playerFlashUntil = now + 110;
     killTweensOf(this.playerLayer);
     tweenTo(this.playerLayer, { x: this.playerBase.x - this.unit * 6 }, { duration: 55, yoyo: true, repeat: 3, ease: "sineInOut" });
-    const cx = this.playerBase.x, cy = this.playerBase.y + this.dragonOriginY * 0.5;
-    this.burst(cx, cy, ["#ff5a4a", "#ffffff", "#ffb04a"], 16, 0.25, { life: 420 });
+    const P = this.playerBox();
+    this.burst(P.cx, P.cy, ["#ff5a4a", "#ffffff", "#ffb04a"], 16, 0.25, { life: 420, extra: { front: true } });
   },
   enemyAttack() {
     Sound.play("enemySwing");
     killTweensOf(this.enemyLayer);
     this.enemyLayer.alpha = 1;
-    tweenTo(this.enemyLayer, { x: this.enemyBase.x - this.W * 0.18 }, { duration: 175, yoyo: true, ease: "quadOut" });
+    const P = this.playerBox(), E = this.enemyBox();
+    const reach = Math.max(this.unit * 12, E.left - P.right + this.unit * 6);
+    tweenTo(this.enemyLayer, { x: this.enemyBase.x - reach }, {
+      duration: 290, ease: "cubicIn",
+      onComplete: () => tweenTo(this.enemyLayer, { x: this.enemyBase.x }, { duration: 240, ease: "quadOut" }),
+    });
   },
   enemyHit() {
     Sound.play(this._enemyKind === "chest" ? "knock" : "hit");
@@ -8408,17 +8673,19 @@ const BattleStage = {
     this.enemyLayer.alpha = 1; this.enemyLayer.y = this.enemyBase.y;
     this.enemyFlashUntil = now + 110;
     tweenTo(this.enemyText, { alpha: { from: 1, to: 0.25 } }, { duration: 60, yoyo: true, repeat: 1 });
-    tweenTo(this.enemyLayer, { scale: { from: 1, to: 1.12 }, x: { from: this.enemyBase.x + this.unit * 3, to: this.enemyBase.x } }, { duration: 90, yoyo: true, ease: "quadOut" });
-    const cx = this.enemyBase.x, cy = this.enemyBase.y + this.dragonOriginY * 0.5;
+    tweenTo(this.enemyLayer, { scale: { from: 1, to: 1.08 }, x: { from: this.enemyBase.x + this.unit * 4, to: this.enemyBase.x } }, { duration: 90, yoyo: true, ease: "quadOut" });
+    const E = this.enemyBox();
     const glow = this._enemyGlow || "#ffffff";
-    this.burst(cx, cy, [glow, "#ffffff", "#fff3a8"], 22, 0.3, { life: 480, extra: { front: true } });
+    this.burst(E.cx, E.cy, [glow, "#ffffff", "#fff3a8"], 22, 0.3, { life: 480, extra: { front: true } });
     this.shakeUntil = now + 120; this.shakeMag = 0.4;
   },
   fireballCast() {
     Sound.play("fireball");
     const now = performance.now();
-    const x0 = this.playerBase.x + this.unit * 8, y0 = this.playerBase.y + this.dragonOriginY * 0.7;
-    const x1 = this.enemyBase.x, y1 = this.enemyBase.y + this.dragonOriginY * 0.45;
+    const P = this.playerBox(), E = this.enemyBox();
+    const m = this._mouth || { x: P.w, y: P.h * 0.3 };
+    const x0 = P.x + m.x, y0 = P.y + m.y;          // from the dragon's mouth
+    const x1 = E.cx, y1 = E.cy;                      // into the enemy's body
     this.fx.push({ type: "fireball", x0, y0, x1, y1, t0: now, dur: 500 });
     setTimeout(() => {
       const t = performance.now();
@@ -8430,31 +8697,33 @@ const BattleStage = {
     }, 490);
   },
   showPopup(text, side, kind) {
-    const base = side === "enemy" ? this.enemyBase : this.playerBase;
+    const B = side === "enemy" ? this.enemyBox() : this.playerBox();
     const colors = { dmg: "#ff6b5b", heal: "#6ee7a8", poison: "#9cff6a", crit: "#ffd700" };
     const color = colors[kind] || "#fff0e0";
     const fontSize = kind === "crit" ? Math.round(this.unit * 9) : Math.round(this.unit * 7.2);
     // Stagger popups that land at the same moment so "WEAK!" and the damage
-    // number don't print on top of each other.
+    // number don't print on top of each other; keep them inside the stage.
     const stack = this.popups.filter((q) => q._side === side && q._age < 400).length;
+    const x = Math.min(this.W - fontSize * 1.6, Math.max(fontSize * 1.6, B.cx + (stack % 2 ? this.unit * 7 : 0)));
+    const y = Math.max(fontSize * 0.8, B.top - stack * fontSize * 0.9);
     const p = makeSprite("text", {
-      text, fontSize, color, x: base.x + (stack % 2 ? this.unit * 7 : 0), y: base.y + this.dragonOriginY * 0.85 - stack * fontSize * 0.9,
+      text, fontSize, color, x, y,
       stroke: "#140d10", strokeWidth: Math.max(3, Math.round(this.unit * 1.3)),
       fontFamily: "Nunito, sans-serif", fontWeight: 900, scale: 1.8, _side: side, _age: 0,
     });
     this.popups.push(p);
     tweenTo(p, { scale: 1, _age: 400 }, { duration: 160, ease: "quadOut" });
-    tweenTo(p, { y: p.y - this.unit * 14 }, {
+    tweenTo(p, { y: p.y - this.unit * 10 }, {
       delay: 120, duration: 2400, ease: "cubicOut",
       onComplete: () => { const i = this.popups.indexOf(p); if (i >= 0) this.popups.splice(i, 1); },
     });
     tweenTo(p, { alpha: { from: 1, to: 0 } }, { delay: 1100, duration: 1400 });
     if (kind === "crit") { Sound.play("crit"); const now = performance.now(); this.whiteUntil = now + 120; this.shakeUntil = now + 260; this.shakeMag = 1.1; }
-    if (kind === "heal") this.burst(base.x, base.y + this.dragonOriginY * 0.4, ["#6ee7a8", "#c8ffe0"], 12, 0.08, { up: 0.08, g: -0.00005, life: 900, extra: { shape: "plus" } });
+    if (kind === "heal") this.burst(B.cx, B.cy, ["#6ee7a8", "#c8ffe0"], 12, 0.08, { up: 0.08, g: -0.00005, life: 900, extra: { shape: "plus", front: true } });
   },
   showImpact(side) {
-    const base = side === "enemy" ? this.enemyBase : this.playerBase;
-    this.fx.push({ type: "star", x: base.x, y: base.y + this.dragonOriginY * 0.55, color: side === "enemy" ? "#ffcf3a" : "#ff5a4a", t0: performance.now(), dur: 280 });
+    const B = side === "enemy" ? this.enemyBox() : this.playerBox();
+    this.fx.push({ type: "star", x: B.cx, y: B.cy, color: side === "enemy" ? "#ffcf3a" : "#ff5a4a", t0: performance.now(), dur: 280 });
   },
 };
 
