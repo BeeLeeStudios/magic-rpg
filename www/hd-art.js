@@ -215,16 +215,30 @@ function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
   hdFill(ctx, (c) => { c.moveTo(106, 44); c.quadraticCurveTo(96, 42 + sway, 84, 44 + sway * 2); c.lineTo(86, 48 + sway * 2); c.quadraticCurveTo(96, 47 + sway, 106, 49); }, hdGrad(ctx, 84, 42, 106, 50, [[0, hdShift(H.cape, -0.25)], [1, H.cape]]), 1.5);
   hdFill(ctx, (c) => { c.moveTo(105, 47); c.quadraticCurveTo(98, 50 + sway, 90, 54 + sway * 2); c.lineTo(92, 57 + sway * 2); c.quadraticCurveTo(99, 53 + sway, 106, 51); }, hdShift(H.cape, -0.15), 1.5);
   if (girl) hdFill(ctx, (c) => { c.moveTo(108, 26); c.quadraticCurveTo(94, 30, 88, 44 + sway); c.quadraticCurveTo(86, 52, 80, 56 + sway); c.quadraticCurveTo(92, 52, 98, 46); c.quadraticCurveTo(102, 38, 110, 34); }, hdGrad(ctx, 80, 26, 110, 56, [[0, hdShift(H.hair, -0.25)], [1, hdShift(H.hair, 0.15)]]), 1.6);
-  // thigh astride, boot down the flank
-  hdFill(ctx, (c) => { c.moveTo(100, 70); c.quadraticCurveTo(116, 68, 124, 74); c.lineTo(122, 82); c.quadraticCurveTo(110, 80, 100, 80); }, hdGrad(ctx, 0, 68, 0, 82, [[0, hdShift(H.leather, 0.2)], [1, H.leather]]), 1.8);
-  hdFill(ctx, (c) => { c.roundRect(117, 76, 8, 16, 4); }, H.leather, 1.8);
-  hdFill(ctx, (c) => { c.moveTo(115, 90); c.lineTo(126, 90); c.quadraticCurveTo(133, 91, 133, 96); c.lineTo(115, 96); }, hdGrad(ctx, 0, 90, 0, 96, [[0, "#4a3428"], [1, "#241a1e"]]), 1.6);
-  // torso: leather jerkin with a metal pauldron
-  hdFill(ctx, (c) => { c.moveTo(102, 46); c.quadraticCurveTo(114, 42, 118, 48); c.lineTo(120, 70); c.quadraticCurveTo(110, 74, 100, 70); c.quadraticCurveTo(99, 58, 102, 46); }, hdGrad(ctx, 100, 44, 120, 72, [[0, hdShift(H.leather, 0.3)], [0.5, H.leather], [1, hdShift(H.leather, -0.3)]]), 2);
-  hdFill(ctx, (c) => { c.moveTo(101, 50); c.quadraticCurveTo(106, 44, 114, 46); c.quadraticCurveTo(114, 54, 104, 57); }, hdGrad(ctx, 0, 44, 0, 57, [[0, hdShift(H.armor, 0.4)], [1, H.armor]]), 1.6);
-  hdFill(ctx, (c) => { c.roundRect(100, 64, 20, 4, 1.5); }, "#3a2418", 1.2);
-  hdFill(ctx, (c) => { c.roundRect(108, 63.5, 4, 5, 1); }, H.hilt, 0);
-  hdFill(ctx, (c) => { c.moveTo(109, 52); c.lineTo(113, 56); c.lineTo(109, 60); c.lineTo(105, 56); }, H.armor, 1);
+  // rounded limb helper: tapered tube with round joints
+  const limb = (pts, w0, w1, fill) => {
+    const t = hdTube(hdBez(pts[0], pts[1], pts[1], pts[2], 10), w0, w1);
+    hdFill(ctx, (c) => hdPoly(c, t.poly), fill, 1.6);
+    hdFill(ctx, (c) => { c.arc(pts[2][0], pts[2][1], w1 / 2, 0, Math.PI * 2); }, fill, 0);
+  };
+  // leg: thigh along the dragon's back, knee, shin down its side, boot
+  limb([[103, 71], [114, 72], [122, 76]], 11, 8.5, hdGrad(ctx, 0, 66, 0, 80, [[0, hdShift(H.leather, 0.25)], [1, H.leather]]));
+  limb([[122, 76], [124, 83], [123, 90]], 8, 6.5, hdGrad(ctx, 118, 0, 128, 0, [[0, H.leather], [1, hdShift(H.leather, -0.25)]]));
+  hdFill(ctx, (c) => { c.moveTo(118, 88); c.quadraticCurveTo(122, 86, 126, 88); c.quadraticCurveTo(133, 90, 134, 95); c.quadraticCurveTo(126, 97, 117, 95); c.quadraticCurveTo(116, 91, 118, 88); }, hdGrad(ctx, 0, 87, 0, 96, [[0, "#5a4032"], [1, "#241a1e"]]), 1.6);
+  // torso: curved back, chest leaning into the ride, tapering to the waist
+  hdFill(ctx, (c) => {
+    c.moveTo(106, 45); c.bezierCurveTo(100, 49, 98, 60, 102, 70);
+    c.quadraticCurveTo(109, 73, 116, 70);
+    c.bezierCurveTo(118, 63, 121, 52, 115, 45);
+    c.quadraticCurveTo(110, 42.5, 106, 45);
+  }, hdGrad(ctx, 99, 44, 120, 72, [[0, hdShift(H.leather, 0.3)], [0.55, H.leather], [1, hdShift(H.leather, -0.3)]]), 1.8);
+  // chest plate
+  hdFill(ctx, (c) => { c.moveTo(107.5, 47); c.quadraticCurveTo(117, 45.5, 118.5, 53.5); c.quadraticCurveTo(117, 61, 108.5, 61); c.quadraticCurveTo(104.5, 54, 107.5, 47); },
+    hdGrad(ctx, 106, 45, 119, 61, [[0, hdShift(H.armor, 0.45)], [0.6, H.armor], [1, hdShift(H.armor, -0.25)]]), 1.4);
+  hdFill(ctx, (c) => { c.moveTo(112, 50.5); c.lineTo(114.5, 53.5); c.lineTo(112, 56.5); c.lineTo(109.5, 53.5); }, H.cape, 0.9);
+  // curved belt with buckle
+  hdFill(ctx, (c) => { c.moveTo(101.5, 64); c.quadraticCurveTo(109, 66.5, 117.5, 63.5); c.lineTo(117, 67.5); c.quadraticCurveTo(109, 70.5, 102, 68); }, "#3a2418", 1.1);
+  hdFill(ctx, (c) => { c.roundRect(108, 64.4, 3.6, 4, 0.8); }, H.hilt, 0);
   // neck + head (profile, looking at the enemy)
   hdFill(ctx, (c) => { c.roundRect(106, 40, 6, 7, 2); }, hdShift(H.skin, -0.12), 1.4);
   ctx.save(); ctx.translate(0, 5);                      // head sits low on a short neck
@@ -249,8 +263,10 @@ function drawHDRider(ctx, H, t = 0, ox = 0, oy = 0) {
     }, hdGrad(ctx, 0, 11, 0, 34, [[0, hdShift(H.hair, 0.4)], [1, H.hair]]), 1.6);
   }
   ctx.restore();
-  // arm forward, gauntlet, sword raised toward the enemy
-  hdFill(ctx, (c) => { c.moveTo(112, 50); c.quadraticCurveTo(122, 50, 128, 54); c.lineTo(126, 59); c.quadraticCurveTo(118, 56, 111, 57); }, hdGrad(ctx, 0, 50, 0, 59, [[0, hdShift(H.armor, 0.25)], [1, H.armor]]), 1.6);
+  // arm: rounded upper arm and forearm reaching to the hilt, shoulder guard on top
+  limb([[110, 50], [113, 56], [117, 59]], 7, 6, hdGrad(ctx, 0, 48, 0, 60, [[0, hdShift(H.armor, 0.2)], [1, hdShift(H.armor, -0.15)]]));
+  limb([[117, 59], [122, 58], [127.5, 55.5]], 6, 5, hdGrad(ctx, 0, 54, 0, 61, [[0, hdShift(H.leather, 0.25)], [1, H.leather]]));
+  hdFill(ctx, (c) => { c.ellipse(110, 48.5, 5.2, 4, -0.3, 0, Math.PI * 2); }, hdGrad(ctx, 0, 44, 0, 53, [[0, hdShift(H.armor, 0.5)], [1, hdShift(H.armor, -0.1)]]), 1.4);
   const bx = 130, by = 52;
   hdFill(ctx, (c) => { c.moveTo(bx, by); c.lineTo(bx + 24, by - 38); c.lineTo(bx + 27, by - 42); c.lineTo(bx + 26.5, by - 36); c.lineTo(bx + 4, by + 2); },
     hdGrad(ctx, bx, by, bx + 26, by - 42, [[0, hdShift(H.blade, -0.25)], [0.5, H.blade], [1, "#ffffff"]]), 1.4);
