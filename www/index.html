@@ -1516,6 +1516,16 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
   .celebrate-overlay .fireworks { display: none; }
 }
 
+/* ---------- secret admin panel ---------- */
+.admin-overlay { z-index: 90; }
+.admin-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-weight: 900; color: #fff; }
+.admin-row label, .admin-row > span:first-child { flex: 0 0 56px; }
+.admin-row input { flex: 1; min-width: 0; font: 900 18px var(--font-ui); padding: 6px 10px; border-radius: 10px; border: none; background: #1a1230; color: #fff; box-shadow: 0 0 0 2px var(--ink); }
+.admin-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid #2d2344; color: #fff; font-weight: 800; font-size: 14px; }
+.admin-item small { color: var(--text-dim); font-weight: 700; }
+.admin-owned { color: #7fe3a0; font-weight: 900; font-size: 13px; white-space: nowrap; }
+.admin-lock { margin-top: 16px; }
+
 /* ---------- boss mechanics ---------- */
 .boss-intro-hint { font-family: var(--font-ui); color: #fff3c4; font-weight: 800; font-size: 16px; margin: 6px 16px 10px; text-align: center; }
 .boss-clock { height: 7px; border-radius: 4px; background: #2d2344; overflow: hidden; margin: -4px 0 6px; box-shadow: 0 0 0 2px var(--ink); }
@@ -1634,6 +1644,7 @@ html.reduce-motion .fireworks { display: none; }
    Celebrations ............ celebrate, dismissCelebration, celebrationHTML (queued full-screen moments)
    Worlds / growth / badges . WORLDS, DRAGON_GROWTH, BADGES, checkBadges, bookHTML, mapHTML
    Parents / prefs / voice .. openParentGate, parentsHTML, setSlotRank, Prefs, applyPrefs, Speech, buzz
+   Secret admin panel ....... ADMIN_CODE, openSecret, adminHTML (Settings > Secret)
    Save slots (localStorage). loadSaves, persistSaves, makeSlot, selectSave
    Game state object ........ const S = {  (single source of truth; read/written all over)
    Turn resolution ........... handleAnswer, enemyStrikePlayer, finishRound, handleWaveClear
@@ -3163,6 +3174,11 @@ const S = {
   // the dragon's price, no dragon can be ridden or bought.
   egg: null,
   lastDeath: null,
+  // Secret admin panel (owner testing). Unlocked by code for this session
+  // only; "Turn off & lock" saves and locks it again.
+  adminGate: null,
+  adminUnlocked: false,
+  adminOpen: false,
   // Clockwork Colossus countdown for the current problem.
   bossClock: null,
   bossClockTimer: 0,
@@ -4453,6 +4469,7 @@ function settingsHTML() {
       ${settingChoiceRow("Text size", "textSize", [["normal", "A"], ["large", "A+"], ["xl", "A++"]])}
       ${settingChoiceRow("Reduce motion", "motion", [["auto", "Auto"], ["on", "On"], ["off", "Off"]])}
       ${settingChoiceRow("Color-blind colors", "colorSafe", [[true, "On"], [false, "Off"]])}
+      <div class="setting-row"><span>Secret</span><button class="pref-pill${S.adminUnlocked ? " on" : ""}" data-action="open-secret">${S.adminUnlocked ? "🔓 Open" : "🔒"}</button></div>
       <button class="btn primary big" data-action="close-settings">Done</button>
     </div>
   </div>`;
@@ -4476,6 +4493,124 @@ function privacyHTML() {
     <h3>Contact</h3>
     <p>Questions? Email <strong>${PRIVACY_CONTACT_EMAIL}</strong>.</p>
     <p style="color:var(--text-dim);font-size:12px">Privacy policy last updated ${PRIVACY_UPDATED}.</p>`;
+}
+
+/* ================= SECRET ADMIN PANEL =================
+   For the owner's testing: set gold and level, and hand out any item with
+   no cost or level requirement. Opened from Settings > Secret with a code;
+   locking it saves the slot and it needs the code again next time. */
+const ADMIN_CODE = "0009";
+
+function openSecret() {
+  S.settingsOpen = false;
+  if (S.adminUnlocked) { S.adminOpen = true; S.adminGate = null; }
+  else S.adminGate = { input: "", wrong: false };
+  render();
+}
+
+function adminKey(key) {
+  const g = S.adminGate;
+  if (!g) return;
+  if (key === "del") { g.input = g.input.slice(0, -1); g.wrong = false; }
+  else if (key === "ok") {
+    if (g.input === ADMIN_CODE) { S.adminGate = null; S.adminUnlocked = true; S.adminOpen = true; }
+    else { g.input = ""; g.wrong = true; }
+  } else if (g.input.length < 6) { g.input += key; g.wrong = false; }
+  render();
+}
+
+function adminSetGold(value) {
+  const v = Math.max(0, Math.min(999999, Math.floor(Number(value) || 0)));
+  S.coins = v;
+  saveActiveSlot();
+  render();
+}
+
+function adminSetLevel(value) {
+  const lv = Math.max(1, Math.min(MAX_LEVEL, Math.floor(Number(value) || 1)));
+  S.xp = xpForLevel(lv);
+  S.playerMaxHP = getMaxHPForLevel(lv);
+  S.playerHP = Math.min(S.playerHP, S.playerMaxHP);
+  checkBadges(true);
+  saveActiveSlot();
+  render();
+}
+
+function adminGive(kind, id) {
+  if (kind === "dmg") S.ownedUpgrades[id] = true;
+  else S.ownedCosmetics[id] = true;
+  checkBadges(true);
+  saveActiveSlot();
+  render();
+}
+
+function adminHatch() {
+  if (!S.egg) return;
+  S.equippedCreature = S.egg;
+  S.egg = null;
+  saveActiveSlot();
+  render();
+}
+
+function adminLock() {
+  saveActiveSlot();
+  flushSaves();
+  S.adminUnlocked = false;
+  S.adminOpen = false;
+  S.adminGate = null;
+  render();
+}
+
+function adminHTML() {
+  if (S.adminGate) {
+    const g = S.adminGate;
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "del", "0", "ok"];
+    return `
+    <div class="shop-overlay admin-overlay">
+      <div class="card gate-card">
+        <h1>Secret</h1>
+        <p>${g.wrong ? "Wrong code. Try again." : "Enter the code."}</p>
+        <div class="gate-question"><span class="gate-input">${g.input ? "•".repeat(g.input.length) : "····"}</span></div>
+        <div class="gate-pad">${keys.map((k) => `<button class="btn gate-key${k === "ok" ? " primary" : ""}" data-action="admin-key" data-key="${k}">${k === "del" ? "⌫" : k === "ok" ? "OK" : k}</button>`).join("")}</div>
+        <button class="btn ghost" data-action="admin-close">Cancel</button>
+      </div>
+    </div>`;
+  }
+  const noSave = !S.activeSaveId;
+  const level = levelFromXP(S.xp).level;
+  const itemRow = (kind, item, owned) => `
+    <div class="admin-item">
+      <span>${item.emoji} ${esc(item.name)} <small>Lv.${item.levelReq || 1} · 🪙${item.cost}</small></span>
+      ${owned ? `<span class="admin-owned">Owned ✓</span>` : `<button class="pref-pill" data-action="admin-give" data-kind="${kind}" data-id="${item.id}" ${noSave ? "disabled" : ""}>Give</button>`}
+    </div>`;
+  const creatures = COSMETICS.filter((c) => c.type === "creature").map((c) => itemRow("cosmetic", c, isOwned(c.id))).join("");
+  const pets = COSMETICS.filter((c) => c.type === "pet").map((c) => itemRow("cosmetic", c, isOwned(c.id))).join("");
+  const swords = DMG_UPGRADES.map((u) => itemRow("dmg", u, isUpgradeOwned(u.id))).join("");
+  return `
+  <div class="shop-overlay admin-overlay">
+    <div class="shop-card admin-card">
+      <div class="shop-header">
+        <h2>🔓 Admin</h2>
+        <button class="close-btn" data-action="admin-close">✕</button>
+      </div>
+      ${noSave ? `<p class="book-count">Load a save first to change gold, level or items.</p>` : `<p class="book-count">Editing: ${esc(playerName())}</p>`}
+      <div class="admin-row">
+        <label for="admin-gold">Gold</label>
+        <input id="admin-gold" type="number" min="0" max="999999" inputmode="numeric" value="${S.coins}">
+        <button class="pref-pill" data-action="admin-set-gold" ${noSave ? "disabled" : ""}>Set</button>
+      </div>
+      <div class="admin-row">
+        <label for="admin-level">Level</label>
+        <input id="admin-level" type="number" min="1" max="${MAX_LEVEL}" inputmode="numeric" value="${level}">
+        <button class="pref-pill" data-action="admin-set-level" ${noSave ? "disabled" : ""}>Set</button>
+      </div>
+      ${S.egg ? `<div class="admin-row"><span>🥚 Egg waiting</span><button class="pref-pill" data-action="admin-hatch">Hatch free</button></div>` : ""}
+      <h3 class="book-section">Dragons</h3>${creatures}
+      <h3 class="book-section">Pets</h3>${pets}
+      <h3 class="book-section">Swords</h3>${swords}
+      <button class="btn primary big admin-lock" data-action="admin-lock">Turn off &amp; lock</button>
+    </div>
+  </div>`;
 }
 
 /* ================= PARENT AREA =================
@@ -5193,6 +5328,7 @@ function renderNow() {
   if (S.bookOpen) html += bookHTML();
   if (S.mapOpen) html += mapHTML();
   if (S.settingsOpen) html += settingsHTML();
+  if (S.adminGate || S.adminOpen) html += adminHTML();
   if (S.levelUpData) html += levelUpHTML();
   if (S.celebrations.length) html += celebrationHTML();
   if (S.badgeToasts.length) html += badgeToastHTML();
@@ -5304,6 +5440,14 @@ root.addEventListener("click", (e) => {
   else if (action === "to-title") { S.screen = "title"; render(); }
   else if (action === "toggle-sound") { Sound.toggle(); render(); }
   else if (action === "open-settings") { S.settingsOpen = true; render(); }
+  else if (action === "open-secret") openSecret();
+  else if (action === "admin-key") adminKey(btn.dataset.key);
+  else if (action === "admin-close") { S.adminGate = null; S.adminOpen = false; render(); }
+  else if (action === "admin-set-gold") adminSetGold(document.getElementById("admin-gold").value);
+  else if (action === "admin-set-level") adminSetLevel(document.getElementById("admin-level").value);
+  else if (action === "admin-give") adminGive(btn.dataset.kind, btn.dataset.id);
+  else if (action === "admin-hatch") adminHatch();
+  else if (action === "admin-lock") adminLock();
   else if (action === "set-pref") { setPref(btn.dataset.key, JSON.parse(btn.dataset.value)); render(); }
   else if (action === "read-problem") readProblem();
   else if (action === "close-settings") { S.settingsOpen = false; render(); }
@@ -5343,6 +5487,7 @@ document.addEventListener("visibilitychange", () => {
   if (!App || !App.addListener) return;
   App.addListener("backButton", () => {
     if (S.bossIntro || S.levelUpData) return;           // must be answered on screen
+    if (S.adminGate || S.adminOpen) { S.adminGate = null; S.adminOpen = false; render(); return; }
     if (S.settingsOpen) { S.settingsOpen = false; render(); return; }
     if (S.shopOpen) { S.shopOpen = false; render(); return; }
     if (S.bookOpen) { S.bookOpen = false; render(); return; }
