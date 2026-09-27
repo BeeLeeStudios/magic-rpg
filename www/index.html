@@ -1420,6 +1420,33 @@ html.reduce-motion .celebrate-overlay .fireworks { display: none; }
 .info-card h3 { font-family: var(--font-ui); color: var(--gold); margin: 16px 0 6px; font-size: 17px; }
 .info-card p, .info-card li { font-size: 14px; line-height: 1.5; color: var(--text); font-weight: 600; }
 .info-card ul { padding-left: 20px; margin: 6px 0; }
+/* ---------- parent area ---------- */
+.gate-card { text-align: center; }
+.gate-question { font-family: var(--font-ui); font-weight: 900; font-size: 34px; margin: 10px 0 14px; }
+.gate-input { color: #7fe3ff; display: inline-block; min-width: 60px; }
+.gate-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.gate-key { font-size: 22px; padding: 10px 0; }
+.parents-card { max-height: calc(100vh - 32px); overflow-y: auto; }
+.parent-tabs { display: flex; gap: 8px; justify-content: center; margin: 4px 0 12px; }
+.parent-slot { background: #1a1230; border-radius: 12px; margin: 10px 0; padding: 10px 12px; box-shadow: 0 0 0 2px var(--ink); }
+.parent-slot summary { cursor: pointer; display: flex; flex-direction: column; gap: 2px; list-style: none; }
+.parent-slot summary::-webkit-details-marker { display: none; }
+.parent-slot-name { font-family: var(--font-ui); font-weight: 900; font-size: 17px; color: #fff; }
+.parent-slot-name::before { content: "▸ "; color: var(--gold); }
+.parent-slot[open] .parent-slot-name::before { content: "▾ "; }
+.parent-slot-rank { color: var(--text-dim); font-weight: 800; font-size: 13px; }
+.parent-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; text-align: center; }
+.parent-stats b { display: block; font-family: var(--font-ui); color: var(--gold); font-size: 15px; }
+.parent-stats span { font-size: 11px; color: var(--text-dim); font-weight: 800; }
+.parent-rank-ctl { display: flex; align-items: center; gap: 10px; font-weight: 900; }
+.parent-rank-ctl span { flex: 1; }
+.parent-rank-ctl .gate-key { width: 44px; padding: 4px 0; }
+.info-card .parent-note { font-size: 12px; color: var(--text-dim); margin: 8px 0; }
+.skill-list { list-style: none; padding: 0 !important; margin: 6px 0 0; }
+.skill-row { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 5px 0; border-top: 1px solid #2d2344; font-size: 13px !important; }
+.skill-row.current .skill-name { color: #fff; }
+.skill-status { font-weight: 900; white-space: nowrap; }
+.skill-acc { grid-column: 1 / -1; color: var(--text-dim); font-size: 12px; }
 
 /* ---------- battle fits the phone: no page scroll ----------
    The arena is a full-height column; the canvas stage takes whatever
@@ -2833,6 +2860,11 @@ const S = {
   // the per-band rolling stats behind it. Both live in the save slot.
   mathBand: 1,
   mastery: makeMastery(),
+  // Time spent in battle, for the parent progress screen.
+  playMs: 0,
+  // Grown-up gate question and the parent screen's open tab.
+  parentGate: null,
+  parentTab: "progress",
   // "boy" | "girl", chosen once when the slot is created.
   hero: null,
   problemShownAt: 0,
@@ -3205,6 +3237,16 @@ function handleWaveClear() {
 }
 
 /* ---------- save slot flow ---------- */
+/* A slot's math rank and per-rank stats, upgrading saves from the old
+   8-rank ladder: those move to the matching rank on the gentler ladder and
+   start that rank's evidence fresh (old stats were for other math). */
+function slotMath(d) {
+  if (d && d.mathBand && (d.mathLadder || 1) < MATH_LADDER_VERSION) {
+    return { band: OLD_BAND_TO_NEW[d.mathBand] || 1, mastery: makeMastery() };
+  }
+  return { band: Math.max(1, Math.min(MAX_BAND, (d && d.mathBand) || 1)), mastery: ensureMastery(d && d.mastery) };
+}
+
 function selectSave(id) {
   const slot = SAVES.slots.find((s) => s.id === id);
   if (!slot) return;
@@ -3227,15 +3269,10 @@ function selectSave(id) {
   // Each kid's math progression rides with their slot. Saves written
   // before bands existed have no mastery data and start at band 1.
   S.hero = (d && (d.hero === "girl" || d.hero === "boy")) ? d.hero : null;
-  if (d && d.mathBand && (d.mathLadder || 1) < MATH_LADDER_VERSION) {
-    // Old 8-rank save: move to the matching rank on the gentler ladder
-    // and start that rank's evidence fresh (old stats were for other math).
-    S.mathBand = OLD_BAND_TO_NEW[d.mathBand] || 1;
-    S.mastery = makeMastery();
-  } else {
-    S.mathBand = Math.max(1, Math.min(MAX_BAND, (d && d.mathBand) || 1));
-    S.mastery = ensureMastery(d && d.mastery);
-  }
+  const math = slotMath(d);
+  S.mathBand = math.band;
+  S.mastery = math.mastery;
+  S.playMs = (d && d.playMs) || 0;
   // Bug fix: the journey screen's "Wave X was your best" line reads
   // S.bestWave, but nothing ever set it -- it only lived in slot.data,
   // so returning players always saw "Wave 1". Hydrated here alongside
@@ -3309,6 +3346,7 @@ function saveActiveSlot() {
     mathBand: S.mathBand,
     mathLadder: MATH_LADDER_VERSION,
     mastery: S.mastery,
+    playMs: S.playMs,
     ownedCosmetics: S.ownedCosmetics,
     ownedUpgrades: S.ownedUpgrades,
     equippedAccessory: S.equippedAccessory,
@@ -3911,7 +3949,7 @@ function saveSelectHTML() {
     <div class="save-list">${items}</div>
     <button class="btn ghost" data-action="add-save" ${SAVES.slots.length >= 12 ? "disabled" : ""}>➕ New Save Slot</button>
     <button class="btn ghost" data-action="to-title">◀ Back</button>
-    <button class="parent-link" data-action="open-info">For Parents · Privacy</button>
+    <button class="parent-link" data-action="open-info">For Parents · Progress &amp; Privacy</button>
   </div>`;
 }
 
@@ -3989,7 +4027,7 @@ const GAME_NAME = { top: "DRAGONS", mid: "VS", bottom: "MATH", full: "Dragons vs
 /* TODO before publishing: set a real support address. The same address
    goes in Play Console (store listing contact) and docs/privacy-policy.html. */
 const PRIVACY_CONTACT_EMAIL = "brandon1919smith@gmail.com";   // temporary; swap for a dedicated support address
-const PRIVACY_UPDATED = "September 26, 2026";
+const PRIVACY_UPDATED = "September 27, 2026";
 
 /* Title screen: an animated pixel-art splash rather than a rules card. The
    audience is 5-13 -- they press the big button. The scene is painted by
@@ -4055,21 +4093,133 @@ function settingsHTML() {
    inside the app, not only on the store listing. It is shown inline (no
    outbound link), so no parental gate is needed to open it. Keep this
    text in sync with docs/privacy-policy.html. */
-function infoHTML() {
+function privacyHTML() {
   return `
-  <div class="card info-card">
-    <h1>For Parents</h1>
     <p>${GAME_NAME.full} is a math practice game for kids ages 5–13. Every correct answer powers an attack; the game quietly adjusts the math to your child's level (addition and subtraction up to two-digit regrouping, then times tables and division).</p>
     <h3>Privacy</h3>
     <ul>
       <li><strong>We collect no data.</strong> No accounts, no analytics, no ads, no tracking, no in-app purchases.</li>
       <li>The app has no internet permission and never connects to the internet.</li>
-      <li>Save files (hero choice, coins, progress and any save-slot name your child types) are stored only on this device and are never sent anywhere.</li>
+      <li>Save files (hero choice, coins, progress, time played and any save-slot name your child types) are stored only on this device and are never sent anywhere.</li>
+      <li>"Read aloud" uses your phone's own text-to-speech voice to speak the problem on screen. Nothing is recorded.</li>
       <li>Deleting a save slot or uninstalling the app erases that data.</li>
     </ul>
     <h3>Contact</h3>
     <p>Questions? Email <strong>${PRIVACY_CONTACT_EMAIL}</strong>.</p>
-    <p style="color:var(--text-dim);font-size:12px">Privacy policy last updated ${PRIVACY_UPDATED}.</p>
+    <p style="color:var(--text-dim);font-size:12px">Privacy policy last updated ${PRIVACY_UPDATED}.</p>`;
+}
+
+/* ================= PARENT AREA =================
+   "For Parents" first asks a grown-up question (a times-table fact from
+   6x6 to 9x9, typed on a pad) so kids don't wander into the rank controls.
+   Behind it: every save slot's progress, a rank override, and the privacy
+   notice. Everything shown is read from the save slots on this device. */
+function openParentGate() {
+  S.parentGate = { a: randInt(6, 9), b: randInt(6, 9), input: "" };
+  S.screen = "parentgate";
+  render();
+}
+
+function parentGateKey(key) {
+  const g = S.parentGate;
+  if (!g) return;
+  if (key === "del") g.input = g.input.slice(0, -1);
+  else if (key === "ok") {
+    if (Number(g.input) === g.a * g.b) { S.parentGate = null; S.parentTab = "progress"; S.screen = "parents"; }
+    else { S.parentGate = null; S.screen = "saveselect"; }
+  } else if (g.input.length < 3) g.input += key;
+  render();
+}
+
+function parentGateHTML() {
+  const g = S.parentGate;
+  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "del", "0", "ok"];
+  return `
+  <div class="card gate-card">
+    <h1>Grown-ups only</h1>
+    <p>To open the parent area, answer:</p>
+    <div class="gate-question">${g.a} × ${g.b} = <span class="gate-input">${g.input || "?"}</span></div>
+    <div class="gate-pad">${keys.map((k) => `<button class="btn gate-key${k === "ok" ? " primary" : ""}" data-action="gate-key" data-key="${k}">${k === "del" ? "⌫" : k === "ok" ? "OK" : k}</button>`).join("")}</div>
+    <button class="btn ghost" data-action="close-info">Cancel</button>
+  </div>`;
+}
+
+function formatPlayTime(ms) {
+  const min = Math.floor((ms || 0) / 60000);
+  if (min < 1) return "under 1 min";
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)} h ${min % 60} min`;
+}
+
+function slotProgressHTML(slot) {
+  const d = slot.data;
+  const { band, mastery } = slotMath(d);
+  let seen = 0, correct = 0;
+  for (const b of MATH_BANDS) { seen += mastery[b.id].seen; correct += mastery[b.id].correct; }
+  const acc = seen ? `${Math.round((correct / seen) * 100)}%` : "–";
+  const cur = getBand(band);
+  const skills = MATH_BANDS.map((b) => {
+    const st = mastery[b.id];
+    const status = b.id < band ? "✅ Passed" : b.id === band ? "🔄 Practicing" : "🔒 Not yet";
+    const detail = st.seen ? `${Math.round((st.correct / st.seen) * 100)}% right of ${st.seen}` : "";
+    return `<li class="skill-row${b.id === band ? " current" : ""}"><span class="skill-name">${b.id}. ${esc(b.desc)}</span><span class="skill-status">${status}</span><span class="skill-acc">${detail}</span></li>`;
+  }).join("");
+  return `
+  <details class="parent-slot">
+    <summary>
+      <span class="parent-slot-name">${esc(slot.name)}</span>
+      <span class="parent-slot-rank">Rank ${cur.id}: ${esc(cur.desc)}</span>
+    </summary>
+    <div class="parent-stats">
+      <div><b>${seen}</b><span>problems</span></div>
+      <div><b>${acc}</b><span>correct</span></div>
+      <div><b>${formatPlayTime(d.playMs)}</b><span>played</span></div>
+      <div><b>${d.bestWave || 0}</b><span>best wave</span></div>
+    </div>
+    <div class="parent-rank-ctl">
+      <span>Math rank</span>
+      <button class="btn gate-key" data-action="parent-rank" data-id="${slot.id}" data-delta="-1" ${band <= 1 ? "disabled" : ""}>−</button>
+      <b>${band}</b>
+      <button class="btn gate-key" data-action="parent-rank" data-id="${slot.id}" data-delta="1" ${band >= MAX_BAND ? "disabled" : ""}>+</button>
+    </div>
+    <p class="parent-note">The game moves your child up or down on its own. Change the rank only to skip ahead (for example, straight to times tables at rank 12) or to make it easier.</p>
+    <ul class="skill-list">${skills}</ul>
+  </details>`;
+}
+
+/* Parent override of a slot's math rank. The new rank's rolling window is
+   cleared so the game judges the child on fresh evidence there. */
+function setSlotRank(id, delta) {
+  const slot = SAVES.slots.find((s) => s.id === id);
+  if (!slot || !slot.data) return;
+  const { band, mastery } = slotMath(slot.data);
+  const next = Math.max(1, Math.min(MAX_BAND, band + delta));
+  Object.assign(mastery[next], { recent: [], times: [], cooldown: 0 });
+  Object.assign(slot.data, { mathBand: next, mathLadder: MATH_LADDER_VERSION, mastery });
+  if (S.activeSaveId === id) { S.mathBand = next; S.mastery = mastery; }
+  persistSaves();
+  render();
+  // Keep the slot that was just changed open after the re-render.
+  requestAnimationFrame(() => {
+    const el = document.querySelector(`[data-action="parent-rank"][data-id="${id}"]`);
+    if (el) el.closest("details").open = true;
+  });
+}
+
+function parentsHTML() {
+  const slots = SAVES.slots.filter((s) => s.data);
+  const tab = S.parentTab;
+  const body = tab === "privacy"
+    ? privacyHTML()
+    : (slots.length ? slots.map(slotProgressHTML).join("") : `<p>No saves yet. Progress shows up here once your child starts playing.</p>`);
+  return `
+  <div class="card info-card parents-card">
+    <h1>For Parents</h1>
+    <div class="parent-tabs">
+      <button class="pref-pill${tab === "progress" ? " on" : ""}" data-action="parent-tab" data-tab="progress">Progress</button>
+      <button class="pref-pill${tab === "privacy" ? " on" : ""}" data-action="parent-tab" data-tab="privacy">Privacy</button>
+    </div>
+    ${body}
     <button class="btn primary big" data-action="close-info">Back</button>
   </div>`;
 }
@@ -4480,7 +4630,8 @@ function renderNow() {
   else if (S.screen === "title") html += titleHTML();
   else if (S.screen === "playing") html += playingHTML();
   else if (S.screen === "gameover") html += gameOverHTML();
-  else if (S.screen === "info") html += infoHTML();
+  else if (S.screen === "parentgate") html += parentGateHTML();
+  else if (S.screen === "parents") html += parentsHTML();
   if (S.shopOpen) html += shopHTML();
   if (S.settingsOpen) html += settingsHTML();
   if (S.levelUpData) html += levelUpHTML();
@@ -4590,8 +4741,11 @@ root.addEventListener("click", (e) => {
   else if (action === "set-pref") { setPref(btn.dataset.key, JSON.parse(btn.dataset.value)); render(); }
   else if (action === "read-problem") readProblem();
   else if (action === "close-settings") { S.settingsOpen = false; render(); }
-  else if (action === "open-info") { S.screen = "info"; render(); }
-  else if (action === "close-info") { S.screen = "saveselect"; render(); }
+  else if (action === "open-info") openParentGate();
+  else if (action === "close-info") { S.parentGate = null; S.screen = "saveselect"; render(); }
+  else if (action === "gate-key") parentGateKey(btn.dataset.key);
+  else if (action === "parent-tab") { S.parentTab = btn.dataset.tab; render(); }
+  else if (action === "parent-rank") setSlotRank(btn.dataset.id, Number(btn.dataset.delta));
 });
 
 window.addEventListener("beforeunload", () => { saveActiveSlot(); flushSaves(); });
@@ -4599,6 +4753,16 @@ window.addEventListener("beforeunload", () => { saveActiveSlot(); flushSaves(); 
 window.addEventListener("pagehide", () => { saveActiveSlot(); flushSaves(); });
 // Android apps are rarely "closed" -- they're backgrounded and later
 // killed by the OS without any unload event. Save on every hide.
+/* Time played, for the parent screen: counts time on the battle screen
+   while the app is visible. Capped per tick so a phone waking from sleep
+   doesn't add the whole nap. */
+let lastPlayTick = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  if (S.screen === "playing" && document.visibilityState === "visible") S.playMs += Math.min(now - lastPlayTick, 5000);
+  lastPlayTick = now;
+}, 1000);
+
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) { saveActiveSlot(); flushSaves(); }
 });
@@ -4615,7 +4779,7 @@ document.addEventListener("visibilitychange", () => {
     if (S.bossIntro || S.levelUpData) return;           // must be answered on screen
     if (S.settingsOpen) { S.settingsOpen = false; render(); return; }
     if (S.shopOpen) { S.shopOpen = false; render(); return; }
-    if (S.screen === "info") { S.screen = "saveselect"; render(); return; }
+    if (S.screen === "parents" || S.screen === "parentgate") { S.parentGate = null; S.screen = "saveselect"; render(); return; }
     if (S.screen === "title") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
     if (S.screen === "saveselect") { S.screen = "title"; render(); return; }
     if (S.screen === "heroselect") { S.screen = "saveselect"; render(); return; }

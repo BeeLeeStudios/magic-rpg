@@ -13,7 +13,7 @@ often, so re-check anything marked **(verify)** in Play Console before you submi
 | Android App Bundle (.aab) build | ✅ Capacitor 8 project in `android/`; CI builds `.aab` + debug `.apk` (`.github/workflows/android.yml`) |
 | **Target API level 36 (Android 16)** — required for new apps & updates since **Aug 31, 2026** | ✅ `android/variables.gradle` → `targetSdkVersion = 36`, `compileSdkVersion = 36` |
 | Edge-to-edge (forced for API 36 on Android 16+) | ✅ `viewport-fit=cover` + safe-area insets in CSS; Capacitor `SystemBars` injects insets |
-| Works offline / no network | ✅ Fonts bundled in `www/fonts`; **INTERNET permission removed** from the manifest |
+| Works offline / no network | ✅ Fonts bundled in `www/fonts`; **INTERNET permission removed** from the manifest (the only permission is VIBRATE, for a buzz on wrong answers) |
 | No personal data collected (COPPA / GDPR-K / Families) | ✅ No ads, analytics, accounts, IAP, or third-party SDKs; saves stay in on-device storage |
 | Privacy policy — in-app **and** on a public URL | ✅ In-app: "For Parents · Privacy" on the save screen. Public: `docs/privacy-policy.html` (you must host it — step 4) |
 | No outbound links / purchases (so no parental gate needed) | ✅ Nothing in the app leaves the app |
