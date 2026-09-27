@@ -25,7 +25,8 @@ Android app for Google Play with
 ## Play it locally
 
 ```bash
-npx http-server www -p 8080     # then open http://localhost:8080
+npm run serve                   # then open http://localhost:8080
+npm test                        # checks every math rank's problems and answer choices
 ```
 
 ## Build the Android app
