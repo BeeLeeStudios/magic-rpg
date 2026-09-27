@@ -2277,7 +2277,7 @@ function getMaxHPForLevel(level) {
    band 8, and the numbers on screen can grow without touching balance. */
 /* A full-health player can always take this many hits before dying, which
    is what stops late waves turning into a two-turn loss. */
-const MIN_HITS_TO_DIE = 5;
+const MIN_HITS_TO_DIE = 6;
 
 const BASE_HIT = 8;
 const BAND_HIT_BONUS = 1.05;  // per rank above 1 (11 ranks: same top damage as the old 8 x 1.5)
@@ -2297,7 +2297,8 @@ function getProblemDamage(problem, elapsedMs) {
    (so it stays threatening) and is capped at a share of max HP so it can
    never one-shot the player from full. */
 function getEnemyDamage() {
-  let raw = 4 + Math.floor(S.wave * 0.9) + Math.floor(getBand(S.mathBand).id * 0.35);
+  // Softened: roughly two thirds of the old 4 + 0.9/wave + 0.35/rank.
+  let raw = 3 + Math.floor(S.wave * 0.6) + Math.floor(getBand(S.mathBand).id * 0.25);
   // Every living minion piles on. Without this the spawn cost the player
   // nothing, so ignoring them was strictly faster than killing them -- the
   // exact opposite of what the summon mechanic is for.
@@ -3138,7 +3139,7 @@ const S = {
   fireballReady: false,
   fireballAnim: false,
   enemyAttackCounter: 0,
-  enemyAttackThreshold: randInt(3, 5),
+  enemyAttackThreshold: randInt(5, 7),
   shopOpen: false,
   doubleDmgWaves: 0,
   shieldHits: 0,
@@ -3660,7 +3661,7 @@ function selectSave(id) {
     S.potionCooldown = battle.potionCooldown || 0;
     S.healCooldown = battle.healCooldown || 0;
     S.enemyAttackCounter = battle.enemyAttackCounter || 0;
-    S.enemyAttackThreshold = battle.enemyAttackThreshold || randInt(3, 5);
+    S.enemyAttackThreshold = battle.enemyAttackThreshold || randInt(5, 7);
     S.doubleDmgWaves = battle.doubleDmgWaves || 0;
     S.shieldHits = battle.shieldHits || 0;
     S.dragonStamina = battle.dragonStamina || 0;
@@ -3823,7 +3824,7 @@ function startGame() {
   S.damageFlash = false;
   S.impacts = [];
   S.enemyAttackCounter = 0;
-  S.enemyAttackThreshold = randInt(3, 5);
+  S.enemyAttackThreshold = randInt(5, 7);
   S.doubleDmgWaves = 0;
   S.shieldHits = 0;
   S.dragonStamina = 0;
@@ -3935,13 +3936,13 @@ function handleAnswer(val) {
       if (S.runId !== rid) return;
       applyPoisonTicks();
       // Even on a correct answer, the monster gets an unprovoked strike
-      // every 3-5 rounds (as long as it's still alive). Treasure chests
+      // every 5-7 rounds (as long as it's still alive). Treasure chests
       // never attack, so they're exempt.
       const isChestWave = S.currentWaveMeta && S.currentWaveMeta.isChest;
       S.enemyAttackCounter += 1;
       if (!isChestWave && S.enemyAttackCounter >= S.enemyAttackThreshold && !allEnemiesDead()) {
         S.enemyAttackCounter = 0;
-        S.enemyAttackThreshold = randInt(3, 5);
+        S.enemyAttackThreshold = randInt(5, 7);
         setTimeout(() => {
           if (S.runId !== rid) return;
           enemyStrikePlayer(getEnemyDamage(), finishRound);
@@ -4091,7 +4092,7 @@ function handleAnswer(val) {
 }
 
 /* Shared enemy-attack sequence: used both when the player answers wrong,
-   and for the periodic unprovoked strike every 3-5 rounds. */
+   and for the periodic unprovoked strike every 5-7 rounds. */
 function enemyStrikePlayer(rawDmg, onSurvive) {
   S.enemyAnim = "lunge-left";
   S.shake = true;
@@ -8219,12 +8220,15 @@ function heroSprite(hero, seated) {
    shade themselves (light top-left, dark bottom-right); the renderer adds
    the outline. paint(g, frame) is called once per frame. */
 function pixDraw(w, h, frameCount, paint) {
+  // Shapes are drawn in a w x h design box, then placed inside a 2-pixel
+  // empty border so nothing that pokes a little past the box gets cut off.
+  const PAD = 2, W = w + PAD * 2, H = h + PAD * 2;
   const frames = [];
   for (let f = 0; f < frameCount; f++) {
-    const grid = Array.from({ length: h }, () => Array(w).fill(".."));
+    const grid = Array.from({ length: H }, () => Array(W).fill(".."));
     const set = (x, y, slot, shade = 1) => {
-      x = Math.round(x); y = Math.round(y);
-      if (x >= 0 && y >= 0 && x < w && y < h) grid[y][x] = slot + shade;
+      x = Math.round(x) + PAD; y = Math.round(y) + PAD;
+      if (x >= 0 && y >= 0 && x < W && y < H) grid[y][x] = slot + shade;
     };
     const inPoly = (pts, x, y) => {
       let inside = false;
@@ -8278,7 +8282,7 @@ function pixDraw(w, h, frameCount, paint) {
     paint(g, f);
     frames.push(grid.map((r) => r.join("")));
   }
-  return { w, h, frames };
+  return { w: W, h: H, frames };
 }
 
 /* Three-Headed Hydra: a squat serpent body with three necks. The heads
@@ -8291,7 +8295,7 @@ const PIX_HYDRA = pixDraw(54, 48, 2, (g, f) => {
   [17, 19, 21, 33, 35, 37].forEach((x) => g.px(x, 47, "h", 0));   // claws
   g.ellipse(28, 35, 16, 10, "b");                                  // body
   g.ellipse(26, 39, 10, 5, "l");                                   // belly
-  const heads = [[10, 13 + bob[0]], [27, 6 + bob[1]], [45, 13 + bob[2]]];
+  const heads = [[10, 14 + bob[0]], [27, 9 + bob[1]], [45, 14 + bob[2]]];
   const roots = [[21, 30], [28, 27], [35, 30]];
   heads.forEach(([hx, hy], i) => {
     g.line(roots[i][0], roots[i][1], hx + 1, hy + 3, "b", 1, 6);   // neck
@@ -8391,6 +8395,270 @@ const PIX_MOSS_WITCH = pixDraw(48, 54, 2, (g, f) => {
   g.poly([[8, 14], [36, 13], [34, 16], [10, 16]], "w");             // hat brim
   g.poly([[14, 14], [30, 14], [27, 4], [34, 0], [23, 2], [18, 8]], "w");   // bent cone
   g.rect(15, 11, 29, 12, "l", 0);                                   // hat band
+});
+
+/* ---------- 20 more enemies, drawn with pixDraw ----------
+   Every sprite faces left (toward the hero), keeps a one-pixel empty
+   border in both frames (tests/enemies.test.mjs checks this), and moves
+   something between its two frames: legs, wings, flames, a blink. */
+const PIX_SALAMANDER = pixDraw(44, 28, 2, (g, f) => {
+  g.line(26, 19, 38, 17, "b", 1, 4); g.line(38, 17, 41, 11, "b", 1, 3);           // tail
+  g.ellipse(41, 7 - f, 2, 3 + f, "h", 0); g.px(41, 8, "W");                       // tail flame
+  g.line(14, 21, f ? 14 : 11, 25, "d", 1, 2); g.line(28, 21, f ? 31 : 28, 25, "d", 1, 2);   // legs
+  g.ellipse(22, 18, 11, 5, "b");                                                  // body
+  g.ellipse(21, 21, 9, 2, "l");                                                   // belly
+  [[18, 15], [24, 14], [29, 16]].forEach(([x, y]) => g.px(x, y, "w", 0));        // spots
+  g.ellipse(9, 16, 6, 4, "b");                                                    // head
+  g.eye(6, 14, false);
+  g.line(3, 18, 8, 18, "e", 1, 1);
+  g.line(f ? 12 : 16, 21, f ? 11 : 17, 25, "d", 1, 2); g.line(f ? 25 : 23, 21, f ? 23 : 25, 25, "d", 1, 2);
+});
+
+const PIX_MAGMA_BEETLE = pixDraw(40, 28, 2, (g, f) => {
+  for (let i = 0; i < 3; i++) {                                                   // legs
+    const x = 14 + i * 8;
+    g.line(x, 20, x - 3 + (f && i % 2 ? 2 : 0), 26, "b", 1, 1);
+  }
+  g.ellipse(22, 14, 14, 9, "d");                                                  // shell
+  g.line(22, 6, 22, 22, "w", 2, 1);                                               // shell seam
+  [[14, 10, 19, 15], [26, 8, 29, 15], [30, 13, 34, 18], [15, 17, 12, 20]].forEach(([a, b, c, d]) => g.line(a, b, c, d, "h", f ? 0 : 1, 1));   // lava cracks
+  g.ellipse(7, 17, 5, 4, "b");                                                    // head
+  g.poly([[3, 19], [1, 23], [5, 21]], "w", 0); g.poly([[6, 20], [5, 24], [8, 21]], "w", 0);   // mandibles
+  g.eye(5, 15, false);
+});
+
+const PIX_LAVA_GOLEM = pixDraw(38, 40, 2, (g, f) => {
+  const a = f ? -1 : 0;
+  g.rect(12, 31, 17, 38, "d"); g.rect(21, 31, 26, 38, "d");                      // legs
+  g.ellipse(6, 24 + a, 4, 8, "d"); g.ellipse(32, 24 - a, 4, 8, "d");              // arms
+  g.ellipse(5, 31 + a, 4, 3, "b"); g.ellipse(33, 31 - a, 4, 3, "b");              // fists
+  g.ellipse(19, 22, 12, 11, "d");                                                 // body
+  g.ellipse(19, 22, 4, 4, "h", f ? 0 : 1);                                        // molten core
+  [[11, 16, 15, 20], [24, 15, 27, 21], [13, 27, 17, 30]].forEach(([p, q, r, t]) => g.line(p, q, r, t, "h", 1, 1));
+  g.ellipse(19, 9, 7, 6, "d");                                                    // head
+  g.rect(14, 8, 17, 9, "h", f ? 0 : 1); g.rect(20, 8, 23, 9, "h", f ? 0 : 1);     // glowing eyes
+  g.line(15, 13, 22, 13, "w", 1, 1);
+});
+
+const PIX_CRAB_KNIGHT = pixDraw(42, 32, 2, (g, f) => {
+  for (let i = 0; i < 3; i++) { g.line(14 + i * 5, 24, 11 + i * 5, 30, "d", 1, 1); g.line(24 + i * 4, 24, 27 + i * 4, 30, "d", 1, 1); }   // legs
+  g.ellipse(35, 18, 5, 7, "w");                                                   // shield
+  g.ellipse(35, 18, 2, 3, "h", 0);
+  g.ellipse(21, 20, 12, 8, "b");                                                  // shell
+  g.ellipse(20, 23, 8, 3, "l");
+  g.line(16, 13, 16, 8, "b", 1, 1); g.line(24, 13, 24, 8, "b", 1, 1);             // eye stalks
+  g.eye(15, 6, true); g.eye(23, 6, true);
+  g.line(10, 20, 7, 16, "b", 1, 2);                                               // claw arm
+  g.ellipse(5, 13, 4, 3, "b");                                                    // pincer
+  g.poly([[2, f ? 8 : 10], [7, 11], [3, 12]], "b");                               // upper pincer opens and closes
+  g.line(2, 13, 6, 13, "e", 1, 1);
+});
+
+const PIX_BUBBLE_PUFFER = pixDraw(36, 34, 2, (g, f) => {
+  const r = f ? 12 : 11;                                                          // puffs up
+  for (let i = 0; i < 12; i++) {                                                  // spikes
+    const an = (i / 12) * Math.PI * 2;
+    const x = 18 + Math.cos(an) * (r + 2), y = 16 + Math.sin(an) * (r + 2);
+    g.line(18 + Math.cos(an) * r, 16 + Math.sin(an) * r, x, y, "h", 0, 1);
+  }
+  g.poly([[29, 16], [34, 10], [34, 22]], "w");                                    // tail fin
+  g.ellipse(18, 16, r, r - 1, "b");                                               // body
+  g.ellipse(18, 20, r - 4, r - 6, "l");                                           // belly
+  g.ellipse(22, 17, 3, 2, "w");                                                   // side fin
+  g.eye(10, 11, true);
+  g.ellipse(6, 17, 1.5, 1.5, "e", 1);                                             // little "o" mouth
+  g.ellipse(4, f ? 5 : 7, 1.5, 1.5, "l", 0); g.ellipse(7, f ? 2 : 4, 1, 1, "l", 0);   // bubbles
+});
+
+const PIX_REEF_EEL = pixDraw(46, 30, 2, (g, f) => {
+  const ph = f ? Math.PI : 0;
+  const y = (x) => 16 + 4 * Math.sin(x / 6 + ph);
+  for (let x = 10; x < 43; x++) g.line(x, y(x), x + 1, y(x + 1), "b", 1, Math.max(2, 6 - (x - 10) / 8));   // body
+  for (let x = 12; x < 40; x += 2) g.px(x, y(x) + 2, "l", 0);                     // belly
+  for (let x = 14; x < 38; x += 3) g.px(x, y(x) - 3, "w", 0);                     // back fin
+  g.ellipse(7, y(8), 5, 4, "b");                                                  // head
+  g.eye(5, y(8) - 2, false);
+  g.line(2, y(8) + 2, 7, y(8) + 2, "e", 1, 1); g.px(4, y(8) + 3, "W");
+});
+
+const PIX_BOG_FROG = pixDraw(36, 32, 2, (g, f) => {
+  const s = f ? 1 : 0;
+  g.line(4, 3 + s, 7, 29, "w", 1, 1);                                              // spear
+  g.poly([[4, 1 + s], [6, 5 + s], [2, 5 + s]], "h", 0);
+  g.ellipse(10, 28, 5, 2, "d"); g.ellipse(26, 28, 5, 2, "d");                     // feet
+  g.ellipse(18, 20 + s, 11, 9 - s, "b");                                          // body
+  g.ellipse(17, 23 + s, 7, 5, "l");
+  g.ellipse(11, 9 + s, 4, 4, "b"); g.ellipse(23, 9 + s, 4, 4, "b");               // eye bumps
+  g.eye(10, 8 + s, true); g.eye(22, 8 + s, true);
+  g.line(9, 15 + s, 25, 15 + s, "e", 1, 1);                                       // wide mouth
+  g.line(9, 20 + s, 6, 16, "b", 1, 2);                                            // arm holding the spear
+});
+
+const PIX_MUSHROOM_IMP = pixDraw(30, 34, 2, (g, f) => {
+  const c = f ? 1 : 0;
+  g.ellipse(11, 31, 3, 1.5, "d"); g.ellipse(19, 31, 3, 1.5, "d");                 // feet
+  g.ellipse(15, 24, 7, 7, "b");                                                   // stem body
+  g.line(9, 24, f ? 4 : 5, f ? 20 : 28, "b", 1, 2); g.line(21, 24, 25, 28, "b", 1, 2);   // arms
+  g.ellipse(15, 11 + c, 13, 8, "w");                                              // cap
+  [[9, 8], [18, 6], [22, 11], [12, 13]].forEach(([x, y], i) => g.ellipse(x, y + c, i === 1 ? 2.5 : 2, 1.5, "l", 0));   // spots
+  g.rect(5, 17 + c, 25, 17 + c, "b", 2);                                          // cap rim
+  g.eye(11, 21 + c, true); g.eye(16, 21 + c, true);
+  g.line(12, 26, 17, 26, "e", 1, 1);
+});
+
+const PIX_TREANT = pixDraw(34, 40, 2, (g, f) => {
+  const l = f ? 1 : 0;
+  g.line(12, 36, 8, 38, "d", 1, 2); g.line(22, 36, 26, 38, "d", 1, 2);            // roots
+  g.poly([[11, 16], [23, 16], [25, 37], [9, 37]], "w", (x) => (x < 13 ? 0 : x > 21 ? 2 : 1));   // trunk
+  g.line(14, 28, 15, 34, "d", 1, 1); g.line(20, 27, 19, 33, "d", 1, 1);           // bark lines
+  g.line(11, 24, 4, 17 + l, "w", 1, 2); g.line(23, 24, 30, 19 - l, "w", 1, 2);    // branch arms
+  g.ellipse(4, 15 + l, 3, 2, "b"); g.ellipse(30, 17 - l, 3, 2, "b");              // leaves on the arms
+  g.ellipse(17, 9 + l, 11, 7, "b"); g.ellipse(9, 12 + l, 5, 4, "b"); g.ellipse(25, 12 + l, 5, 4, "b");   // crown
+  g.ellipse(14, 6 + l, 4, 2, "l", 0);
+  g.ellipse(22, 7 + l, 1.5, 1.5, "h", 0);                                        // flower
+  g.eye(13, 21, true); g.eye(19, 21, true);
+  g.line(14, 26, 19, 26, "e", 1, 1);
+});
+
+const PIX_THORN_WOLF = pixDraw(44, 32, 2, (g, f) => {
+  g.line(36, 16, 42, f ? 9 : 11, "b", 1, 3);                                      // tail
+  g.line(15, 22, f ? 12 : 15, 30, "d", 1, 3); g.line(31, 22, f ? 34 : 31, 30, "d", 1, 3);   // far legs
+  g.ellipse(24, 18, 13, 7, "b");                                                  // body
+  g.ellipse(23, 22, 9, 2, "l");
+  [16, 21, 26, 31].forEach((x) => g.poly([[x - 2, 12], [x, 7], [x + 2, 12]], "w", 0));   // thorns
+  g.line(19, 22, f ? 21 : 18, 30, "b", 1, 3); g.line(28, 22, f ? 26 : 29, 30, "b", 1, 3);   // near legs
+  g.poly([[9, 11], [11, 4], [14, 10]], "b");                                      // ear
+  g.ellipse(9, 15, 6, 5, "b");                                                    // head
+  g.ellipse(4, 17, 3, 2.5, "b");                                                  // snout
+  g.px(2, 16, "e"); g.rect(7, 13, 8, 13, "h", f ? 0 : 1);                         // nose, glowing eye
+  g.line(2, 19, 6, 19, "e", 1, 1); g.px(4, 20, "W");
+});
+
+const PIX_OWLBEAR = pixDraw(36, 36, 2, (g, f) => {
+  g.ellipse(12, 33, 4, 2, "d"); g.ellipse(24, 33, 4, 2, "d");                     // feet
+  g.ellipse(18, 23, 11, 10, "b");                                                 // body
+  g.ellipse(17, 25, 7, 6, "l");                                                   // feathery belly
+  [[14, 23], [19, 25], [16, 28]].forEach(([x, y]) => g.px(x, y, "w", 2));
+  g.ellipse(6, f ? 18 : 23, 3, 6, "d"); g.ellipse(30, 23, 3, 6, "d");             // arms (one waves)
+  g.poly([[9, 5], [11, 0], [14, 4]], "d"); g.poly([[21, 4], [24, 0], [26, 5]], "d");   // ear tufts
+  g.ellipse(17, 10, 8, 7, "b");                                                   // head
+  g.ellipse(15, 11, 6, 5, "l");                                                   // face disc
+  g.eye(11, 9, true); g.eye(16, 9, true);
+  g.poly([[13, 12], [15, 16], [17, 12]], "h", 0);                                 // beak
+});
+
+const PIX_PUMPKIN_GHOUL = pixDraw(34, 38, 2, (g, f) => {
+  g.poly([[8, 19], [26, 19], [30, 36], [25, 33], [21, 36], [17, 33], [13, 36], [9, 33], [4, 36]], "d");   // tattered cloak
+  g.line(8, 22, 2, f ? 18 : 24, "b", 1, 1); g.line(26, 22, 32, f ? 24 : 18, "b", 1, 1);   // vine arms
+  g.ellipse(17, 11, 11, 9, "w");                                                  // pumpkin head
+  g.line(12, 3, 11, 19, "w", 2, 1); g.line(22, 3, 23, 19, "w", 2, 1); g.line(17, 2, 17, 20, "w", 2, 1);   // ribs
+  g.line(17, 2, 19, 0, "b", 1, 2);                                                // stem
+  g.poly([[9, 8], [13, 8], [11, 11]], "h", f ? 0 : 1); g.poly([[20, 8], [24, 8], [22, 11]], "h", f ? 0 : 1);   // carved eyes
+  g.poly([[9, 14], [25, 14], [23, 17], [20, 15], [17, 17], [14, 15], [11, 17]], "h", f ? 0 : 1);   // carved grin
+});
+
+const PIX_CANDLE_GHOST = pixDraw(30, 40, 2, (g, f) => {
+  g.ellipse(5, f ? 22 : 25, 2, 3, "b", 0); g.ellipse(25, f ? 27 : 24, 2, 3, "b", 0);   // wisps
+  g.ellipse(15, 36, 8, 2, "w");                                                   // holder
+  g.rect(10, 14, 20, 34, "l", 1);                                                 // wax
+  g.rect(10, 14, 12, 34, "l", 0);
+  [[11, 17, 3], [16, 16, 5], [19, 18, 2]].forEach(([x, y, n]) => g.rect(x, y, x, y + n, "l", 0));   // drips
+  g.line(15, 10, 15, 13, "e", 1, 1);                                              // wick
+  g.ellipse(f ? 14 : 16, 7, 3, 5, "h", 1); g.px(f ? 14 : 16, 8, "W");             // flame flickers
+  g.eye(12, 21, true); g.eye(17, 21, true);
+  g.ellipse(15, 27, 1.5, 2, "e", 1);                                              // "oo" mouth
+});
+
+const PIX_MUMMY = pixDraw(30, 40, 2, (g, f) => {
+  const a = f ? 1 : 0;
+  g.rect(10, 31, 13, 38, "l"); g.rect(17, 31, 20, 38, "l");                      // legs
+  g.ellipse(15, 23, 8, 11, "l");                                                  // body
+  for (let y = 15; y < 34; y += 3) g.line(8, y, 22, y + 1, "d", 1, 1);            // wrappings
+  g.line(9, 18 + a, 2, 19 + a, "l", 1, 3); g.line(9, 22 - a, 2, 23 - a, "l", 1, 3);   // arms reaching
+  g.line(21, 26, 26, 34 - a, "b", 0, 1);                                          // loose strip
+  g.ellipse(15, 9, 6, 6, "l");                                                    // head
+  g.line(9, 7, 21, 8, "d", 1, 1); g.line(9, 12, 21, 11, "d", 1, 1);
+  g.rect(10, 9, 19, 10, "e"); g.px(12, 9, "h", f ? 0 : 1); g.px(17, 9, "h", f ? 0 : 1);   // glowing eyes
+});
+
+const PIX_MIMIC = pixDraw(32, 30, 2, (g, f) => {
+  const lid = f ? 3 : 0;                                                          // lid chomps
+  g.rect(3, 15, 28, 27, "w");                                                     // box
+  g.rect(3, 20, 28, 21, "h", 1); g.rect(14, 19, 17, 23, "h", 0);                  // band + lock
+  g.ellipse(15, 15 + lid / 2, 9, 2, "b");                                         // tongue
+  for (let x = 4; x <= 27; x += 3) g.poly([[x, 15], [x + 1, 12 + lid], [x + 2, 15]], "W", 1);   // lower teeth
+  g.poly([[3, 12 + lid], [28, 12 + lid], [26, 3 + lid], [5, 1 + lid]], "w", (x, y) => (y < 5 + lid ? 0 : 1));   // lid
+  g.rect(4, 7 + lid, 27, 8 + lid, "h", 1);
+  for (let x = 5; x <= 26; x += 3) g.poly([[x, 12 + lid], [x + 1, 15 + lid], [x + 2, 12 + lid]], "W", 1);   // upper teeth
+  g.eye(8, 4 + lid, true);
+});
+
+const PIX_STORM_SPRITE = pixDraw(30, 36, 2, (g, f) => {
+  const w = f ? 4 : 7;                                                            // wings flap
+  g.ellipse(7, 14, 5, w, "w", 0); g.ellipse(23, 14, 5, w, "w", 0);                // wings
+  g.ellipse(15, 29, 7, 4, "d"); g.ellipse(10, 30, 3, 2, "d"); g.ellipse(20, 31, 3, 2, "d");   // cloud tail
+  g.ellipse(15, 19, 5, 7, "b");                                                   // body
+  g.line(10, 18, 5, f ? 20 : 22, "b", 1, 2);                                      // arm with bolt
+  g.poly([[5, 14], [8, 19], [5, 19], [7, 25], [2, 18], [5, 18], [3, 14]], "h", 0);   // lightning bolt
+  g.ellipse(15, 9, 5, 5, "l");                                                    // head
+  g.poly([[10, 6], [12, 1], [14, 5], [16, 0], [18, 5], [21, 2], [20, 7]], "h", 1);   // zappy hair
+  g.eye(12, 9, false); g.eye(16, 9, false);
+});
+
+const PIX_ICE_IMP = pixDraw(28, 34, 2, (g, f) => {
+  g.poly([[20, 12], [27, 7], [25, 16]], "w"); g.poly([[8, 12], [1, 8], [4, 16]], "w");   // little wings
+  g.line(20, 26, 25, 31, "b", 1, 1); g.poly([[24, 30], [27, 32], [24, 33]], "l", 0);   // tail
+  g.ellipse(10, 31, 3, 1.5, "d"); g.ellipse(18, 31, 3, 1.5, "d");                 // feet
+  g.ellipse(14, 22, 7, 8, "b");                                                   // body
+  g.ellipse(14, 24, 4, 5, "l");
+  g.line(8, 20, 5, f ? 14 : 18, "b", 1, 2);                                       // arm with snowball
+  g.ellipse(5, f ? 12 : 16, 3, 3, "l", 0);
+  g.poly([[9, 7], [8, 1], [12, 6]], "l", 0); g.poly([[16, 6], [20, 1], [19, 7]], "l", 0);   // ice horns
+  g.ellipse(14, 11, 6, 6, "b");                                                   // head
+  g.eye(10, 10, true); g.eye(15, 10, true);
+  g.line(10, 14, 17, 14, "e", 1, 1); g.px(12, 15, "W"); g.px(15, 15, "W");         // grin
+});
+
+const PIX_YETI = pixDraw(40, 42, 2, (g, f) => {
+  const a = f ? -3 : 0;                                                           // arms raise
+  g.ellipse(13, 39, 5, 2, "b"); g.ellipse(27, 39, 5, 2, "b");                     // feet
+  g.ellipse(6, 26 + a, 4, 10, "l"); g.ellipse(34, 26 + a, 4, 10, "l");            // arms
+  g.ellipse(6, 35 + a, 3, 2, "b"); g.ellipse(34, 35 + a, 3, 2, "b");              // hands
+  g.ellipse(20, 26, 13, 13, "l");                                                 // furry body
+  g.ellipse(20, 12, 10, 9, "l");                                                  // head fur
+  g.ellipse(18, 13, 7, 6, "b");                                                   // face
+  g.eye(14, 10, true); g.eye(19, 10, true);
+  g.line(14, 16, 22, 16, "e", 1, 1); g.px(15, 17, "W"); g.px(21, 17, "W");         // fangs
+  [[12, 24], [26, 22], [19, 32]].forEach(([x, y]) => g.px(x, y, "w", 2));         // fur tufts
+});
+
+const PIX_PENGUIN_KNIGHT = pixDraw(30, 36, 2, (g, f) => {
+  const s = f ? -3 : 0;                                                           // sword raises
+  g.line(4, 11 + s, 5, 27 + s, "w", 0, 1); g.rect(2, 25 + s, 7, 25 + s, "h", 0);  // sword
+  g.ellipse(11, 34, 3, 1.5, "b"); g.ellipse(19, 34, 3, 1.5, "b");                 // feet
+  g.ellipse(15, 21, 9, 12, "d");                                                  // body
+  g.ellipse(14, 23, 6, 9, "l");                                                   // white front
+  g.line(7, 20, 5, 26 + s, "d", 1, 2);                                            // flipper
+  g.poly([[15, 3], [18, 0], [20, 3]], "h", 0);                                    // plume
+  g.ellipse(15, 8, 7, 6, "w");                                                    // helmet
+  g.rect(9, 8, 17, 9, "e"); g.px(11, 8, "W"); g.px(15, 8, "W");                   // visor + eyes
+  g.poly([[8, 11], [4, 13], [8, 13]], "b", 0);                                    // beak
+});
+
+const PIX_SAND_SCORPION = pixDraw(44, 32, 2, (g, f) => {
+  const t = f ? 2 : 0;                                                            // tail sways
+  for (let i = 0; i < 3; i++) g.line(15 + i * 6, 25, 12 + i * 6 + (f && i === 1 ? 2 : 0), 30, "d", 1, 1);   // legs
+  const tail = [[31, 21], [36, 17], [38, 12 - t / 2], [36, 7 - t], [31, 5 - t]];
+  tail.forEach(([x, y], i) => g.ellipse(x, y, 3 - i * 0.3, 3 - i * 0.3, "b"));   // tail segments
+  g.poly([[29, 3 - t], [26, 6 - t], [30, 7 - t]], "h", 0);                         // stinger
+  g.ellipse(28, 22, 5, 4, "b");
+  g.ellipse(18, 23, 9, 5, "b");                                                   // body
+  g.ellipse(17, 25, 6, 2, "l");
+  g.line(10, 21, 6, 18, "b", 1, 2);                                               // claw arm
+  g.ellipse(5, 15, 4, 3, "w");                                                    // pincer
+  g.poly([[1, f ? 10 : 12], [6, 13], [2, 14]], "w");
+  g.line(1, 15, 5, 15, "e", 1, 1);
+  g.px(11, 19, "e"); g.px(13, 19, "e");                                           // beady eyes
 });
 
 const PIX_ENEMY_ART = {
