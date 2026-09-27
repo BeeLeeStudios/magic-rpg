@@ -34,7 +34,7 @@ MATH THAT FITS YOUR CHILD
 • Speed bonuses reward real fluency, not guessing.
 
 AN ADVENTURE KIDS WANT TO PLAY
-• 20 hand-drawn pixel monsters and 3 bosses with their own tricks — one splits into minions, one is frozen solid and only cracks with fast answers, one charges a big attack you must stop with correct answers.
+• 40 pixel monsters and 8 bosses with their own tricks — one splits into minions, one only cracks with fast answers, one steals your gold, one races a clock, and more.
 • Cross five worlds on the world map: volcano, lagoon, forest, haunted night and frozen north.
 • Watch your dragon grow from a little hatchling into a golden Elder.
 • Fill the Dragon Book with every monster and treasure, and earn 20 badges.

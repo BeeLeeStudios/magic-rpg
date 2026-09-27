@@ -2311,10 +2311,10 @@ function getEnemyDamage() {
   return Math.max(2, Math.min(raw, cap));
 }
 
-/* Ten mythic creatures, one per wave before the roster loops. Trimmed
-   down from fifty: the fairies, pirates, superheroes and rescue pups were
-   pulling the game away from a single coherent world, and a short roster
-   is one that can actually be drawn by hand. */
+/* Forty fantasy creatures, drawn from a shuffled bag so none repeats until
+   the whole roster has been seen. The first twenty are hand-typed sprites;
+   the rest (Fire Salamander onward) are shape-drawn with pixDraw. Every one
+   needs a matching PIX_ENEMY_ART entry or it falls back to its emoji. */
 const ENEMIES = [
   { name: "Muck Slime", emoji: "\u{1F7E2}", glow: "#6ee7a8" },
   { name: "Cave Goblin", emoji: "\u{1F47A}", glow: "#f97316" },
@@ -2336,6 +2336,26 @@ const ENEMIES = [
   { name: "Ember Elemental", emoji: "\u{1F525}", glow: "#ff9f4a" },
   { name: "Frost Harpy", emoji: "\u{1F985}", glow: "#cfe8f5" },
   { name: "Cyclops Ogre", emoji: "\u{1F441}\uFE0F", glow: "#f0e0a0" },
+  { name: "Fire Salamander", emoji: "\u{1F98E}", glow: "#ff8a3a" },
+  { name: "Magma Beetle", emoji: "\u{1FAB2}", glow: "#ff7a2a" },
+  { name: "Lava Golem", emoji: "\u{1FAA8}", glow: "#ff8a2a" },
+  { name: "Sand Scorpion", emoji: "\u{1F982}", glow: "#e8c070" },
+  { name: "Crab Knight", emoji: "\u{1F980}", glow: "#ff7a5a" },
+  { name: "Bubble Puffer", emoji: "\u{1F421}", glow: "#ffe07a" },
+  { name: "Reef Eel", emoji: "\u{1F40D}", glow: "#7fd0ff" },
+  { name: "Bog Frog", emoji: "\u{1F438}", glow: "#8fd06a" },
+  { name: "Mushroom Imp", emoji: "\u{1F344}", glow: "#ff7a6a" },
+  { name: "Treant Sprout", emoji: "\u{1F333}", glow: "#8fd06a" },
+  { name: "Thorn Wolf", emoji: "\u{1F43A}", glow: "#8fd06a" },
+  { name: "Owlbear Cub", emoji: "\u{1F989}", glow: "#e8b070" },
+  { name: "Pumpkin Ghoul", emoji: "\u{1F383}", glow: "#ffb040" },
+  { name: "Candle Ghost", emoji: "\u{1F56F}\uFE0F", glow: "#ffd76b" },
+  { name: "Mummy", emoji: "\u{1F9DF}", glow: "#7fe3ff" },
+  { name: "Mimic", emoji: "\u{1F4E6}", glow: "#f2c440" },
+  { name: "Storm Sprite", emoji: "\u26A1", glow: "#ffe84a" },
+  { name: "Ice Imp", emoji: "\u{1F9CA}", glow: "#9fdcff" },
+  { name: "Snow Yeti", emoji: "\u2744\uFE0F", glow: "#e8f4ff" },
+  { name: "Penguin Knight", emoji: "\u{1F427}", glow: "#cfe8f5" },
 ];
 
 /* Treasure chest: a random bonus "wave" that replaces a normal enemy.
@@ -8680,6 +8700,26 @@ const PIX_ENEMY_ART = {
   "Coil Basilisk": { art: PIX_BASILISK, palette: { body: "#4a8a5c", dark: "#2a5638", belly: "#e8d98a", wing: "#3a6e48", horn: "#d9c14a" } },
   "Ember Elemental": { art: PIX_EMBER, palette: { body: "#f0752a", dark: "#a83a12", belly: "#ffe9a8", wing: "#ff9f4a", horn: "#ffd76b" } },
   "Frost Harpy": { art: PIX_HARPY, palette: { body: "#cfe8f5", dark: "#7a9ec4", belly: "#ffffff", wing: "#9fc8e8", horn: "#e8a83c" } },
+  "Fire Salamander": { art: PIX_SALAMANDER, palette: { body: "#e8662a", dark: "#8a2a14", belly: "#ffd08a", wing: "#ffb040", horn: "#ffe066" } },
+  "Magma Beetle": { art: PIX_MAGMA_BEETLE, palette: { body: "#6a4a40", dark: "#3a2a2a", belly: "#ffb070", wing: "#d9b08a", horn: "#ff7a2a" } },
+  "Lava Golem": { art: PIX_LAVA_GOLEM, palette: { body: "#6a4a40", dark: "#4a3230", belly: "#ffd070", wing: "#2a1a18", horn: "#ff8a2a" } },
+  "Sand Scorpion": { art: PIX_SAND_SCORPION, palette: { body: "#d8a850", dark: "#8a6a2a", belly: "#f0d890", wing: "#c08a3a", horn: "#e0335a" } },
+  "Crab Knight": { art: PIX_CRAB_KNIGHT, palette: { body: "#e0503a", dark: "#8a2418", belly: "#ffd0b0", wing: "#9aa8b8", horn: "#f2c440" } },
+  "Bubble Puffer": { art: PIX_BUBBLE_PUFFER, palette: { body: "#f2c94a", dark: "#c48a2a", belly: "#fff4c8", wing: "#ff9a4a", horn: "#f4f0e0" } },
+  "Reef Eel": { art: PIX_REEF_EEL, palette: { body: "#3aa8c8", dark: "#1a5a78", belly: "#c8f0ff", wing: "#7fd0ff", horn: "#ffd76b" } },
+  "Bog Frog": { art: PIX_BOG_FROG, palette: { body: "#6fbf4a", dark: "#3a7a2a", belly: "#e8f0a0", wing: "#8a5a32", horn: "#cfd8e0" } },
+  "Mushroom Imp": { art: PIX_MUSHROOM_IMP, palette: { body: "#e8d6a8", dark: "#7a4a2a", belly: "#f8f2e0", wing: "#d9453a", horn: "#ffd76b" } },
+  "Treant Sprout": { art: PIX_TREANT, palette: { body: "#5fae4a", dark: "#4a2e1a", belly: "#9ad86a", wing: "#7a5232", horn: "#ff8ab8" } },
+  "Thorn Wolf": { art: PIX_THORN_WOLF, palette: { body: "#5a6a5a", dark: "#2e3a2e", belly: "#a8b8a0", wing: "#8fd06a", horn: "#ff5a3a" } },
+  "Owlbear Cub": { art: PIX_OWLBEAR, palette: { body: "#8a5a3a", dark: "#5a3620", belly: "#e8d0a8", wing: "#6a4428", horn: "#f2a830" } },
+  "Pumpkin Ghoul": { art: PIX_PUMPKIN_GHOUL, palette: { body: "#4a8a3a", dark: "#3a2448", belly: "#c07030", wing: "#f08a2a", horn: "#ffe066" } },
+  "Candle Ghost": { art: PIX_CANDLE_GHOST, palette: { body: "#a8d8ff", dark: "#8a8070", belly: "#f4ecd8", wing: "#c9962f", horn: "#ffcf4a" } },
+  "Mummy": { art: PIX_MUMMY, palette: { body: "#c8b898", dark: "#a8987a", belly: "#e8dcc0", wing: "#6a5a48", horn: "#7fe3ff" } },
+  "Mimic": { art: PIX_MIMIC, palette: { body: "#e05a7a", dark: "#5a3218", belly: "#ffd0a0", wing: "#9a5a2a", horn: "#f2c440" } },
+  "Storm Sprite": { art: PIX_STORM_SPRITE, palette: { body: "#4a7ad8", dark: "#8a9ab0", belly: "#d8ecff", wing: "#a8e0ff", horn: "#ffe84a" } },
+  "Ice Imp": { art: PIX_ICE_IMP, palette: { body: "#6ab8e8", dark: "#2a5a8a", belly: "#f0faff", wing: "#3a7ab8", horn: "#ffffff" } },
+  "Snow Yeti": { art: PIX_YETI, palette: { body: "#7a8ab8", dark: "#4a5a88", belly: "#f0f4ff", wing: "#c8d8f0", horn: "#ffffff" } },
+  "Penguin Knight": { art: PIX_PENGUIN_KNIGHT, palette: { body: "#f0a030", dark: "#2a2a3a", belly: "#f4f4f8", wing: "#aab8c8", horn: "#d8323a" } },
   "Cyclops Ogre": { art: PIX_OGRE, palette: { body: "#b08050", dark: "#7a5636", belly: "#e8d2a8", wing: "#4a3a2a", horn: "#f0e0a0" } },
   // The Monarch's minions. Without an entry here they fell through to the
    // emoji fallback, so the boss visibly reverted to a green circle the
