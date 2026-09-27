@@ -1516,6 +1516,12 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
   .celebrate-overlay .fireworks { display: none; }
 }
 
+/* ---------- boss mechanics ---------- */
+.boss-intro-hint { font-family: var(--font-ui); color: #fff3c4; font-weight: 800; font-size: 16px; margin: 6px 16px 10px; text-align: center; }
+.boss-clock { height: 7px; border-radius: 4px; background: #2d2344; overflow: hidden; margin: -4px 0 6px; box-shadow: 0 0 0 2px var(--ink); }
+.boss-clock i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #ff5a3a, #f2c440); animation: bossClock linear forwards; }
+@keyframes bossClock { from { width: 100%; } to { width: 0%; } }
+
 /* ---------- falling in battle / dragon eggs ---------- */
 .death-loss { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: #3a1420; color: #ffd0d0; font-weight: 800; box-shadow: 0 0 0 2px var(--ink); }
 .death-egg { display: flex; align-items: center; gap: 10px; text-align: left; margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: #1a1230; color: var(--text); font-weight: 700; box-shadow: 0 0 0 2px #c9a227; }
@@ -2412,6 +2418,7 @@ const BOSSES = [
     emoji: "\u{1F451}",
     glow: "#8ef0a8",
     hpMult: 1.8,
+    hint: "It splits into little oozes. Beat them fast!",
     // Splits off two smaller oozes each time it drops past a threshold.
     // The blobs are already visible inside its body in the sprite, so the
     // summon reads as something it was always going to do.
@@ -2440,6 +2447,7 @@ const BOSSES = [
     emoji: "\u{1F9CA}",
     glow: "#cfe8f5",
     hpMult: 1.8,
+    hint: "Its ice armor only breaks with FAST answers!",
     /* Frozen plate. Answers slower than half the band's time budget are
        mostly absorbed. Every other boss rewards being CORRECT; this one
        only rewards being FLUENT, which is the gap between knowing a fact
@@ -2454,6 +2462,7 @@ const BOSSES = [
     emoji: "\u{1F5FF}",
     glow: "#7de0c4",
     hpMult: 1.8,
+    hint: "When it charges up, answer right twice to break its spell!",
     /* Spends two rounds winding up, then unleashes. Answer both charging
        rounds correctly and you break its focus; miss either and it lands
        hard. The only boss where a wrong answer has a delayed consequence
@@ -2469,7 +2478,142 @@ const BOSSES = [
     },
     weakness: { op: "-", mult: 2 },
   },
+  {
+    name: "Three-Headed Hydra",
+    emoji: "\u{1F40D}",
+    glow: "#6ee7a8",
+    hpMult: 1.8,
+    hint: "Every miss lets it regrow. Don't miss!",
+    /* Mistakes heal it: each wrong answer regrows part of its health. The
+       one fight where accuracy is everything and speed doesn't matter. */
+    regrow: { pct: 0.12, line: "The Hydra regrows!" },
+  },
+  {
+    name: "Clockwork Colossus",
+    emoji: "\u2699\uFE0F",
+    glow: "#e0b050",
+    hpMult: 1.8,
+    hint: "Answer before the clock runs out!",
+    /* Every problem gets a visible countdown -- 1.5x the rank's own time
+       budget, so it follows the math instead of a fixed number of seconds.
+       Let it run out and the Colossus strikes, then a new problem comes. */
+    clock: { pct: 1.5, line: "Tick-tock... too slow!" },
+  },
+  {
+    name: "Crystal Queen",
+    emoji: "\u{1F48E}",
+    glow: "#c9a8ff",
+    hpMult: 1.8,
+    hint: "Only answer streaks can crack her crystal!",
+    /* Hits are scaled by the current answer streak: the first right answer
+       barely scratches her, the fourth in a row hits harder than normal. */
+    streakArmor: { mults: [0.5, 0.8, 1.2, 1.6] },
+  },
+  {
+    name: "Goblin King",
+    emoji: "\u{1F4B0}",
+    glow: "#f2c440",
+    hpMult: 1.8,
+    hint: "He steals your gold! Beat him to win it back, doubled!",
+    /* Each time he hits you he pockets some gold; beating him pays all of
+       it back twice over. Falling to him loses it like any other gold. */
+    thief: { steal: 5 },
+  },
+  {
+    name: "Moss Witch",
+    emoji: "\u{1F9D9}",
+    glow: "#c8ff6a",
+    hpMult: 1.8,
+    hint: "Poison spoils her healing potions!",
+    /* Every few rounds she drinks a healing potion -- unless she's
+       poisoned, which spoils it. Teaches using the Poison button. */
+    brew: { every: 3, pct: 0.15, line: "The Witch drinks a healing potion!", blockedLine: "Poison spoiled her potion!" },
+  },
 ];
+
+/* The live boss (if any) that has the given mechanic. */
+function liveBoss(key) {
+  return S.enemies.find((e) => e.isBoss && e.hp > 0 && e[key]) || null;
+}
+
+/* Shows a boss line over the battlefield for two seconds. */
+function showBossBanner(line) {
+  S.bossBanner = line;
+  const rid = S.runId;
+  render();
+  setTimeout(() => { if (S.runId === rid && S.bossBanner === line) { S.bossBanner = null; render(); } }, 2000);
+}
+
+/* Hydra: a wrong answer regrows health. Returns the banner line if it did. */
+function bossRegrow() {
+  const boss = liveBoss("regrow");
+  if (!boss) return null;
+  const heal = Math.round(boss.maxHP * boss.regrow.pct);
+  boss.hp = Math.min(boss.maxHP, boss.hp + heal);
+  addPopup(`+${heal}`, "enemy", "heal");
+  return boss.regrow.line;
+}
+
+/* Crystal Queen: damage multiplier from the current answer streak. */
+function getStreakArmorMult(target) {
+  if (!target || !target.streakArmor) return 1;
+  const m = target.streakArmor.mults;
+  return m[Math.max(1, Math.min(S.streak, m.length)) - 1];
+}
+
+/* Moss Witch: counts rounds and heals on every Nth, unless poisoned. */
+function tickBossBrew() {
+  const boss = liveBoss("brew");
+  if (!boss) return null;
+  boss.brewCounter = (boss.brewCounter || 0) + 1;
+  if (boss.brewCounter < boss.brew.every) return null;
+  boss.brewCounter = 0;
+  if (boss.poisonTurns > 0) return boss.brew.blockedLine;
+  const heal = Math.round(boss.maxHP * boss.brew.pct);
+  boss.hp = Math.min(boss.maxHP, boss.hp + heal);
+  addPopup(`+${heal}`, "enemy", "heal");
+  return boss.brew.line;
+}
+
+/* Clockwork Colossus: a countdown per problem. It pauses while anything
+   covers the battle (celebrations, shop, settings...) and counts as a miss
+   when it runs out. */
+function startBossClock() {
+  stopBossClock();
+  const boss = liveBoss("clock");
+  if (!boss || S.screen !== "playing" || !S.problem) return;
+  const ms = Math.round(getBand(S.problem.band || S.mathBand).speedMs * boss.clock.pct);
+  S.bossClock = { ms, start: Date.now(), problem: S.problem };
+  scheduleBossClock(ms);
+}
+
+function stopBossClock() {
+  clearTimeout(S.bossClockTimer);
+  S.bossClock = null;
+}
+
+function scheduleBossClock(wait) {
+  const rid = S.runId;
+  clearTimeout(S.bossClockTimer);
+  S.bossClockTimer = setTimeout(() => {
+    const c = S.bossClock;
+    const boss = liveBoss("clock");
+    if (S.runId !== rid || !c || !boss || S.problem !== c.problem || S.pick) return;
+    const covered = S.bossIntro || S.celebrations.length || S.settingsOpen || S.shopOpen || S.bookOpen
+      || S.mapOpen || S.levelUpData || S.locked || document.visibilityState !== "visible";
+    if (covered) { c.start += 500; scheduleBossClock(500); return; }
+    const left = c.start + c.ms - Date.now();
+    if (left > 20) { scheduleBossClock(left); return; }
+    S.bossClock = null;
+    S.locked = true;
+    S.streak = 0;
+    S.waveMisses += 1;
+    Sound.play("wrong");
+    buzz();
+    showBossBanner(boss.clock.line);
+    enemyStrikePlayer(getEnemyDamage(), () => { applyPoisonTicks(); finishRound(); });
+  }, wait);
+}
 
 /* The first boss is always the Ooze Monarch, so every kid meets the same
    creature at wave 5 and learns what a boss wave is against a fight that's
@@ -3019,6 +3163,9 @@ const S = {
   // the dragon's price, no dragon can be ridden or bought.
   egg: null,
   lastDeath: null,
+  // Clockwork Colossus countdown for the current problem.
+  bossClock: null,
+  bossClockTimer: 0,
   bookTab: "monsters",
   mapOpen: false,
   // Grown-up gate question and the parent screen's open tab.
@@ -3074,6 +3221,7 @@ function newProblem(lvl) {
   S.problem = p;
   S.choices = makeChoices(p);
   S.problemShownAt = Date.now();
+  startBossClock();
   if (Prefs.autoRead && S.screen === "playing") setTimeout(readProblem, 250);
 }
 
@@ -3251,6 +3399,11 @@ function spawnWave(wave, level) {
       armor: base.armor || null,
       charge: base.charge || null,
       charging: 0, chargeCounter: 0, chargeHits: 0,
+      regrow: base.regrow || null,
+      clock: base.clock || null,
+      streakArmor: base.streakArmor || null,
+      thief: base.thief || null, stolen: 0,
+      brew: base.brew || null, brewCounter: 0,
     }];
     S.currentWaveMeta = { isBoss: base.isBoss, name: base.name, count: 1 };
     if (base.isBoss) {
@@ -3301,6 +3454,9 @@ function finishRound() {
     }, 2000);
   }
 
+  const brewLine = tickBossBrew();
+  if (brewLine) { Sound.play("slurp"); showBossBanner(brewLine); }
+
   const absorbLine = tickBossMinions();
   if (absorbLine) {
     Sound.play("slurp");
@@ -3345,6 +3501,8 @@ function handleWaveClear() {
     xpReward = Math.round(xpReward * (1 + eff.xpPct / 100));
     label = meta.count > 1 ? `${meta.count}× ${meta.name}` : meta.name;
   }
+  const wonBack = S.enemies.reduce((t, e) => t + (e.stolen || 0), 0) * 2;
+  coinReward += wonBack;
   S.coins += coinReward;
   if (meta.isChest) S.stats.chests += 1;
   else {
@@ -3368,7 +3526,7 @@ function handleWaveClear() {
     S.banner = `Treasure Chest opened! +${coinReward} coins · +${xpReward} XP${healSuffix}`;
   } else {
     S.banner = `${label} defeated! +${coinReward} coins · +${xpReward} XP${healSuffix}`;
-    if (meta.isBoss) celebrate({ icon: "🏆", kicker: "Boss defeated!", title: `${meta.name} is beaten!`, sub: `+${coinReward} coins · +${xpReward} XP` });
+    if (meta.isBoss) celebrate({ icon: "🏆", kicker: "Boss defeated!", title: `${meta.name} is beaten!`, sub: `+${coinReward} coins${wonBack ? ` (${wonBack} won back!)` : ""} · +${xpReward} XP` });
   }
   if (S.equippedCreature) {
     const grew = dragonGrowth(newLevelInfo.level);
@@ -3717,6 +3875,7 @@ function chooseLevelUpCard(cardId) {
 function handleAnswer(val) {
   if (S.locked) return;
   S.locked = true;
+  stopBossClock();
   const correct = val === S.problem.answer;
   S.lastAnswerCorrect = correct;
   S.pick = { val, correct, answer: S.problem.answer };
@@ -3820,7 +3979,9 @@ function handleAnswer(val) {
         // Elemental-style weakness: this boss splits, so subtraction hurts it.
         const weakMult = getWeaknessMult(target, answeredProblem);
         const armorMult = getArmorMult(target, elapsed, answeredProblem);
-        const dmg = Math.max(1, Math.round(skillDmg * weakMult * armorMult));
+        const streakMult = getStreakArmorMult(target);
+        const dmg = Math.max(1, Math.round(skillDmg * weakMult * armorMult * streakMult));
+        if (streakMult !== 1) addPopup(`💎 x${streakMult}`, "enemy", streakMult > 1 ? "crit" : "dmg");
         if (weakMult > 1) addPopup("WEAK!", "enemy", "crit");
         // Armour has to announce itself or it just reads as the game being
         // broken -- the player needs to know WHY the hit barely landed.
@@ -3901,6 +4062,8 @@ function handleAnswer(val) {
       applyPoisonTicks();
       finishRound();
     } else {
+      const regrowLine = bossRegrow();
+      if (regrowLine) { Sound.play("slurp"); showBossBanner(regrowLine); }
       // Wave-scaled and hard-capped at 35% of max HP, so a miss on a big
       // two-digit problem can never one-shot a full-health dragon.
       enemyStrikePlayer(getEnemyDamage(), () => {
@@ -3937,6 +4100,13 @@ function enemyStrikePlayer(rawDmg, onSurvive) {
     S.damageFlash = true;
     BattleFX.playerHit();
     S.playerHP = Math.max(0, S.playerHP - dmg);
+    const thief = liveBoss("thief");
+    if (thief && S.coins > 0) {
+      const took = Math.min(S.coins, thief.thief.steal);
+      S.coins -= took;
+      thief.stolen = (thief.stolen || 0) + took;
+      addPopup(`-${took} 🪙`, "player", "dmg");
+    }
     if (eff.reflectPct > 0) {
       const reflectAmt = Math.round(dmg * eff.reflectPct / 100);
       const target = getActiveEnemy();
@@ -4148,6 +4318,11 @@ function saveSelectHTML() {
 
 /* Shown once per save slot, before the title. Two big tap targets --
    no text entry, since the youngest players can't reliably type. */
+function bossHint(name) {
+  const b = BOSSES.find((x) => x.name === name);
+  return b ? b.hint : "";
+}
+
 function bossIntroHTML() {
   return `
     <div class="boss-intro${S.bossIntro.seen ? " seen" : ""}">
@@ -4155,6 +4330,7 @@ function bossIntroHTML() {
         <div class="boss-intro-warn">\u2620\uFE0F</div>
         <div class="boss-intro-lead">A BOSS APPROACHES</div>
         <div class="boss-intro-name">${esc(S.bossIntro.name)}</div>
+        ${bossHint(S.bossIntro.name) ? `<div class="boss-intro-hint">${esc(bossHint(S.bossIntro.name))}</div>` : ""}
         ${PIX_ENEMY_ART[S.bossIntro.name] ? `<canvas class="boss-portrait" data-pix="boss:${esc(S.bossIntro.name)}" width="${PIX_ENEMY_ART[S.bossIntro.name].art.w * 4 + 8}" height="${PIX_ENEMY_ART[S.bossIntro.name].art.h * 4 + 8}"></canvas>` : ""}
         <button class="boss-intro-btn" onclick="beginBossFight()">FIGHT!</button>
       </div>
@@ -4639,6 +4815,7 @@ function playingHTML() {
     </div>
 
     <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}">
+      ${S.bossClock ? `<div class="boss-clock" aria-label="Time left"><i style="animation-duration:${S.bossClock.ms}ms;animation-delay:-${Math.max(0, Date.now() - S.bossClock.start)}ms"></i></div>` : ""}
       <div class="streak">${S.streak >= 10 ? `⚡ LEGENDARY! ${S.streak} in a row` : S.streak >= 7 ? `🔥 UNSTOPPABLE! ${S.streak} in a row` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
       <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span>${Speech.available() ? `<button class="speak-btn" data-action="read-problem" aria-label="Read the problem aloud">🔊</button>` : ""}</div>
       <div class="choices">
@@ -7891,6 +8068,186 @@ function heroSprite(hero, seated) {
 
 /* Which monsters have pixel art yet. Anything absent keeps its emoji, so
    the roster stays playable while the conversion is only part-done. */
+/* ---------- shape-drawn sprites ----------
+   The later bosses are drawn from simple shapes into the same "XN" cell
+   format the hand-typed sprites use, so they're easy to adjust. Ellipses
+   shade themselves (light top-left, dark bottom-right); the renderer adds
+   the outline. paint(g, frame) is called once per frame. */
+function pixDraw(w, h, frameCount, paint) {
+  const frames = [];
+  for (let f = 0; f < frameCount; f++) {
+    const grid = Array.from({ length: h }, () => Array(w).fill(".."));
+    const set = (x, y, slot, shade = 1) => {
+      x = Math.round(x); y = Math.round(y);
+      if (x >= 0 && y >= 0 && x < w && y < h) grid[y][x] = slot + shade;
+    };
+    const inPoly = (pts, x, y) => {
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const [xi, yi] = pts[i], [xj, yj] = pts[j];
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    };
+    const g = {
+      px: set,
+      ellipse(cx, cy, rx, ry, slot, flat) {
+        for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) {
+          for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+            const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
+            if (dx * dx + dy * dy > 1) continue;
+            const t = dx * 0.45 + dy * 0.8;
+            set(x, y, slot, flat != null ? flat : t < -0.45 ? 0 : t > 0.4 ? 2 : 1);
+          }
+        }
+      },
+      rect(x0, y0, x1, y1, slot, shade = 1) {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, slot, shade);
+      },
+      poly(pts, slot, shade = 1) {
+        const ys = pts.map((p) => p[1]), xs = pts.map((p) => p[0]);
+        for (let y = Math.floor(Math.min(...ys)); y <= Math.ceil(Math.max(...ys)); y++) {
+          for (let x = Math.floor(Math.min(...xs)); x <= Math.ceil(Math.max(...xs)); x++) {
+            if (inPoly(pts, x + 0.5, y + 0.5)) set(x, y, slot, typeof shade === "function" ? shade(x, y) : shade);
+          }
+        }
+      },
+      line(x0, y0, x1, y1, slot, shade = 1, thick = 1) {
+        const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2));
+        const r = (thick - 1) / 2;
+        for (let i = 0; i <= n; i++) {
+          const x = x0 + ((x1 - x0) * i) / n, y = y0 + ((y1 - y0) * i) / n;
+          for (let oy = -Math.ceil(r); oy <= Math.ceil(r); oy++) {
+            for (let ox = -Math.ceil(r); ox <= Math.ceil(r); ox++) {
+              if (ox * ox + oy * oy <= r * r + 0.25) set(x + ox, y + oy, slot, shade);
+            }
+          }
+        }
+      },
+      eye(x, y, big) {                       // white eye with a pupil looking left (at the hero)
+        set(x, y, "W"); set(x + 1, y, "W");
+        if (big) { set(x, y + 1, "W"); set(x + 1, y + 1, "W"); set(x, y + 1, "e"); }
+        set(x, y, "e");
+      },
+    };
+    paint(g, f);
+    frames.push(grid.map((r) => r.join("")));
+  }
+  return { w, h, frames };
+}
+
+/* Three-Headed Hydra: a squat serpent body with three necks. The heads
+   bob out of step with each other between frames. */
+const PIX_HYDRA = pixDraw(54, 48, 2, (g, f) => {
+  const bob = [f ? 1 : 0, f ? 0 : 1, f ? 1 : 0];
+  g.ellipse(44, 40, 9, 4, "d");                                   // tail
+  g.line(50, 38, 53, 33, "d", 1, 2);
+  g.rect(17, 41, 22, 47, "d"); g.rect(33, 41, 38, 47, "d");        // legs
+  [17, 19, 21, 33, 35, 37].forEach((x) => g.px(x, 47, "h", 0));   // claws
+  g.ellipse(28, 35, 16, 10, "b");                                  // body
+  g.ellipse(26, 39, 10, 5, "l");                                   // belly
+  const heads = [[10, 13 + bob[0]], [27, 6 + bob[1]], [45, 13 + bob[2]]];
+  const roots = [[21, 30], [28, 27], [35, 30]];
+  heads.forEach(([hx, hy], i) => {
+    g.line(roots[i][0], roots[i][1], hx + 1, hy + 3, "b", 1, 6);   // neck
+    g.line(roots[i][0] - 2, roots[i][1] + 1, hx - 1, hy + 5, "l", 1, 2); // throat scales
+  });
+  heads.forEach(([hx, hy]) => {
+    g.poly([[hx + 1, hy - 4], [hx + 3, hy - 9], [hx + 5, hy - 3]], "h", 0);   // horn
+    g.ellipse(hx + 1, hy, 6, 5, "b");                                          // head
+    g.ellipse(hx - 5, hy + 2, 4, 3, "b");                                      // snout
+    g.line(hx - 8, hy + 3, hx - 2, hy + 3, "e", 1, 1);                         // mouth
+    g.px(hx - 7, hy + 4, "W"); g.px(hx - 4, hy + 4, "W");                      // fangs
+    g.eye(hx - 1, hy - 2, true);
+  });
+});
+
+/* Clockwork Colossus: a brass automaton with a clock for a chest. The
+   minute hand ticks and the eyes flicker between frames. */
+const PIX_CLOCKWORK = pixDraw(50, 52, 2, (g, f) => {
+  g.rect(15, 42, 21, 51, "w"); g.rect(29, 42, 35, 51, "w");        // legs
+  g.rect(13, 49, 22, 51, "d"); g.rect(28, 49, 37, 51, "d");        // feet
+  g.rect(3, 20, 10, 36, "w"); g.rect(40, 20, 47, 36, "w");         // arms
+  g.ellipse(6, 39, 4, 4, "d"); g.ellipse(44, 39, 4, 4, "d");       // gear fists
+  g.poly([[11, 17], [39, 17], [41, 43], [9, 43]], "b", (x, y) => (x < 16 ? 0 : x > 34 || y > 38 ? 2 : 1)); // body
+  g.ellipse(7, 18, 5, 4, "b"); g.ellipse(43, 18, 5, 4, "b");       // shoulders
+  g.ellipse(25, 30, 9, 9, "l", 1);                                 // clock face
+  [[25, 22], [33, 30], [25, 38], [17, 30]].forEach(([x, y]) => g.px(x, y, "d", 2));
+  g.line(25, 30, 25, 24, "e", 1, 1);                               // hour hand
+  if (f) g.line(25, 30, 30, 34, "e", 1, 1); else g.line(25, 30, 31, 28, "e", 1, 1);   // minute hand
+  g.px(25, 30, "h", 0);
+  g.rect(16, 5, 34, 16, "w");                                      // head
+  g.rect(18, 7, 32, 8, "w", 0);
+  g.rect(18, 10, 22, 12, "e"); g.rect(28, 10, 32, 12, "e");        // eye sockets
+  g.rect(19, 11, 21, 11, "h", f ? 0 : 1); g.rect(29, 11, 31, 11, "h", f ? 0 : 1);   // glowing eyes
+  g.rect(21, 14, 29, 14, "d", 2);                                  // mouth grille
+  g.line(25, 5, 25, 1, "b", 1, 1); g.ellipse(25, 1, 2, 1.5, "h", f ? 0 : 1);          // antenna
+});
+
+/* Crystal Queen: a faceted crystal gown, pale face, gold crown and a
+   sceptre. Loose shards float around her and drift between frames. */
+const PIX_CRYSTAL_QUEEN = pixDraw(48, 54, 2, (g, f) => {
+  const d = f ? 1 : 0;
+  g.poly([[24, 20], [42, 53], [6, 53]], "w", (x, y) => (x < 16 ? 0 : x > 30 ? 2 : 1));   // gown
+  g.line(24, 24, 14, 52, "l", 0, 1); g.line(24, 24, 34, 52, "l", 0, 1); g.line(24, 26, 24, 52, "l", 0, 1);  // facets
+  g.ellipse(24, 22, 6, 6, "b");                                    // bodice
+  g.line(19, 21, 11, 31, "b", 1, 2);                               // arm
+  g.line(29, 21, 36, 28, "b", 1, 2);
+  g.line(38, 12, 34, 44, "h", 1, 1);                               // sceptre
+  g.poly([[38, 7], [41, 11], [38, 15], [35, 11]], "b", 0);          // sceptre gem
+  g.ellipse(24, 11, 5, 6, "l");                                    // face
+  g.eye(21, 10, false); g.eye(26, 10, false);
+  g.px(23, 14, "d", 2); g.px(24, 14, "d", 2);                      // mouth
+  g.poly([[18, 6], [19, 1], [21, 4], [24, 0], [27, 4], [29, 1], [30, 6]], "h", 0);   // crown
+  g.px(24, 3, "b", 0);
+  [[5, 16 + d], [43, 20 - d], [3, 38 - d], [44, 40 + d]].forEach(([x, y]) =>
+    g.poly([[x, y - 3], [x + 2, y], [x, y + 3], [x - 2, y]], "b", 0));   // floating shards
+});
+
+/* Goblin King: a pot-bellied goblin in a red royal cape and crown,
+   clutching a sack of stolen gold. Coins glint between frames. */
+const PIX_GOBLIN_KING = pixDraw(52, 50, 2, (g, f) => {
+  g.poly([[14, 16], [38, 16], [46, 49], [6, 49]], "w", (x) => (x < 12 ? 0 : x > 38 ? 2 : 1));   // cape
+  g.rect(17, 42, 22, 49, "d"); g.rect(30, 42, 35, 49, "d");         // legs
+  g.ellipse(26, 32, 13, 12, "b");                                   // belly
+  g.rect(14, 33, 38, 35, "d", 2); g.rect(24, 32, 28, 36, "h", 0);    // belt + buckle
+  g.line(14, 24, 8, 34, "b", 1, 3);                                 // arm
+  g.ellipse(42, 40, 8, 7, "l");                                     // gold sack
+  g.line(38, 34, 46, 34, "d", 2, 1);
+  [[39, 31], [43, 30], [46, 32]].forEach(([x, y], i) => g.px(x, y, "h", (i + f) % 2 ? 0 : 1));   // coins
+  g.line(36, 24, 40, 34, "b", 1, 3);                                // arm holding the sack
+  g.poly([[18, 9], [2, 4], [16, 19]], "b"); g.poly([[32, 9], [50, 4], [34, 19]], "b");   // big pointy ears
+  g.poly([[15, 11], [7, 7], [15, 16]], "l", 2); g.poly([[35, 11], [44, 7], [35, 16]], "l", 2);   // inner ears
+  g.ellipse(25, 14, 10, 8, "b");                                    // head
+  g.eye(18, 12, true); g.eye(27, 12, true);
+  g.poly([[23, 14], [21, 19], [25, 18]], "b", 2);                   // nose
+  g.line(17, 20, 31, 20, "e", 1, 1);                                // grin
+  [19, 23, 27].forEach((x) => g.px(x, 21, "W"));                    // teeth
+  g.poly([[16, 7], [17, 1], [20, 4], [25, 0], [30, 4], [33, 1], [34, 7]], "h", 0);   // crown
+  g.px(25, 4, "w", 0);
+});
+
+/* Moss Witch: hunched in a mossy robe under a crooked hat, holding a
+   staff topped with a glowing potion orb that pulses between frames. */
+const PIX_MOSS_WITCH = pixDraw(48, 54, 2, (g, f) => {
+  g.poly([[18, 22], [30, 22], [40, 53], [8, 53]], "d", (x) => (x < 14 ? 0 : x > 32 ? 2 : 1));   // robe
+  [[11, 50], [16, 47], [24, 51], [31, 48], [37, 51], [20, 40], [28, 36]].forEach(([x, y]) => g.ellipse(x, y, 2.5, 1.5, "l"));   // moss
+  g.line(40, 12, 42, 53, "w", 1, 2);                                // staff
+  g.ellipse(40, 9, 4, 4, "h", f ? 0 : 1);                           // potion orb
+  g.px(39, 8, "W");
+  g.line(26, 28, 38, 24, "d", 1, 3);                                // arm
+  g.ellipse(39, 24, 2, 2, "b");                                     // hand
+  g.ellipse(22, 19, 6, 6, "b");                                     // face
+  g.poly([[17, 18], [9, 22], [17, 21]], "b");                       // long nose
+  g.px(12, 22, "l", 0);                                             // wart
+  g.eye(18, 17, false);
+  g.line(17, 23, 21, 23, "e", 1, 1);                                // mouth
+  g.line(27, 16, 31, 30, "w", 2, 2);                                // hair
+  g.poly([[8, 14], [36, 13], [34, 16], [10, 16]], "w");             // hat brim
+  g.poly([[14, 14], [30, 14], [27, 4], [34, 0], [23, 2], [18, 8]], "w");   // bent cone
+  g.rect(15, 11, 29, 12, "l", 0);                                   // hat band
+});
+
 const PIX_ENEMY_ART = {
   "Muck Slime": { art: PIX_SLIME, palette: { body: "#5ec96f", dark: "#2f8f47", belly: "#d6f5c8", wing: "#a8e8b0", horn: "#e0c14a" } },
   "Cave Goblin": { art: PIX_GOBLIN, palette: { body: "#8fb03f", dark: "#5c7526", belly: "#e8eec0", wing: "#7a4c28", horn: "#c9a227" } },
@@ -7917,6 +8274,11 @@ const PIX_ENEMY_ART = {
    // the same height as everything else on the field.
   "Ooze Spawn": { art: PIX_SLIME, sizePct: 0.55,
     palette: { body: "#4fbf6a", dark: "#1f7a3c", belly: "#d9f7c4", wing: "#37a055", horn: "#f0c14a" } },
+  "Three-Headed Hydra": { art: PIX_HYDRA, palette: { body: "#3f9a6a", dark: "#1f5a44", belly: "#d8e8a0", wing: "#3f9a6a", horn: "#f0e0b0" } },
+  "Clockwork Colossus": { art: PIX_CLOCKWORK, palette: { body: "#c9962f", dark: "#6b4f1d", belly: "#f4ecd0", wing: "#8a9cb0", horn: "#ff6a3a" } },
+  "Crystal Queen": { art: PIX_CRYSTAL_QUEEN, palette: { body: "#9fdcff", dark: "#3a6fb0", belly: "#f4f8ff", wing: "#c79cff", horn: "#f2c440" } },
+  "Goblin King": { art: PIX_GOBLIN_KING, palette: { body: "#7ab04f", dark: "#4a3a2a", belly: "#c8a060", wing: "#b8323a", horn: "#f2c440" } },
+  "Moss Witch": { art: PIX_MOSS_WITCH, palette: { body: "#9ccf7a", dark: "#4a2e6a", belly: "#6fbf4a", wing: "#2e2448", horn: "#c8ff6a" } },
   "Ooze Monarch": { art: PIX_OOZE_MONARCH, palette: { body: "#4fbf6a", dark: "#1f7a3c", belly: "#d9f7c4", wing: "#37a055", horn: "#f0c14a" } },
   "Rime Warden": { art: PIX_RIME_WARDEN, palette: { body: "#a8d8ec", dark: "#4a7a9c", belly: "#ffffff", wing: "#7ab4d4", horn: "#e8f4ff" } },
   "Ancient Effigy": { art: PIX_ANCIENT_EFFIGY, palette: { body: "#8a7f6a", dark: "#5a5244", belly: "#7de0c4", wing: "#6e6656", horn: "#d9b44a" } },
