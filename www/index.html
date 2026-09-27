@@ -3169,7 +3169,7 @@ const S = {
   badgeToasts: [],
   waveMisses: 0,
   bookOpen: false,
-  // Falling in battle costs all your gold and turns the dragon you were
+  // Falling in battle costs half your gold and turns the dragon you were
   // riding into an egg (its id). Until it is hatched in the shop for half
   // the dragon's price, no dragon can be ridden or bought.
   egg: null,
@@ -4980,11 +4980,11 @@ function hatchCost(id) {
   return item ? Math.ceil(item.cost / 2) : 0;
 }
 
-/* The price of falling: all gold, and the dragon being ridden becomes an
-   egg. Dying again while an egg is waiting just costs the gold. */
+/* The price of falling: half your gold, and the dragon being ridden
+   becomes an egg. Dying again while an egg is waiting just costs gold. */
 function fallInBattle() {
-  const lostCoins = S.coins;
-  S.coins = 0;
+  const lostCoins = Math.ceil(S.coins / 2);
+  S.coins -= lostCoins;
   let newEgg = null;
   if (S.equippedCreature && !S.egg) {
     newEgg = S.equippedCreature;
@@ -5019,7 +5019,7 @@ function gameOverHTML() {
     <div class="title-emoji">💀</div>
     <h1>${esc(playerName())} Has Fallen</h1>
     <p class="sub">You reached wave ${S.wave} with a score of ${S.score}.</p>
-    <div class="death-loss">${d.lostCoins > 0 ? `You dropped all your gold: <b>−🪙${d.lostCoins}</b>` : "You had no gold to lose."}</div>
+    <div class="death-loss">${d.lostCoins > 0 ? `You dropped half your gold: <b>−🪙${d.lostCoins}</b>` : "You had no gold to lose."}</div>
     ${eggLine}
     <p class="death-kept">You keep your level, math rank, items and badges.</p>
     <button class="btn primary big" data-action="start-game">Try Again</button>
@@ -9026,10 +9026,14 @@ function applyPrefs() {
 }
 applyPrefs();
 
-/* A short buzz on a wrong answer. Needs the VIBRATE permission on Android. */
+/* A short buzz on a wrong answer. Android's WebView ignores
+   navigator.vibrate, so the app uses the Capacitor Haptics plugin (which
+   declares the VIBRATE permission); a plain browser falls back to the web API. */
 function buzz() {
-  if (!Prefs.vibrate || !navigator.vibrate) return;
-  try { navigator.vibrate(120); } catch (e) {}
+  if (!Prefs.vibrate) return;
+  const haptics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+  if (haptics && haptics.vibrate) { Promise.resolve(haptics.vibrate({ duration: 150 })).catch(() => {}); return; }
+  try { if (navigator.vibrate) navigator.vibrate(120); } catch (e) {}
 }
 
 /* ================= READ ALOUD =================
