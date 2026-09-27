@@ -1489,6 +1489,40 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
   .celebrate-overlay .fireworks { display: none; }
 }
 
+/* ---------- comfort & accessibility settings (see Prefs) ---------- */
+.settings-card { max-height: calc(100vh - 32px); overflow-y: auto; }
+.setting-row { flex-wrap: wrap; }
+.pref-pills { display: inline-flex; gap: 6px; }
+.pref-pill {
+  min-width: 48px; padding: 7px 10px; border: none; border-radius: 10px; cursor: pointer;
+  font: 900 14px var(--font-ui); color: var(--text-dim); background: #1a1230; box-shadow: 0 0 0 2px var(--ink);
+}
+.pref-pill.on { color: #1a0f1e; background: #ffb04a; }
+.problem { position: relative; }
+.speak-btn {
+  position: absolute; right: -4px; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px; border: none; border-radius: 50%; cursor: pointer;
+  font-size: 20px; line-height: 1; background: #2a1f40; box-shadow: 0 0 0 2px var(--ink);
+}
+/* Text size: the battle problem and answers, plus body text on cards. */
+html.text-large .arena.fit .problem { font-size: clamp(38px, 12vw, 52px); }
+html.text-large .arena.fit .choice { font-size: 31px; }
+html.text-xl .arena.fit .problem { font-size: clamp(42px, 13vw, 58px); }
+html.text-xl .arena.fit .choice { font-size: 36px; }
+html.text-large .card p, html.text-large .card li, html.text-large .setting-row, html.text-large .banner { font-size: 18px; }
+html.text-xl .card p, html.text-xl .card li, html.text-xl .setting-row, html.text-xl .banner { font-size: 21px; }
+/* Colour-blind friendly: blue = right, orange = wrong, plus a tick/cross. */
+html.color-safe .choice.correct, html.color-safe .choice.reveal { --b-face: #1f6fd1; --b-hi: #7fb6ff; --b-lo: #0d3a78; }
+html.color-safe .choice.wrong { --b-face: #e07b00; --b-hi: #ffc070; --b-lo: #7a4200; }
+html.color-safe .choice.correct::after, html.color-safe .choice.reveal::after { content: " ✓"; }
+html.color-safe .choice.wrong::after { content: " ✗"; }
+/* Reduce motion chosen in Settings (the media query above covers the phone setting). */
+html.reduce-motion .logo, html.reduce-motion .journey-btn, html.reduce-motion .boss-portrait,
+html.reduce-motion .problem .q, html.reduce-motion .fireball-btn.ready, html.reduce-motion .player-fill.low,
+html.reduce-motion .problem-card.on-fire, html.reduce-motion .levelup-overlay::before,
+html.reduce-motion .choice.correct, html.reduce-motion .choice.wrong { animation: none !important; }
+html.reduce-motion .fireworks { display: none; }
+
 </style>
 </head>
 <body>
@@ -2849,6 +2883,7 @@ function newProblem(lvl) {
   S.problem = p;
   S.choices = makeChoices(p);
   S.problemShownAt = Date.now();
+  if (Prefs.autoRead && S.screen === "playing") setTimeout(readProblem, 250);
 }
 
 /* Dismisses the boss intro and hands control back. */
@@ -3462,6 +3497,7 @@ function handleAnswer(val) {
   S.lastAnswerCorrect = correct;
   S.pick = { val, correct, answer: S.problem.answer };
   Sound.play(correct ? "correct" : "wrong");
+  if (!correct) buzz();
 
   // Timing drives both the mastery check and the speed damage bonus.
   const elapsed = Math.max(0, Date.now() - (S.problemShownAt || Date.now()));
@@ -3984,6 +4020,13 @@ function titleHTML() {
 
 /* Settings: sound on/off and volume. The slider updates the volume live
    (see the "input" listener) without re-rendering, so dragging is smooth. */
+/* One row of pill buttons for a Prefs value. */
+function settingChoiceRow(label, key, options) {
+  const pills = options.map(([value, text]) =>
+    `<button class="pref-pill${Prefs[key] === value ? " on" : ""}" data-action="set-pref" data-key="${key}" data-value="${JSON.stringify(value).replace(/"/g, "&quot;")}" aria-pressed="${Prefs[key] === value}">${text}</button>`).join("");
+  return `<div class="setting-row"><span>${label}</span><span class="pref-pills">${pills}</span></div>`;
+}
+
 function settingsHTML() {
   return `
   <div class="settings-overlay">
@@ -3998,6 +4041,11 @@ function settingsHTML() {
         <input id="volume-slider" type="range" min="0" max="100" step="5" value="${Sound.volume}" ${Sound.muted ? "disabled" : ""} aria-label="Volume">
         <span class="vol-label" id="volume-label">${Sound.volume}%</span>
       </div>
+      ${settingChoiceRow("Vibrate on a miss", "vibrate", [[true, "On"], [false, "Off"]])}
+      ${Speech.available() ? settingChoiceRow("Read problems aloud", "autoRead", [[true, "Always"], [false, "Tap 🔊"]]) : ""}
+      ${settingChoiceRow("Text size", "textSize", [["normal", "A"], ["large", "A+"], ["xl", "A++"]])}
+      ${settingChoiceRow("Reduce motion", "motion", [["auto", "Auto"], ["on", "On"], ["off", "Off"]])}
+      ${settingChoiceRow("Color-blind colors", "colorSafe", [[true, "On"], [false, "Off"]])}
       <button class="btn primary big" data-action="close-settings">Done</button>
     </div>
   </div>`;
@@ -4248,7 +4296,7 @@ function playingHTML() {
 
     <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}">
       <div class="streak">${S.streak >= 10 ? `⚡ LEGENDARY! ${S.streak} in a row` : S.streak >= 7 ? `🔥 UNSTOPPABLE! ${S.streak} in a row` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
-      <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span></div>
+      <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span>${Speech.available() ? `<button class="speak-btn" data-action="read-problem" aria-label="Read the problem aloud">🔊</button>` : ""}</div>
       <div class="choices">
         ${S.choices.map((c) => `
           <button class="btn choice ${choiceFeedbackClass(c)}"
@@ -4539,6 +4587,8 @@ root.addEventListener("click", (e) => {
   else if (action === "to-title") { S.screen = "title"; render(); }
   else if (action === "toggle-sound") { Sound.toggle(); render(); }
   else if (action === "open-settings") { S.settingsOpen = true; render(); }
+  else if (action === "set-pref") { setPref(btn.dataset.key, JSON.parse(btn.dataset.value)); render(); }
+  else if (action === "read-problem") readProblem();
   else if (action === "close-settings") { S.settingsOpen = false; render(); }
   else if (action === "open-info") { S.screen = "info"; render(); }
   else if (action === "close-info") { S.screen = "saveselect"; render(); }
@@ -7885,6 +7935,67 @@ function makeTextureCanvas(w, h) {
    choice is a per-device setting kept in its own storage key, separate
    from the save slots. Audio can only start after a tap (browser/WebView
    autoplay rules), so the context is created lazily on first use. */
+/* ================= PREFS =================
+   Per-device comfort and accessibility settings (like volume). They
+   describe the phone and whoever is holding it, not a kid's progress, so
+   they live in localStorage rather than in a save slot. */
+const PREFS_KEY = "dvmPrefs";
+const Prefs = Object.assign(
+  { textSize: "normal", motion: "auto", colorSafe: false, vibrate: true, autoRead: false },
+  (() => { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) { return {}; } })()
+);
+function setPref(key, value) {
+  Prefs[key] = value;
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(Prefs)); } catch (e) {}
+  applyPrefs();
+}
+/* "auto" follows the phone's own reduce-motion setting. */
+function reduceMotion() {
+  if (Prefs.motion === "on") return true;
+  if (Prefs.motion === "off") return false;
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+function applyPrefs() {
+  const h = document.documentElement.classList;
+  h.toggle("text-large", Prefs.textSize === "large");
+  h.toggle("text-xl", Prefs.textSize === "xl");
+  h.toggle("reduce-motion", reduceMotion());
+  h.toggle("color-safe", !!Prefs.colorSafe);
+}
+applyPrefs();
+
+/* A short buzz on a wrong answer. Needs the VIBRATE permission on Android. */
+function buzz() {
+  if (!Prefs.vibrate || !navigator.vibrate) return;
+  try { navigator.vibrate(120); } catch (e) {}
+}
+
+/* ================= READ ALOUD =================
+   Uses the phone's own text-to-speech engine (Capacitor plugin on Android,
+   speechSynthesis in a browser). Only the problem on screen is spoken;
+   nothing is recorded or sent anywhere. */
+const SPOKEN_OP = { "+": "plus", "-": "minus", "×": "times", "÷": "divided by" };
+const Speech = {
+  native() { return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech; },
+  available() { return !!(this.native() || window.speechSynthesis); },
+  say(text) {
+    const tts = this.native();
+    if (tts) {
+      Promise.resolve(tts.stop && tts.stop()).catch(() => {})
+        .then(() => tts.speak({ text, lang: "en-US", rate: 0.9 })).catch(() => {});
+      return;
+    }
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    }
+  },
+};
+function problemSpeech(p) { return `${p.a} ${SPOKEN_OP[p.op] || p.op} ${p.b} equals what?`; }
+function readProblem() { if (S.problem) Speech.say(problemSpeech(S.problem)); }
+
 const Sound = {
   ctx: null,
   muted: (() => { try { return localStorage.getItem("dvmMuted") === "1"; } catch (e) { return false; } })(),
@@ -8537,6 +8648,7 @@ const BattleStage = {
     this.parts.push(Object.assign({ vx: 0, vy: 0, g: 0, life: 600, age: 0, size: this.ap, color: "#fff", drag: 1 }, p));
   },
   burst(x, y, colors, count, speed, opts = {}) {
+    if (document.documentElement.classList.contains("reduce-motion")) count = Math.ceil(count / 3);
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2;
       const v = speed * (0.35 + Math.random() * 0.65);
@@ -8643,7 +8755,9 @@ const BattleStage = {
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, this.W, this.H);
     let sx = 0, sy = 0;
-    if (now < this.shakeUntil) {
+    // Reduce motion (Settings or the phone setting): no shake, no white flash.
+    const calm = document.documentElement.classList.contains("reduce-motion");
+    if (!calm && now < this.shakeUntil) {
       const mag = this.unit * (this.shakeMag || 0.5);
       sx = Math.round((Math.random() - 0.5) * mag); sy = Math.round((Math.random() - 0.5) * mag);
     }
@@ -8670,10 +8784,10 @@ const BattleStage = {
     }
     if (now < this.flashUntil) {
       const remain = (this.flashUntil - now) / 350;
-      ctx.fillStyle = `rgba(255,40,40,${0.35 * remain})`;
+      ctx.fillStyle = `rgba(255,40,40,${(calm ? 0.15 : 0.35) * remain})`;
       ctx.fillRect(0, 0, this.W, this.H);
     }
-    if (now < this.whiteUntil) {
+    if (!calm && now < this.whiteUntil) {
       ctx.fillStyle = `rgba(255,255,240,${0.55 * (this.whiteUntil - now) / 140})`;
       ctx.fillRect(0, 0, this.W, this.H);
     }
