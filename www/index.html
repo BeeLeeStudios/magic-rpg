@@ -1516,6 +1516,57 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
   .celebrate-overlay .fireworks { display: none; }
 }
 
+/* ---------- Dragon Book, badges, world map ---------- */
+.map-btn { border: none; background: none; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-shadow: inherit; cursor: pointer; white-space: nowrap; }
+.topbar-actions { gap: 4px; }
+.topbar-actions .icon-btn { white-space: nowrap; }
+.arena.fit .topbar-actions .icon-btn { padding: 5px 7px; }
+.book-count { text-align: center; color: var(--text-dim); font-weight: 800; font-size: 13px; margin: 4px 0 10px; }
+.book-section { font-family: var(--font-ui); color: var(--gold); font-size: 16px; margin: 14px 0 8px; }
+.book-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.book-entry { background: #1a1230; border-radius: 12px; padding: 8px 4px; text-align: center; box-shadow: 0 0 0 2px var(--ink); }
+.book-entry.boss { box-shadow: 0 0 0 2px #c9a227; }
+.book-pic { height: 58px; display: flex; align-items: center; justify-content: center; font-size: 34px; }
+.book-pic canvas { max-width: 100%; max-height: 58px; image-rendering: pixelated; }
+.book-entry.locked .book-pic { filter: brightness(0) opacity(0.45); }
+.book-name { font-family: var(--font-ui); font-weight: 900; font-size: 12px; color: #fff; margin-top: 4px; line-height: 1.2; }
+.book-entry.locked .book-name { color: var(--text-dim); }
+.book-sub { font-size: 11px; color: var(--gold); font-weight: 800; }
+.badge-list { display: flex; flex-direction: column; gap: 8px; }
+.badge-row { display: flex; align-items: center; gap: 10px; background: #1a1230; border-radius: 12px; padding: 8px 10px; box-shadow: 0 0 0 2px var(--ink); }
+.badge-row.locked { opacity: 0.55; }
+.badge-row.locked .badge-icon { filter: grayscale(1); }
+.badge-icon { font-size: 28px; }
+.badge-text { flex: 1; display: flex; flex-direction: column; }
+.badge-text b { font-family: var(--font-ui); color: #fff; font-size: 14px; }
+.badge-text small { color: var(--text-dim); font-weight: 700; font-size: 12px; }
+.badge-reward { font-weight: 900; color: var(--gold); white-space: nowrap; }
+.badge-toast {
+  position: fixed; left: 50%; top: calc(12px + var(--safe-top, 0px)); transform: translateX(-50%); z-index: 80;
+  display: flex; align-items: center; gap: 10px; width: min(92vw, 380px); padding: 10px 14px; border-radius: 14px;
+  background: #2a1f40; box-shadow: 0 0 0 3px #c9a227, 0 8px 24px rgba(0,0,0,0.5); animation: toastIn 0.35s ease-out; pointer-events: none;
+}
+.badge-toast-icon { font-size: 30px; }
+.badge-toast-text { display: flex; flex-direction: column; }
+.badge-toast-text b { font-family: var(--font-ui); color: var(--gold); font-size: 15px; }
+.badge-toast-text small { color: var(--text); font-weight: 700; font-size: 12px; }
+@keyframes toastIn { from { transform: translate(-50%, -30px); opacity: 0; } }
+html.reduce-motion .badge-toast { animation: none; }
+.map-world { background: #1a1230; border-radius: 12px; padding: 8px 10px 10px; margin: 8px 0; box-shadow: 0 0 0 2px var(--ink); }
+.map-world.current { box-shadow: 0 0 0 3px var(--gold); }
+.map-world.ahead { opacity: 0.6; }
+.map-world-name { font-family: var(--font-ui); font-weight: 900; color: #fff; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; }
+.map-world-name small { color: var(--text-dim); font-size: 11px; }
+.map-path { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-top: 8px; }
+.map-node {
+  position: relative; aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font: 900 10px var(--font-ui); color: var(--text-dim); background: #2d2344;
+}
+.map-node.done { background: #1f6a3a; color: #bff5d0; }
+.map-node.boss { font-size: 12px; }
+.map-node.here { background: var(--gold); font-size: 14px; box-shadow: 0 0 0 2px #fff; }
+.map-flag { position: absolute; top: -10px; right: -4px; font-style: normal; font-size: 12px; }
+
 /* ---------- comfort & accessibility settings (see Prefs) ---------- */
 .settings-card { max-height: calc(100vh - 32px); overflow-y: auto; }
 .setting-row { flex-wrap: wrap; }
@@ -1568,6 +1619,8 @@ html.reduce-motion .fireworks { display: none; }
                                DMG_UPGRADES, SWORD_TIERS (rider's held sword, tier-colored)
    Level-up cards ........... LEVEL_UP_CARDS, pickLevelUpCardChoices
    Celebrations ............ celebrate, dismissCelebration, celebrationHTML (queued full-screen moments)
+   Worlds / growth / badges . WORLDS, DRAGON_GROWTH, BADGES, checkBadges, bookHTML, mapHTML
+   Parents / prefs / voice .. openParentGate, parentsHTML, setSlotRank, Prefs, applyPrefs, Speech, buzz
    Save slots (localStorage). loadSaves, persistSaves, makeSlot, selectSave
    Game state object ........ const S = {  (single source of truth; read/written all over)
    Turn resolution ........... handleAnswer, enemyStrikePlayer, finishRound, handleWaveClear
@@ -2617,6 +2670,64 @@ const DMG_UPGRADES = [
   { id: "dmg5", name: "Dragonfang Blade", emoji: "🐉", cost: 1000, levelReq: 5, type: "dmg", bonus: 5, perk: "Forged from a dragon's fang" },
 ];
 
+/* ================= WORLDS =================
+   Five worlds in order, 10 waves each (so two bosses per world). After
+   wave 50 the journey loops with tougher monsters -- enemy HP already
+   scales by wave. Index order matches BIOMES in the battle stage section. */
+const WAVES_PER_WORLD = 10;
+const WORLDS = [
+  { name: "Volcano Peaks", emoji: "🌋" },
+  { name: "Sunny Lagoon", emoji: "🏝️" },
+  { name: "Whispering Forest", emoji: "🌲" },
+  { name: "Haunted Night", emoji: "🌙" },
+  { name: "Frozen North", emoji: "❄️" },
+];
+function worldIndexForWave(wave) { return Math.floor((Math.max(1, wave) - 1) / WAVES_PER_WORLD) % WORLDS.length; }
+function journeyLoop(wave) { return Math.floor((Math.max(1, wave) - 1) / (WAVES_PER_WORLD * WORLDS.length)); }
+
+/* ================= DRAGON GROWTH =================
+   The mount visibly grows with dragon level: smaller as a hatchling, full
+   size as an adult, gold armour as an elder (drawHDElderArmor, hd-art.js). */
+const DRAGON_GROWTH = [
+  { id: "hatchling", name: "Hatchling", minLevel: 1, scale: 0.78, line: "" },
+  { id: "young", name: "Young Dragon", minLevel: 5, scale: 0.88, line: "Your dragon is getting bigger and stronger!" },
+  { id: "adult", name: "Adult Dragon", minLevel: 10, scale: 1, line: "Your dragon is fully grown!" },
+  { id: "elder", name: "Elder Dragon", minLevel: 20, scale: 1, line: "Your dragon earned golden Elder armor!" },
+];
+function dragonGrowth(level) {
+  let g = DRAGON_GROWTH[0];
+  for (const stage of DRAGON_GROWTH) if (level >= stage.minLevel) g = stage;
+  return g;
+}
+
+/* ================= BADGES =================
+   Achievements shown in the Dragon Book. Each is a test over badgeFacts().
+   Earning one during play pops a toast and pays its coins; badges an older
+   save already qualifies for are granted quietly on load, with no coins. */
+const BADGES = [
+  { id: "first_win", icon: "⚔️", name: "First Victory", desc: "Beat your first monster", coins: 25, test: (g) => g.monsters + g.bosses >= 1 },
+  { id: "hunter10", icon: "🗡️", name: "Monster Hunter", desc: "Beat 10 monsters", coins: 25, test: (g) => g.monsters >= 10 },
+  { id: "hunter50", icon: "🛡️", name: "Monster Master", desc: "Beat 50 monsters", coins: 50, test: (g) => g.monsters >= 50 },
+  { id: "hunter200", icon: "🏰", name: "Legend of the Realm", desc: "Beat 200 monsters", coins: 100, test: (g) => g.monsters >= 200 },
+  { id: "first_boss", icon: "👑", name: "Boss Breaker", desc: "Beat your first boss", coins: 50, test: (g) => g.bosses >= 1 },
+  { id: "perfect_boss", icon: "💎", name: "Flawless", desc: "Beat a boss without a single miss", coins: 75, test: (g) => g.bossesNoMiss >= 1 },
+  { id: "streak10", icon: "🔥", name: "On Fire", desc: "10 right answers in a row", coins: 25, test: (g) => g.bestStreak >= 10 },
+  { id: "streak25", icon: "⚡", name: "Unstoppable", desc: "25 right answers in a row", coins: 75, test: (g) => g.bestStreak >= 25 },
+  { id: "correct100", icon: "✏️", name: "Hundred Club", desc: "100 right answers", coins: 50, test: (g) => g.correct >= 100 },
+  { id: "correct1000", icon: "🧠", name: "Math Wizard", desc: "1,000 right answers", coins: 100, test: (g) => g.correct >= 1000 },
+  { id: "rank5", icon: "⭐", name: "Rising Star", desc: "Reach math rank 5", coins: 25, test: (g) => g.rank >= 5 },
+  { id: "rank8", icon: "🌟", name: "Ten-Stacker", desc: "Reach math rank 8", coins: 50, test: (g) => g.rank >= 8 },
+  { id: "rank11", icon: "🎓", name: "Dragon Mathematician", desc: "Reach math rank 11", coins: 75, test: (g) => g.rank >= 11 },
+  { id: "rank12", icon: "🔢", name: "Times Tables!", desc: "Reach rank 12 and start times tables", coins: 75, test: (g) => g.rank >= 12 },
+  { id: "rank17", icon: "🧙", name: "Dragon Sage", desc: "Reach the top math rank", coins: 100, test: (g) => g.rank >= 17 },
+  { id: "wave10", icon: "🗺️", name: "Explorer", desc: "Reach wave 10", coins: 25, test: (g) => g.bestWave >= 10 },
+  { id: "wave25", icon: "🏔️", name: "Adventurer", desc: "Reach wave 25", coins: 75, test: (g) => g.bestWave >= 25 },
+  { id: "chests10", icon: "🎁", name: "Treasure Hunter", desc: "Open 10 treasure chests", coins: 50, test: (g) => g.chests >= 10 },
+  { id: "dragons3", icon: "🐉", name: "Dragon Keeper", desc: "Own 3 dragons", coins: 50, test: (g) => g.dragons >= 3 },
+  { id: "pet1", icon: "🐾", name: "Best Friends", desc: "Get a pet", coins: 25, test: (g) => g.pets >= 1 },
+];
+const NEW_STATS = () => ({ correct: 0, bestStreak: 0, chests: 0, bossesNoMiss: 0 });
+
 /* Blade/hilt colours for the rider's sword, keyed by how many DMG
    upgrades are owned (0 = starting sword, nothing bought yet). Index i
    is unlocked once i upgrades are owned -- pixRamp derives the light/
@@ -2862,6 +2973,16 @@ const S = {
   mastery: makeMastery(),
   // Time spent in battle, for the parent progress screen.
   playMs: 0,
+  // Dragon Book: monsters beaten (name -> count), lifetime stats, badges
+  // earned (id -> timestamp), and toasts waiting to show.
+  defeated: {},
+  stats: NEW_STATS(),
+  badges: {},
+  badgeToasts: [],
+  waveMisses: 0,
+  bookOpen: false,
+  bookTab: "monsters",
+  mapOpen: false,
   // Grown-up gate question and the parent screen's open tab.
   parentGate: null,
   parentTab: "progress",
@@ -3058,6 +3179,7 @@ function decideMulti(wave, level) {
 }
 
 function spawnWave(wave, level) {
+  S.waveMisses = 0;
   // Boss waves draw from the boss roster; everything else from the bag.
   const isBossWave = wave % 5 === 0;
   const base = isBossWave ? getBossForWave(wave) : getEnemyForWave(wave);
@@ -3186,6 +3308,11 @@ function handleWaveClear() {
     label = meta.count > 1 ? `${meta.count}× ${meta.name}` : meta.name;
   }
   S.coins += coinReward;
+  if (meta.isChest) S.stats.chests += 1;
+  else {
+    S.defeated[meta.name] = (S.defeated[meta.name] || 0) + (meta.isBoss ? 1 : (meta.count || 1));
+    if (meta.isBoss && S.waveMisses === 0) S.stats.bossesNoMiss += 1;
+  }
   if (!meta.isChest) Sound.play("coin");   // chests already jingle when they open
   const oldLevel = dragonLevel;
   S.xp += xpReward;
@@ -3205,6 +3332,11 @@ function handleWaveClear() {
     S.banner = `${label} defeated! +${coinReward} coins · +${xpReward} XP${healSuffix}`;
     if (meta.isBoss) celebrate({ icon: "🏆", kicker: "Boss defeated!", title: `${meta.name} is beaten!`, sub: `+${coinReward} coins · +${xpReward} XP` });
   }
+  if (S.equippedCreature) {
+    const grew = dragonGrowth(newLevelInfo.level);
+    if (grew !== dragonGrowth(oldLevel)) celebrate({ icon: "🐉", kicker: "Your dragon grew up!", title: grew.name, sub: grew.line });
+  }
+  checkBadges();
   if (actualHeal > 0) addPopup(`+${actualHeal}`, "player", "heal");
   saveActiveSlot();
   render();
@@ -3280,6 +3412,11 @@ function selectSave(id) {
   S.bestWave = (d && d.bestWave) || 0;
   S.bestScore = (d && d.bestScore) || 0;
   S.celebrations = [];
+  S.defeated = (d && d.defeated) || {};
+  S.stats = Object.assign(NEW_STATS(), d && d.stats);
+  S.badges = (d && d.badges) || {};
+  S.badgeToasts = [];
+  checkBadges(true);
   S.runId += 1;
 
   const battle = d && d.battle;
@@ -3347,6 +3484,9 @@ function saveActiveSlot() {
     mathLadder: MATH_LADDER_VERSION,
     mastery: S.mastery,
     playMs: S.playMs,
+    defeated: S.defeated,
+    stats: S.stats,
+    badges: S.badges,
     ownedCosmetics: S.ownedCosmetics,
     ownedUpgrades: S.ownedUpgrades,
     equippedAccessory: S.equippedAccessory,
@@ -3476,6 +3616,7 @@ function startGame() {
   S.xpBoostWaves = 0;
   S.banner = null;
   S.celebrations = [];
+  S.badgeToasts = [];
   S.bossBanner = null;
   S.levelUpData = null;
   S.locked = !!S.bossIntro;
@@ -3499,6 +3640,10 @@ function nextWave(currentPlayerHP, currentMaxHP, currentLevel) {
   spawnWave(w, currentLevel);
   newProblem(currentLevel);
   S.banner = null;
+  if (w > 1 && (w - 1) % WAVES_PER_WORLD === 0) {
+    const world = WORLDS[worldIndexForWave(w)];
+    celebrate({ icon: world.emoji, kicker: "New world!", title: `Now entering ${world.name}`, sub: `Waves ${w}–${w + WAVES_PER_WORLD - 1}${journeyLoop(w) ? " · tougher monsters ahead!" : ""}` });
+  }
   // spawnWave() locks input when a boss intro is showing; don't undo it or
   // the player could answer through the takeover screen.
   S.locked = !!S.bossIntro;
@@ -3535,7 +3680,7 @@ function handleAnswer(val) {
   S.lastAnswerCorrect = correct;
   S.pick = { val, correct, answer: S.problem.answer };
   Sound.play(correct ? "correct" : "wrong");
-  if (!correct) buzz();
+  if (!correct) { buzz(); S.waveMisses += 1; }
 
   // Timing drives both the mastery check and the speed damage bonus.
   const elapsed = Math.max(0, Date.now() - (S.problemShownAt || Date.now()));
@@ -3546,6 +3691,9 @@ function handleAnswer(val) {
 
   if (correct) {
     S.streak += 1;
+    S.stats.correct += 1;
+    S.stats.bestStreak = Math.max(S.stats.bestStreak, S.streak);
+    checkBadges();
     S.fireballCharge = Math.min(3, S.fireballCharge + 1);
     if (S.fireballCharge >= 3) S.fireballReady = true;
     S.potionCharge = Math.min(3, S.potionCharge + 1);
@@ -3883,6 +4031,7 @@ function buyItem(item) {
   if (S.goalId === item.id) S.goalId = null;
   if (item.type === "creature") S.equippedCreature = item.id;
   else if (item.type === "pet") S.equippedPet = item.id;
+  checkBadges();
   saveActiveSlot();
   render();
 }
@@ -4397,8 +4546,9 @@ function playingHTML() {
   return `
   <div class="arena fit">
     <div class="topbar">
-      <span class="wave-chip">Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</span>
+      <button class="wave-chip map-btn" data-action="open-map" aria-label="World map">🗺️ Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</button>
       <span class="topbar-actions">
+        <button class="icon-btn" data-action="open-book" aria-label="Dragon Book">📖</button>
         <button class="icon-btn" data-action="open-settings" aria-label="Settings">⚙️</button>
         <button class="icon-btn" data-action="switch-save" aria-label="Saves">💾</button>
         <button class="icon-btn" data-action="open-shop">🪙 ${S.coins} · 🛒</button>
@@ -4547,6 +4697,141 @@ function cosmeticItemHTML(item) {
     </div>`;
 }
 
+/* ---------- badges: earning and toasts ---------- */
+function badgeFacts() {
+  const bossNames = new Set(BOSSES.map((b) => b.name));
+  let monsters = 0, bosses = 0;
+  for (const [name, n] of Object.entries(S.defeated)) {
+    if (bossNames.has(name)) bosses += n; else monsters += n;
+  }
+  const owned = (type) => COSMETICS.filter((c) => c.type === type && S.ownedCosmetics[c.id]).length;
+  return Object.assign({}, S.stats, {
+    monsters, bosses, rank: S.mathBand, bestWave: Math.max(S.bestWave || 0, S.wave || 0),
+    dragons: owned("creature"), pets: owned("pet"),
+  });
+}
+
+function checkBadges(quiet) {
+  const g = badgeFacts();
+  for (const b of BADGES) {
+    if (S.badges[b.id] || !b.test(g)) continue;
+    S.badges[b.id] = Date.now();
+    if (quiet) continue;
+    S.coins += b.coins;
+    S.badgeToasts.push(b);
+    if (S.badgeToasts.length === 1) showNextBadgeToast();
+  }
+}
+
+function showNextBadgeToast() {
+  if (!S.badgeToasts.length) return;
+  Sound.play("coin");
+  render();
+  const rid = S.runId;
+  setTimeout(() => {
+    if (S.runId !== rid) return;
+    S.badgeToasts.shift();
+    render();
+    showNextBadgeToast();
+  }, 2600);
+}
+
+function badgeToastHTML() {
+  const b = S.badgeToasts[0];
+  return `
+  <div class="badge-toast" role="status">
+    <span class="badge-toast-icon">${b.icon}</span>
+    <span class="badge-toast-text"><b>New badge: ${esc(b.name)}</b><small>${esc(b.desc)} · +${b.coins} 🪙</small></span>
+  </div>`;
+}
+
+/* ---------- Dragon Book: monsters, treasures, badges ---------- */
+function bookEntryHTML(pic, name, found, sub = "", extra = "") {
+  return `<div class="book-entry${found ? "" : " locked"}${extra}"><div class="book-pic">${pic}</div><div class="book-name">${found ? esc(name) : "???"}</div>${sub ? `<div class="book-sub">${sub}</div>` : ""}</div>`;
+}
+
+function bookHTML() {
+  const tab = S.bookTab;
+  let body;
+  if (tab === "monsters") {
+    const all = ENEMIES.map((e) => ({ name: e.name, emoji: e.emoji, boss: false }))
+      .concat(BOSSES.map((b) => ({ name: b.name, emoji: b.emoji, boss: true })));
+    const found = all.filter((m) => S.defeated[m.name]).length;
+    body = `<p class="book-count">${found} of ${all.length} monsters found</p><div class="book-grid">${all.map((m) => {
+      const n = S.defeated[m.name] || 0;
+      const art = PIX_ENEMY_ART[m.name];
+      const pic = art ? `<canvas data-pix="enemy:${esc(m.name)}" width="${art.art.w * 2 + 4}" height="${art.art.h * 2 + 4}"></canvas>` : m.emoji;
+      return bookEntryHTML(pic, m.name, n > 0, n ? `Beaten ×${n}` : (m.boss ? "Boss" : ""), m.boss ? " boss" : "");
+    }).join("")}</div>`;
+  } else if (tab === "treasures") {
+    const dragons = COSMETICS.filter((c) => c.type === "creature").map((c) =>
+      bookEntryHTML(`<canvas data-pix="mount:${c.id}" width="${PIX_DRAGON.w + 2}" height="${PIX_DRAGON.h + 2}"></canvas>`, c.name, isOwned(c.id))).join("");
+    const pets = COSMETICS.filter((c) => c.type === "pet").map((c) =>
+      bookEntryHTML(`<canvas data-pix="pet:${c.id}" width="68" height="54"></canvas>`, c.name, isOwned(c.id))).join("");
+    const swords = DMG_UPGRADES.map((u, i) =>
+      bookEntryHTML(`<canvas data-pix="sword:${i + 1}" width="36" height="36"></canvas>`, u.name, isUpgradeOwned(u.id))).join("");
+    body = `<h3 class="book-section">Dragons</h3><div class="book-grid">${dragons}</div>
+      <h3 class="book-section">Pets</h3><div class="book-grid">${pets}</div>
+      <h3 class="book-section">Swords</h3><div class="book-grid">${swords}</div>`;
+  } else {
+    const got = BADGES.filter((b) => S.badges[b.id]).length;
+    body = `<p class="book-count">${got} of ${BADGES.length} badges earned</p><div class="badge-list">${BADGES.map((b) => `
+      <div class="badge-row${S.badges[b.id] ? "" : " locked"}">
+        <span class="badge-icon">${b.icon}</span>
+        <span class="badge-text"><b>${esc(b.name)}</b><small>${esc(b.desc)}</small></span>
+        <span class="badge-reward">${S.badges[b.id] ? "✅" : `🪙${b.coins}`}</span>
+      </div>`).join("")}</div>`;
+  }
+  const tabs = [["monsters", "👾 Monsters"], ["treasures", "💎 Treasures"], ["badges", "🏅 Badges"]]
+    .map(([id, label]) => `<button class="pref-pill${tab === id ? " on" : ""}" data-action="book-tab" data-tab="${id}">${label}</button>`).join("");
+  return `
+  <div class="shop-overlay">
+    <div class="shop-card book-card">
+      <div class="shop-header">
+        <h2>Dragon Book</h2>
+        <button class="close-btn" data-action="close-book">✕</button>
+      </div>
+      <div class="parent-tabs">${tabs}</div>
+      ${body}
+    </div>
+  </div>`;
+}
+
+/* ---------- World map: five worlds, one stop per wave ---------- */
+function mapHTML() {
+  const loop = journeyLoop(S.wave);
+  const base = loop * WAVES_PER_WORLD * WORLDS.length;
+  const cur = worldIndexForWave(S.wave);
+  const best = S.bestWave || 0;
+  const worlds = WORLDS.map((w, wi) => {
+    const first = base + wi * WAVES_PER_WORLD + 1;
+    const nodes = Array.from({ length: WAVES_PER_WORLD }, (_, i) => {
+      const wave = first + i;
+      const state = wave < S.wave ? "done" : wave === S.wave ? "here" : "ahead";
+      const boss = wave % 5 === 0;
+      const mark = wave === S.wave ? "🐉" : boss ? "👑" : wave < S.wave ? "✓" : wave;
+      const flag = wave === best && best > S.wave ? `<i class="map-flag">🚩</i>` : "";
+      return `<span class="map-node ${state}${boss ? " boss" : ""}" aria-label="Wave ${wave}">${mark}${flag}</span>`;
+    }).join("");
+    return `
+    <div class="map-world${wi === cur ? " current" : ""}${wi > cur ? " ahead" : ""}">
+      <div class="map-world-name">${w.emoji} ${w.name}<small>Waves ${first}–${first + WAVES_PER_WORLD - 1}</small></div>
+      <div class="map-path">${nodes}</div>
+    </div>`;
+  }).join("");
+  return `
+  <div class="shop-overlay">
+    <div class="shop-card map-card">
+      <div class="shop-header">
+        <h2>World Map</h2>
+        <button class="close-btn" data-action="close-map">✕</button>
+      </div>
+      <p class="book-count">${loop ? `Journey ${loop + 1}: the monsters are tougher now! · ` : ""}Best wave: ${best} 🚩</p>
+      ${worlds}
+    </div>
+  </div>`;
+}
+
 function shopHTML() {
   const creatureItems = COSMETICS.filter((c) => c.type === "creature").map(cosmeticItemHTML).join("");
   const petItems = COSMETICS.filter((c) => c.type === "pet").map(cosmeticItemHTML).join("");
@@ -4633,9 +4918,12 @@ function renderNow() {
   else if (S.screen === "parentgate") html += parentGateHTML();
   else if (S.screen === "parents") html += parentsHTML();
   if (S.shopOpen) html += shopHTML();
+  if (S.bookOpen) html += bookHTML();
+  if (S.mapOpen) html += mapHTML();
   if (S.settingsOpen) html += settingsHTML();
   if (S.levelUpData) html += levelUpHTML();
   if (S.celebrations.length) html += celebrationHTML();
+  if (S.badgeToasts.length) html += badgeToastHTML();
   html += "</div>";
   if (S.bossIntro) { html += bossIntroHTML(); S.bossIntro.seen = true; }
   const bars = captureBars();
@@ -4705,6 +4993,11 @@ root.addEventListener("click", (e) => {
   if (action === "start-game") startGame();
   else if (action === "open-shop") { S.shopOpen = true; render(); }
   else if (action === "close-shop") { S.shopOpen = false; render(); }
+  else if (action === "open-book") { S.bookOpen = true; render(); }
+  else if (action === "close-book") { S.bookOpen = false; render(); }
+  else if (action === "book-tab") { S.bookTab = btn.dataset.tab; render(); }
+  else if (action === "open-map") { S.mapOpen = true; render(); }
+  else if (action === "close-map") { S.mapOpen = false; render(); }
   else if (action === "answer") handleAnswer(Number(btn.dataset.value));
   else if (action === "cast-fireball") useFireball();
   else if (action === "use-potion-hp") usePotionHP();
@@ -4779,6 +5072,8 @@ document.addEventListener("visibilitychange", () => {
     if (S.bossIntro || S.levelUpData) return;           // must be answered on screen
     if (S.settingsOpen) { S.settingsOpen = false; render(); return; }
     if (S.shopOpen) { S.shopOpen = false; render(); return; }
+    if (S.bookOpen) { S.bookOpen = false; render(); return; }
+    if (S.mapOpen) { S.mapOpen = false; render(); return; }
     if (S.screen === "parents" || S.screen === "parentgate") { S.parentGate = null; S.screen = "saveselect"; render(); return; }
     if (S.screen === "title") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
     if (S.screen === "saveselect") { S.screen = "title"; render(); return; }
@@ -8377,6 +8672,11 @@ function paintPixIcons() {
       paintHDInto(cv, `mount|${id}`, (ctx) => drawHDDragon(ctx, ELEMENT_PALETTES[id] || ELEMENT_PALETTES.starter, 0.15), HD_DRAGON_FIT, 1);
       return;
     }
+    if (cv.dataset.pix.startsWith("pet:")) {
+      const id = cv.dataset.pix.slice(4);
+      paintHDInto(cv, `pet|${id}`, (ctx) => drawHDPet(ctx, id, 0.2), HD_PET_FIT, 1);
+      return;
+    }
     const spec = pixIconSpec(cv.dataset.pix);
     if (spec) paintSpriteInto(cv, spec.art, spec.palette, 0, cv.dataset.pix);
   });
@@ -8464,9 +8764,9 @@ const BIOMES = [
   { id: "ice", sky: ["#0a1a2e", "#1a3a5e", "#4a7eaa", "#cfe8f5"], far: "#6a8aaa", mid: "#3a5a7a", ground: ["#eaf6ff", "#bcd8ec", "#7a9cbc"], rim: "#ffffff", fx: "snow", glow: "#bff4ff" },
 ];
 
+/* The arena follows the world map: WORLDS[i] is fought on BIOMES[i]. */
 function arenaBiomeForWave(wave) {
-  const pairIndex = Math.floor((Math.max(1, wave) - 1) / 2);
-  return Math.floor(seededRandom01(pairIndex) * BIOMES.length);
+  return worldIndexForWave(wave);
 }
 
 /* Paints one biome's static layers at low resolution (1 art pixel each).
@@ -8719,7 +9019,7 @@ const BattleStage = {
     if (this.unit === undefined) return;
     const paletteKey = `${this._hero || "boy"}|` + (this._mountPalette
       ? `${this._mountPalette.body}|${this._mountPalette.dark}|${this._mountPalette.belly}|${this._mountPalette.wing}|${this._mountPalette.horn}`
-      : "onfoot") + `|${this._swordTier || 0}`;
+      : "onfoot") + `|${this._swordTier || 0}|${this._growth || "adult"}`;
     if (paletteKey !== this._cachedPaletteKey) { this._cachedPaletteKey = paletteKey; this.bakePlayer(); }
     const petKey = `${this._petId || ""}|${this.unit}`;
     if (petKey !== this._cachedPetKey) { this._cachedPetKey = petKey; this.bakePet(); }
@@ -8747,7 +9047,8 @@ const BattleStage = {
     const H = hdHeroLook(hero, tier);
     const targetH = DRAGON_ART_GRID * u;
     const fit = mounted ? HD_DRAGON_FIT : HD_HERO_FIT;
-    const texH = mounted ? targetH * 0.9 : targetH * 0.86;
+    const growth = DRAGON_GROWTH.find((g) => g.id === this._growth) || DRAGON_GROWTH[2];
+    const texH = mounted ? targetH * 0.9 * growth.scale : targetH * 0.86;
     const texW = texH * fit.w / fit.h;
     const dpr = this.dpr || 1;
     const frames = mounted ? 4 : 2;
@@ -8755,8 +9056,11 @@ const BattleStage = {
     for (let f = 0; f < frames; f++) {
       const t = f / frames;
       const tex = hdRender((ctx) => {
-        if (mounted) { drawHDDragon(ctx, this._mountPalette, t); drawHDRider(ctx, H, t); }
-        else drawHDHeroStanding(ctx, H, t);
+        if (mounted) {
+          drawHDDragon(ctx, this._mountPalette, t);
+          if (growth.id === "elder") drawHDElderArmor(ctx, t);
+          drawHDRider(ctx, H, t);
+        } else drawHDHeroStanding(ctx, H, t);
       }, fit, texW, texH, dpr, 1);
       meta = meta || tex;
       this.dragonStrips.push(makeSprite("image", { canvas: tex, dw: texW, dh: texH, originX: 0, originY: 0 }));
@@ -9472,6 +9776,7 @@ const BattleStage = {
     const pet = COSMETICS.find((c) => c.id === S.equippedPet);
     this._hero = S.hero || "boy";
     this._swordTier = getSwordTier();
+    this._growth = dragonGrowth(levelInfo.level).id;
     this._mountPalette = creature && ELEMENT_PALETTES[creature.id]
       ? ELEMENT_PALETTES[creature.id] : (creature ? ELEMENT_PALETTES.starter : null);
     this._palette = creature && ELEMENT_PALETTES[creature.id]

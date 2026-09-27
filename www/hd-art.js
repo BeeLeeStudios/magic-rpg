@@ -200,6 +200,36 @@ function drawHDDragon(ctx, P, t = 0) {
   drawWing(-1);                                          // near wing: over the back, behind the rider
 }
 
+/* Elder dragons (dragon level 20+) wear a gold collar and a small crown and
+   give off a few twinkles. Drawn over drawHDDragon, under the rider, in the
+   same design space. t: 0..1 animation phase (twinkles alternate). */
+function drawHDElderArmor(ctx, t = 0) {
+  const gold = "#f2c440";
+  // collar round the base of the neck (same curve as the neck in drawHDDragon)
+  const neck = hdTube(hdBez([144, 84], [166, 76], [154, 46], [180, 38], 18), 36, 20);
+  const a = 3, b = 8;
+  hdFill(ctx, (c) => hdPoly(c, [neck.left[a], neck.left[b], neck.right[b], neck.right[a]]),
+    hdGrad(ctx, neck.left[b][0], neck.left[b][1], neck.right[a][0], neck.right[a][1], [[0, "#fff3b0"], [0.5, gold], [1, "#a8741a"]]), 1.8);
+  const gx = (neck.left[5][0] + neck.right[6][0]) / 2, gy = (neck.left[5][1] + neck.right[6][1]) / 2;
+  hdFill(ctx, (c) => { c.arc(gx, gy, 3.2, 0, Math.PI * 2); }, "#e0335a", 1.2);
+  // crown on top of the head (the head is drawn at 1.15x around (180, 38))
+  ctx.save(); ctx.translate(180, 38); ctx.scale(1.15, 1.15); ctx.translate(-180, -38);
+  hdFill(ctx, (c) => {
+    c.moveTo(173, 28); c.lineTo(174, 18); c.lineTo(178.5, 23.5); c.lineTo(182, 14.5); c.lineTo(185, 23.5);
+    c.lineTo(189.5, 18.5); c.lineTo(190, 28.5); c.quadraticCurveTo(181, 25.5, 173, 28);
+  }, hdGrad(ctx, 0, 14, 0, 29, [[0, "#fff3b0"], [1, gold]]), 1.4);
+  ctx.restore();
+  // twinkles around the dragon
+  const phase = t < 0.5 ? 0 : 1;
+  [[58, 36], [122, 14], [214, 72], [34, 112], [160, 136]].forEach(([x, y], i) => {
+    const r = (i + phase) % 2 ? 2.2 : 3.4;
+    hdFill(ctx, (c) => {
+      c.moveTo(x, y - r * 2); c.lineTo(x + r * 0.45, y - r * 0.45); c.lineTo(x + r * 2, y); c.lineTo(x + r * 0.45, y + r * 0.45);
+      c.lineTo(x, y + r * 2); c.lineTo(x - r * 0.45, y + r * 0.45); c.lineTo(x - r * 2, y); c.lineTo(x - r * 0.45, y - r * 0.45);
+    }, "#fff6c8", 0);
+  });
+}
+
 /* ---------------------------------------------------------------------
    Rider in the saddle (side view, facing right). Design space matches the
    dragon so the rider can be drawn straight onto its back.

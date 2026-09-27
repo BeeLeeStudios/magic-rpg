@@ -35,7 +35,9 @@ MATH THAT FITS YOUR CHILD
 
 AN ADVENTURE KIDS WANT TO PLAY
 • 20 hand-drawn pixel monsters and 3 bosses with their own tricks — one splits into minions, one is frozen solid and only cracks with fast answers, one charges a big attack you must stop with correct answers.
-• Five battle worlds: volcano, lagoon, forest, haunted night and frozen north.
+• Cross five worlds on the world map: volcano, lagoon, forest, haunted night and frozen north.
+• Watch your dragon grow from a little hatchling into a golden Elder.
+• Fill the Dragon Book with every monster and treasure, and earn 20 badges.
 • Save up gold for 10 dragon mounts with their own breath attacks, pets that fight alongside you, and five swords.
 • Fireballs, potions, level-up rewards and treasure chests.
 • Up to 12 save slots so brothers, sisters and classmates each keep their own progress and math level.
@@ -43,6 +45,8 @@ AN ADVENTURE KIDS WANT TO PLAY
 MADE FOR FAMILIES
 • No ads. No in-app purchases. No accounts.
 • Collects no data at all, and works completely offline — the app doesn't even use the internet.
+• A parent area (behind a grown-up question) shows each child's skills, accuracy and time played.
+• Read-aloud problems, bigger text, reduce-motion and colour-blind options.
 • Designed for ages 5–13.
 
 Solve it. Beat it. Level up!
