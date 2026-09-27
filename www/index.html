@@ -2290,7 +2290,7 @@ const ENEMIES = [
 ];
 
 /* Treasure chest: a random bonus "wave" that replaces a normal enemy.
-   It never attacks and always yields a random 25-50 gold + flat 20 XP. */
+   It never attacks and always yields a random 10-20 gold + flat 20 XP. */
 /* Roughly a 1-in-5 chance per wave (never on boss waves, never twice in a
    row) that the next wave is a treasure chest instead of a real enemy. */
 function decideChest(wave) {
@@ -2705,26 +2705,26 @@ function dragonGrowth(level) {
    Earning one during play pops a toast and pays its coins; badges an older
    save already qualifies for are granted quietly on load, with no coins. */
 const BADGES = [
-  { id: "first_win", icon: "⚔️", name: "First Victory", desc: "Beat your first monster", coins: 25, test: (g) => g.monsters + g.bosses >= 1 },
-  { id: "hunter10", icon: "🗡️", name: "Monster Hunter", desc: "Beat 10 monsters", coins: 25, test: (g) => g.monsters >= 10 },
-  { id: "hunter50", icon: "🛡️", name: "Monster Master", desc: "Beat 50 monsters", coins: 50, test: (g) => g.monsters >= 50 },
-  { id: "hunter200", icon: "🏰", name: "Legend of the Realm", desc: "Beat 200 monsters", coins: 100, test: (g) => g.monsters >= 200 },
-  { id: "first_boss", icon: "👑", name: "Boss Breaker", desc: "Beat your first boss", coins: 50, test: (g) => g.bosses >= 1 },
-  { id: "perfect_boss", icon: "💎", name: "Flawless", desc: "Beat a boss without a single miss", coins: 75, test: (g) => g.bossesNoMiss >= 1 },
-  { id: "streak10", icon: "🔥", name: "On Fire", desc: "10 right answers in a row", coins: 25, test: (g) => g.bestStreak >= 10 },
-  { id: "streak25", icon: "⚡", name: "Unstoppable", desc: "25 right answers in a row", coins: 75, test: (g) => g.bestStreak >= 25 },
-  { id: "correct100", icon: "✏️", name: "Hundred Club", desc: "100 right answers", coins: 50, test: (g) => g.correct >= 100 },
-  { id: "correct1000", icon: "🧠", name: "Math Wizard", desc: "1,000 right answers", coins: 100, test: (g) => g.correct >= 1000 },
-  { id: "rank5", icon: "⭐", name: "Rising Star", desc: "Reach math rank 5", coins: 25, test: (g) => g.rank >= 5 },
-  { id: "rank8", icon: "🌟", name: "Ten-Stacker", desc: "Reach math rank 8", coins: 50, test: (g) => g.rank >= 8 },
-  { id: "rank11", icon: "🎓", name: "Dragon Mathematician", desc: "Reach math rank 11", coins: 75, test: (g) => g.rank >= 11 },
-  { id: "rank12", icon: "🔢", name: "Times Tables!", desc: "Reach rank 12 and start times tables", coins: 75, test: (g) => g.rank >= 12 },
-  { id: "rank17", icon: "🧙", name: "Dragon Sage", desc: "Reach the top math rank", coins: 100, test: (g) => g.rank >= 17 },
-  { id: "wave10", icon: "🗺️", name: "Explorer", desc: "Reach wave 10", coins: 25, test: (g) => g.bestWave >= 10 },
-  { id: "wave25", icon: "🏔️", name: "Adventurer", desc: "Reach wave 25", coins: 75, test: (g) => g.bestWave >= 25 },
-  { id: "chests10", icon: "🎁", name: "Treasure Hunter", desc: "Open 10 treasure chests", coins: 50, test: (g) => g.chests >= 10 },
-  { id: "dragons3", icon: "🐉", name: "Dragon Keeper", desc: "Own 3 dragons", coins: 50, test: (g) => g.dragons >= 3 },
-  { id: "pet1", icon: "🐾", name: "Best Friends", desc: "Get a pet", coins: 25, test: (g) => g.pets >= 1 },
+  { id: "first_win", icon: "⚔️", name: "First Victory", desc: "Beat your first monster", coins: 10, test: (g) => g.monsters + g.bosses >= 1 },
+  { id: "hunter10", icon: "🗡️", name: "Monster Hunter", desc: "Beat 10 monsters", coins: 10, test: (g) => g.monsters >= 10 },
+  { id: "hunter50", icon: "🛡️", name: "Monster Master", desc: "Beat 50 monsters", coins: 15, test: (g) => g.monsters >= 50 },
+  { id: "hunter200", icon: "🏰", name: "Legend of the Realm", desc: "Beat 200 monsters", coins: 25, test: (g) => g.monsters >= 200 },
+  { id: "first_boss", icon: "👑", name: "Boss Breaker", desc: "Beat your first boss", coins: 15, test: (g) => g.bosses >= 1 },
+  { id: "perfect_boss", icon: "💎", name: "Flawless", desc: "Beat a boss without a single miss", coins: 20, test: (g) => g.bossesNoMiss >= 1 },
+  { id: "streak10", icon: "🔥", name: "On Fire", desc: "10 right answers in a row", coins: 10, test: (g) => g.bestStreak >= 10 },
+  { id: "streak25", icon: "⚡", name: "Unstoppable", desc: "25 right answers in a row", coins: 20, test: (g) => g.bestStreak >= 25 },
+  { id: "correct100", icon: "✏️", name: "Hundred Club", desc: "100 right answers", coins: 15, test: (g) => g.correct >= 100 },
+  { id: "correct1000", icon: "🧠", name: "Math Wizard", desc: "1,000 right answers", coins: 25, test: (g) => g.correct >= 1000 },
+  { id: "rank5", icon: "⭐", name: "Rising Star", desc: "Reach math rank 5", coins: 10, test: (g) => g.rank >= 5 },
+  { id: "rank8", icon: "🌟", name: "Ten-Stacker", desc: "Reach math rank 8", coins: 15, test: (g) => g.rank >= 8 },
+  { id: "rank11", icon: "🎓", name: "Dragon Mathematician", desc: "Reach math rank 11", coins: 20, test: (g) => g.rank >= 11 },
+  { id: "rank12", icon: "🔢", name: "Times Tables!", desc: "Reach rank 12 and start times tables", coins: 20, test: (g) => g.rank >= 12 },
+  { id: "rank17", icon: "🧙", name: "Dragon Sage", desc: "Reach the top math rank", coins: 25, test: (g) => g.rank >= 17 },
+  { id: "wave10", icon: "🗺️", name: "Explorer", desc: "Reach wave 10", coins: 10, test: (g) => g.bestWave >= 10 },
+  { id: "wave25", icon: "🏔️", name: "Adventurer", desc: "Reach wave 25", coins: 20, test: (g) => g.bestWave >= 25 },
+  { id: "chests10", icon: "🎁", name: "Treasure Hunter", desc: "Open 10 treasure chests", coins: 15, test: (g) => g.chests >= 10 },
+  { id: "dragons3", icon: "🐉", name: "Dragon Keeper", desc: "Own 3 dragons", coins: 15, test: (g) => g.dragons >= 3 },
+  { id: "pet1", icon: "🐾", name: "Best Friends", desc: "Get a pet", coins: 10, test: (g) => g.pets >= 1 },
 ];
 const NEW_STATS = () => ({ correct: 0, bestStreak: 0, chests: 0, bossesNoMiss: 0 });
 
@@ -2808,8 +2808,10 @@ const LEVEL_UP_CARDS = [
 ];
 
 /* Gold card scales with both dragon level and how far the run has gone. */
+/* Worth about two boss kills, so the card is a nice bonus but not a
+   shortcut past playing: 10 gold, +1 for every 2 waves reached. */
 function goldCardAmount(level, wave) {
-  return Math.round(10 + level * 2 + wave * 3);
+  return 10 + Math.floor(wave / 2);
 }
 
 /* Shuffles the 5-card pool and offers the first 3 -- called once per
@@ -3295,7 +3297,7 @@ function handleWaveClear() {
   const dragonLevel = levelFromXP(S.xp).level;
   let coinReward, xpReward, label;
   if (meta.isChest) {
-    coinReward = randInt(25, 50);
+    coinReward = randInt(10, 20);
     xpReward = 20;
     label = "Treasure Chest";
   } else {
