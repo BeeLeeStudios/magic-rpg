@@ -5,6 +5,16 @@ import vm from "node:vm";
 
 const html = readFileSync(new URL("../www/index.html", import.meta.url), "utf8");
 
+/* Loads the code between two marker strings in www/index.html and returns
+   the named top-level bindings. */
+export function loadSection(startMarker, endMarker, names) {
+  const start = html.indexOf(startMarker);
+  const end = html.indexOf(endMarker, start);
+  if (start < 0 || end < 0) throw new Error(`markers not found: ${startMarker} .. ${endMarker}`);
+  const ctx = vm.createContext({ Math });
+  return vm.runInContext(`${html.slice(start, end)}\n;({ ${names.join(", ")} })`, ctx);
+}
+
 export function loadMath() {
   const start = html.indexOf("/* ---------- helpers ---------- */");
   const end = html.indexOf("/* ================= MASTERY");

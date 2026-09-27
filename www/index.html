@@ -2191,10 +2191,12 @@ function evaluateBandChange(answeredBandId) {
   return { type: "promote", band: S.mathBand, from, jumped: jump > 1 };
 }
 
-const MAX_LEVEL = 25;
-// 24 thresholds to climb from Lv.1 to Lv.25: 10, 13, 16 ... a gentle +3 each time
-// instead of the old 10/20/40/60 curve that ballooned too fast.
-const XP_THRESHOLDS = Array.from({ length: MAX_LEVEL - 1 }, (_, i) => 10 + i * 3);
+const MAX_LEVEL = 100;
+// XP from level L to L+1 is 20 + 4*(L-1): level 2 after ~4 waves, level 10
+// after ~70, level 25 after ~300, and level 100 is a long-term goal.
+// (Curve v1 was 10 + 3*(L-1) and stopped at level 25 -- far too quick.)
+const XP_CURVE_VERSION = 2;
+const XP_THRESHOLDS = Array.from({ length: MAX_LEVEL - 1 }, (_, i) => 20 + i * 4);
 function levelFromXP(xp) {
   let level = 1;
   let remaining = xp;
@@ -2210,10 +2212,32 @@ function levelFromXP(xp) {
   return { level, remaining, needed: XP_THRESHOLDS[idx], maxed: false };
 }
 
-/* Max HP is now tied permanently to dragon level: Lv.1 = 30 HP, +2 HP every
-   level after that (Lv.2 = 32, Lv.3 = 34, ... Lv.25 = 78). */
+/* Total XP at the start of `level`. */
+function xpForLevel(level) {
+  let xp = 0;
+  for (let i = 0; i < Math.min(level, MAX_LEVEL) - 1; i++) xp += XP_THRESHOLDS[i];
+  return xp;
+}
+
+/* Saves from curve v1 keep the level they had (and how far through it
+   they were), so nobody's dragon level goes down with the update. */
+const OLD_XP_THRESHOLDS = Array.from({ length: 24 }, (_, i) => 10 + i * 3);
+function migrateXP(oldXP) {
+  let level = 1, rem = oldXP || 0;
+  while (level < 25 && rem >= OLD_XP_THRESHOLDS[level - 1]) { rem -= OLD_XP_THRESHOLDS[level - 1]; level += 1; }
+  const frac = level < 25 ? rem / OLD_XP_THRESHOLDS[level - 1] : 0;
+  return xpForLevel(level) + Math.floor(frac * XP_THRESHOLDS[level - 1]);
+}
+function slotXP(d) {
+  if (!d) return 0;
+  return (d.xpCurve || 1) < XP_CURVE_VERSION ? migrateXP(d.xp) : (d.xp || 0);
+}
+
+/* Max HP is tied permanently to dragon level: Lv.1 = 30 HP, +2 HP a level
+   up to Lv.25 (78 HP), then +1 a level (Lv.100 = 153) so very high levels
+   don't make the early waves of a run meaningless. */
 function getMaxHPForLevel(level) {
-  return 28 + level * 2;
+  return 28 + Math.min(level, 25) * 2 + Math.max(0, level - 25);
 }
 
 /* ---------- damage, decoupled from the answer's VALUE ----------
@@ -2620,27 +2644,27 @@ const COSMETICS = [
   /* Dragon mounts. The hero starts on foot; buying one of these puts them
      in the saddle and swaps the mount's slot palette. 10 elemental dragons,
      unlocked in increasing rarity as the player levels up. */
-  { id: "creature_fire", name: "Fire Dragon", emoji: "🔥🐉", cost: 80, type: "creature", levelReq: 2 },
-  { id: "creature_earth", name: "Earth Dragon", emoji: "🌍🐉", cost: 150, type: "creature", levelReq: 4 },
-  { id: "creature_water", name: "Water Dragon", emoji: "💧🐉", cost: 250, type: "creature", levelReq: 7 },
-  { id: "creature_air", name: "Air Dragon", emoji: "💨🐉", cost: 350, type: "creature", levelReq: 10 },
-  { id: "creature_ice", name: "Ice Dragon", emoji: "❄️🐉", cost: 450, type: "creature", levelReq: 13 },
-  { id: "creature_storm", name: "Storm Dragon", emoji: "⛈️🐉", cost: 600, type: "creature", levelReq: 16 },
-  { id: "creature_crystal", name: "Crystal Dragon", emoji: "💎🐉", cost: 750, type: "creature", levelReq: 19 },
-  { id: "creature_onyx", name: "Onyx Dragon", emoji: "⚫🐉", cost: 900, type: "creature", levelReq: 21 },
-  { id: "creature_shadow", name: "Shadow Dragon", emoji: "🌑🐉", cost: 1100, type: "creature", levelReq: 23 },
-  { id: "creature_skeleton", name: "Skeleton Dragon", emoji: "💀🐉", cost: 1400, type: "creature", levelReq: 25 },
+  { id: "creature_fire", name: "Fire Dragon", emoji: "🔥🐉", cost: 80, type: "creature", levelReq: 3 },
+  { id: "creature_earth", name: "Earth Dragon", emoji: "🌍🐉", cost: 150, type: "creature", levelReq: 8 },
+  { id: "creature_water", name: "Water Dragon", emoji: "💧🐉", cost: 250, type: "creature", levelReq: 14 },
+  { id: "creature_air", name: "Air Dragon", emoji: "💨🐉", cost: 350, type: "creature", levelReq: 20 },
+  { id: "creature_ice", name: "Ice Dragon", emoji: "❄️🐉", cost: 450, type: "creature", levelReq: 27 },
+  { id: "creature_storm", name: "Storm Dragon", emoji: "⛈️🐉", cost: 600, type: "creature", levelReq: 34 },
+  { id: "creature_crystal", name: "Crystal Dragon", emoji: "💎🐉", cost: 750, type: "creature", levelReq: 42 },
+  { id: "creature_onyx", name: "Onyx Dragon", emoji: "⚫🐉", cost: 900, type: "creature", levelReq: 50 },
+  { id: "creature_shadow", name: "Shadow Dragon", emoji: "🌑🐉", cost: 1100, type: "creature", levelReq: 60 },
+  { id: "creature_skeleton", name: "Skeleton Dragon", emoji: "💀🐉", cost: 1400, type: "creature", levelReq: 70 },
 
   /* Pets — one active at a time. Each fights alongside you with its own
      attack when its stamina fills (about every other correct answer);
      dmgPercent is its power relative to your sword hit. Unlocks every 5
      levels up to Lv.25. */
-  { id: "pet_owl", name: "Owl", emoji: "🦉", cost: 75, type: "pet", levelReq: 1, dmgPercent: 50 },
-  { id: "pet_wolf", name: "Wolf", emoji: "🐺", cost: 200, type: "pet", levelReq: 5, dmgPercent: 60 },
-  { id: "pet_bear", name: "Bear", emoji: "🐻", cost: 350, type: "pet", levelReq: 10, dmgPercent: 70 },
-  { id: "pet_panther", name: "Panther", emoji: "🐆", cost: 550, type: "pet", levelReq: 15, dmgPercent: 80 },
-  { id: "pet_griffin", name: "Griffin", emoji: "🦅", cost: 800, type: "pet", levelReq: 20, dmgPercent: 90 },
-  { id: "pet_dragonwhelp", name: "Dragon Whelp", emoji: "🐉", cost: 1100, type: "pet", levelReq: 25, dmgPercent: 100 },
+  { id: "pet_owl", name: "Owl", emoji: "🦉", cost: 75, type: "pet", levelReq: 2, dmgPercent: 50 },
+  { id: "pet_wolf", name: "Wolf", emoji: "🐺", cost: 200, type: "pet", levelReq: 10, dmgPercent: 60 },
+  { id: "pet_bear", name: "Bear", emoji: "🐻", cost: 350, type: "pet", levelReq: 20, dmgPercent: 70 },
+  { id: "pet_panther", name: "Panther", emoji: "🐆", cost: 550, type: "pet", levelReq: 32, dmgPercent: 80 },
+  { id: "pet_griffin", name: "Griffin", emoji: "🦅", cost: 800, type: "pet", levelReq: 45, dmgPercent: 90 },
+  { id: "pet_dragonwhelp", name: "Dragon Whelp", emoji: "🐉", cost: 1100, type: "pet", levelReq: 60, dmgPercent: 100 },
 ];
 
 /* Battle arena backdrops are painted pixel biomes now -- see BIOMES and
@@ -2664,10 +2688,10 @@ function seededRandom01(n) {
    equipped sword sets both your bonus damage and the blade you see. */
 const DMG_UPGRADES = [
   { id: "dmg1", name: "Iron Sword",       emoji: "🗡️", cost: 100,  levelReq: 1, type: "dmg", bonus: 1, perk: "Sturdy and sharp" },
-  { id: "dmg2", name: "Steel Sword",      emoji: "⚔️", cost: 250,  levelReq: 2, type: "dmg", bonus: 2, perk: "Polished steel shine" },
-  { id: "dmg3", name: "Flame Sword",      emoji: "🔥", cost: 450, levelReq: 3, type: "dmg", bonus: 3, perk: "Burns with living fire" },
-  { id: "dmg4", name: "Storm Sword",      emoji: "⚡", cost: 700, levelReq: 4, type: "dmg", bonus: 4, perk: "Crackles with lightning" },
-  { id: "dmg5", name: "Dragonfang Blade", emoji: "🐉", cost: 1000, levelReq: 5, type: "dmg", bonus: 5, perk: "Forged from a dragon's fang" },
+  { id: "dmg2", name: "Steel Sword",      emoji: "⚔️", cost: 250,  levelReq: 6, type: "dmg", bonus: 2, perk: "Polished steel shine" },
+  { id: "dmg3", name: "Flame Sword",      emoji: "🔥", cost: 450, levelReq: 12, type: "dmg", bonus: 3, perk: "Burns with living fire" },
+  { id: "dmg4", name: "Storm Sword",      emoji: "⚡", cost: 700, levelReq: 20, type: "dmg", bonus: 4, perk: "Crackles with lightning" },
+  { id: "dmg5", name: "Dragonfang Blade", emoji: "🐉", cost: 1000, levelReq: 30, type: "dmg", bonus: 5, perk: "Forged from a dragon's fang" },
 ];
 
 /* ================= WORLDS =================
@@ -2690,9 +2714,9 @@ function journeyLoop(wave) { return Math.floor((Math.max(1, wave) - 1) / (WAVES_
    size as an adult, gold armour as an elder (drawHDElderArmor, hd-art.js). */
 const DRAGON_GROWTH = [
   { id: "hatchling", name: "Hatchling", minLevel: 1, scale: 0.78, line: "" },
-  { id: "young", name: "Young Dragon", minLevel: 5, scale: 0.88, line: "Your dragon is getting bigger and stronger!" },
-  { id: "adult", name: "Adult Dragon", minLevel: 10, scale: 1, line: "Your dragon is fully grown!" },
-  { id: "elder", name: "Elder Dragon", minLevel: 20, scale: 1, line: "Your dragon earned golden Elder armor!" },
+  { id: "young", name: "Young Dragon", minLevel: 10, scale: 0.88, line: "Your dragon is getting bigger and stronger!" },
+  { id: "adult", name: "Adult Dragon", minLevel: 25, scale: 1, line: "Your dragon is fully grown!" },
+  { id: "elder", name: "Elder Dragon", minLevel: 50, scale: 1, line: "Your dragon earned golden Elder armor!" },
 ];
 function dragonGrowth(level) {
   let g = DRAGON_GROWTH[0];
@@ -3387,7 +3411,7 @@ function selectSave(id) {
   S.activeSaveId = id;
   const d = slot.data;
   S.coins = (d && d.coins) || 0;
-  S.xp = (d && d.xp) || 0;
+  S.xp = slotXP(d);
   S.ownedCosmetics = (d && d.ownedCosmetics) || {};
   S.ownedUpgrades = (d && d.ownedUpgrades) || {};
   // Accessories and auras were removed from the game; older saves may
@@ -3478,6 +3502,7 @@ function saveActiveSlot() {
   slot.data = {
     coins: S.coins,
     xp: S.xp,
+    xpCurve: XP_CURVE_VERSION,
     // Math progression is per-kid, so it belongs to the slot, not the run.
     // It deliberately survives a game over -- dying to a dragon shouldn't
     // cost you the arithmetic you've learned.
@@ -3939,7 +3964,7 @@ function useFireball() {
   setTimeout(() => {
     S.fireballAnim = false;
     const eff = getActiveBuffs();
-    const baseDmg = 10 + getDmgBonus() + Math.floor(levelFromXP(S.xp).level / 2);
+    const baseDmg = 10 + getDmgBonus() + Math.floor(Math.min(levelFromXP(S.xp).level, 30) / 2);
     let skillDmg = Math.round(baseDmg * (1 + (eff.dmgPct + eff.fireballDmgPct) / 100));
     const isCrit = eff.critChance > 0 && Math.random() * 100 < eff.critChance;
     if (isCrit) skillDmg = Math.round(skillDmg * (1.5 + eff.critMultAdd / 100));
@@ -4060,7 +4085,7 @@ function toggleEquip(item) {
 function saveSelectHTML() {
   const items = SAVES.slots.map((slot) => {
     const has = !!slot.data;
-    const lvl = has ? levelFromXP(slot.data.xp || 0).level : 1;
+    const lvl = has ? levelFromXP(slotXP(slot.data)).level : 1;
     const inBattle = has && slot.data.battle;
     const summary = has
       ? `Lv.${lvl} · 🪙${slot.data.coins || 0} · Best Wave ${slot.data.bestWave || 0}${inBattle ? ` · ⚔️ Wave ${slot.data.battle.wave} in progress` : ""}`
