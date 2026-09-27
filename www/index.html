@@ -1546,8 +1546,8 @@ const shuffle = (arr) => {
    build -- they can both be running a Lv.15 dragon on completely different
    math.
 
-   Every band is addition/subtraction. Multiplication, if added later,
-   belongs after rank 11 so it never shows up for a kid who isn't ready.
+   Ranks 1-11 are addition/subtraction; ranks 12-17 are times tables and
+   division, after rank 11 so they never show up for a kid who isn't ready.
 
    `gen` returns { a, op, b, answer }. `errors` lists the characteristic
    wrong answers for that skill -- see makeChoices() for why. */
@@ -1699,6 +1699,60 @@ const MATH_BANDS = [
     },
     errors: (p) => [p.answer - 10, p.answer + 10, p.answer + 1, p.answer - 1],
   },
+  // Ranks 12-17: times tables and division facts up to 10 x 10, in the
+  // order schools teach them -- the easy tables, then sharing by them,
+  // then the hard tables, then sharing by those, then everything mixed.
+  {
+    id: 12,
+    name: "Twin Flame",
+    desc: "Times tables: × 2, × 5, × 10",
+    speedMs: 8000,
+    gen() { return mulFact([2, 5, 10], 1, 10); },
+    errors: mulErrors,
+  },
+  {
+    id: 13,
+    name: "Triple Claw",
+    desc: "Times tables: × 3, × 4",
+    speedMs: 9000,
+    gen() { return mulFact([3, 4], 1, 10); },
+    errors: mulErrors,
+  },
+  {
+    id: 14,
+    name: "Splitter",
+    desc: "Sharing: ÷ 2, ÷ 5, ÷ 10",
+    speedMs: 9000,
+    gen() { return divFact([2, 5, 10], 1, 10); },
+    errors: divErrors,
+  },
+  {
+    id: 15,
+    name: "Rune Weaver",
+    desc: "Times tables: × 6 to × 9",
+    speedMs: 10000,
+    gen() { return mulFact([6, 7, 8, 9], 2, 10); },
+    errors: mulErrors,
+  },
+  {
+    id: 16,
+    name: "Shard Breaker",
+    desc: "Sharing: ÷ 3 to ÷ 9",
+    speedMs: 10000,
+    gen() { return divFact([3, 4, 5, 6, 7, 8, 9], 2, 10); },
+    errors: divErrors,
+  },
+  {
+    id: 17,
+    name: "Dragon Sage",
+    desc: "All × and ÷ facts to 10 × 10",
+    speedMs: 9000,
+    gen() {
+      const all = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+      return Math.random() < 0.5 ? mulFact(all, 2, 10) : divFact(all, 2, 10);
+    },
+    errors: (p) => (p.op === "×" ? mulErrors(p) : divErrors(p)),
+  },
 ];
 
 /* Ranks 1-7: one number comes from this rank's new range [lo, hi], the
@@ -1723,6 +1777,31 @@ function smallErrors(p) {
 // Past 12, the ten is where kids slip: 10 off, or 1 off from counting.
 function teenErrors(p) {
   return [p.answer + 10, p.answer - 10, p.answer + 1, p.answer - 1, p.op === "-" ? p.a + p.b : Math.abs(p.a - p.b)];
+}
+
+/* Ranks 12-17. One factor comes from this rank's tables, the other from
+   lo..hi, in either order so 3 x 7 and 7 x 3 both show up. */
+function mulFact(tables, lo, hi) {
+  const t = tables[randInt(0, tables.length - 1)];
+  const n = randInt(lo, hi);
+  return Math.random() < 0.5
+    ? { a: t, op: "×", b: n, answer: t * n }
+    : { a: n, op: "×", b: t, answer: t * n };
+}
+/* Division is built backwards from a product, so it always comes out even. */
+function divFact(divisors, lo, hi) {
+  const d = divisors[randInt(0, divisors.length - 1)];
+  const q = randInt(lo, hi);
+  return { a: d * q, op: "÷", b: d, answer: q };
+}
+// Times tables: a neighbouring fact (7 x 8 -> 49 or 64), adding instead of
+// multiplying, and a slip of one.
+function mulErrors(p) {
+  return [p.a * (p.b + 1), p.a * (p.b - 1), (p.a + 1) * p.b, (p.a - 1) * p.b, p.a + p.b, p.answer + 1, p.answer - 1];
+}
+// Division: off by one or two, and subtracting instead of dividing.
+function divErrors(p) {
+  return [p.answer + 1, p.answer - 1, p.answer + 2, p.answer - 2, p.a - p.b];
 }
 
 /* Saves from before the 11-rank ladder used 8 bigger ranks. Each old rank
@@ -3871,7 +3950,7 @@ function infoHTML() {
   return `
   <div class="card info-card">
     <h1>For Parents</h1>
-    <p>${GAME_NAME.full} is a math practice game for kids ages 5–13. Every correct answer powers an attack; the game quietly adjusts the math to your child's level (addition and subtraction, from "within 10" up to two-digit regrouping).</p>
+    <p>${GAME_NAME.full} is a math practice game for kids ages 5–13. Every correct answer powers an attack; the game quietly adjusts the math to your child's level (addition and subtraction up to two-digit regrouping, then times tables and division).</p>
     <h3>Privacy</h3>
     <ul>
       <li><strong>We collect no data.</strong> No accounts, no analytics, no ads, no tracking, no in-app purchases.</li>

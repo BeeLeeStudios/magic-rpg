@@ -5,6 +5,7 @@
   "description": "Dragons vs Math - a pixel-art math battle game for kids ages 5-13",
   "scripts": {
     "serve": "npx http-server www -p 8080 -c-1",
+    "test": "node --test \"tests/**/*.test.mjs\"",
     "sync": "npx cap sync android",
     "open": "npx cap open android",
     "assets": "node scripts/generate-store-assets.mjs && npx capacitor-assets generate --android --iconBackgroundColor '#1a0f2e' --splashBackgroundColor '#140b24'",
