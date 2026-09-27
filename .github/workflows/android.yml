@@ -8,7 +8,7 @@ name: Android build
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main, "claude/**", "feature/**"]
     # Website, deploy and docs changes don't touch the app, so they don't rebuild it.
     paths-ignore: ["site/**", "docs/**", "deploy/**", "**/*.md", "scripts/build-site-assets.mjs", ".github/workflows/deploy-site.yml"]
   pull_request:
