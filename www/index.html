@@ -1528,6 +1528,8 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
 
 /* ---------- boss mechanics ---------- */
 .boss-intro-hint { font-family: var(--font-ui); color: #fff3c4; font-weight: 800; font-size: 16px; margin: 6px 16px 10px; text-align: center; }
+.problem-card.riddle { box-shadow: 0 0 0 3px #b58cff, 0 0 26px rgba(181,140,255,0.65) !important; }
+.problem-card.riddle .streak::before { content: "🔮 RIDDLE! "; color: #d8c0ff; }
 .boss-clock { height: 7px; border-radius: 4px; background: #2d2344; overflow: hidden; margin: -4px 0 6px; box-shadow: 0 0 0 2px var(--ink); }
 .boss-clock i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #ff5a3a, #f2c440); animation: bossClock linear forwards; }
 @keyframes bossClock { from { width: 100%; } to { width: 0%; } }
@@ -1541,9 +1543,10 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
 
 /* ---------- Dragon Book, badges, world map ---------- */
 .map-btn { border: none; background: none; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-shadow: inherit; cursor: pointer; white-space: nowrap; }
-.topbar-actions { gap: 4px; }
+.topbar-actions { gap: 3px; }
+.arena.fit .wave-chip { gap: 4px; }
 .topbar-actions .icon-btn { white-space: nowrap; }
-.arena.fit .topbar-actions .icon-btn { padding: 5px 7px; }
+.arena.fit .topbar-actions .icon-btn { padding: 5px 6px; }
 .book-count { text-align: center; color: var(--text-dim); font-weight: 800; font-size: 13px; margin: 4px 0 10px; }
 .book-section { font-family: var(--font-ui); color: var(--gold); font-size: 16px; margin: 14px 0 8px; }
 .book-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -2311,7 +2314,7 @@ function getEnemyDamage() {
   return Math.max(2, Math.min(raw, cap));
 }
 
-/* Forty fantasy creatures, drawn from a shuffled bag so none repeats until
+/* Sixty fantasy creatures, drawn from a shuffled bag so none repeats until
    the whole roster has been seen. The first twenty are hand-typed sprites;
    the rest (Fire Salamander onward) are shape-drawn with pixDraw. Every one
    needs a matching PIX_ENEMY_ART entry or it falls back to its emoji. */
@@ -2356,6 +2359,26 @@ const ENEMIES = [
   { name: "Ice Imp", emoji: "\u{1F9CA}", glow: "#9fdcff" },
   { name: "Snow Yeti", emoji: "\u2744\uFE0F", glow: "#e8f4ff" },
   { name: "Penguin Knight", emoji: "\u{1F427}", glow: "#cfe8f5" },
+  { name: "Phoenix Chick", emoji: "\u{1F424}", glow: "#ffb040" },
+  { name: "Cinder Hound", emoji: "\u{1F415}", glow: "#ff7a2a" },
+  { name: "Lava Snail", emoji: "\u{1F40C}", glow: "#ff9a4a" },
+  { name: "Obsidian Knight", emoji: "\u{1F6E1}\uFE0F", glow: "#ff8a2a" },
+  { name: "Glow Jelly", emoji: "\u{1FABC}", glow: "#ff9ad8" },
+  { name: "Pirate Parrot", emoji: "\u{1F99C}", glow: "#6ad86a" },
+  { name: "Shell Turtle", emoji: "\u{1F422}", glow: "#8fd06a" },
+  { name: "Shark Pup", emoji: "\u{1F988}", glow: "#9ac8e8" },
+  { name: "Acorn Knight", emoji: "\u{1F330}", glow: "#e8b070" },
+  { name: "Fox Spirit", emoji: "\u{1F98A}", glow: "#7fe3ff" },
+  { name: "Pixie Trickster", emoji: "\u{1F9DA}", glow: "#ffb0d8" },
+  { name: "Bee Swarm", emoji: "\u{1F41D}", glow: "#ffd76b" },
+  { name: "Scarecrow", emoji: "\u{1F33E}", glow: "#f2d060" },
+  { name: "Haunted Armor", emoji: "\u2694\uFE0F", glow: "#7fffd0" },
+  { name: "Ghost Cat", emoji: "\u{1F408}", glow: "#c8d8f0" },
+  { name: "Will-o-Wisp", emoji: "\u{1F4AB}", glow: "#8ad0ff" },
+  { name: "Walrus Brute", emoji: "\u{1F9AD}", glow: "#d8b898" },
+  { name: "Snow Owl", emoji: "\u{1F989}", glow: "#f0f4ff" },
+  { name: "Frost Moth", emoji: "\u{1F98B}", glow: "#b8e0ff" },
+  { name: "Ice Slime", emoji: "\u{1F4A7}", glow: "#8fd8ff" },
 ];
 
 /* Treasure chest: a random bonus "wave" that replaces a normal enemy.
@@ -2561,6 +2584,28 @@ const BOSSES = [
        poisoned, which spoils it. Teaches using the Poison button. */
     brew: { every: 3, pct: 0.15, line: "The Witch drinks a healing potion!", blockedLine: "Poison spoiled her potion!" },
   },
+  {
+    name: "Tidal Kraken",
+    emoji: "\u{1F419}",
+    glow: "#f0a0c8",
+    hpMult: 1.8,
+    hint: "Beat the tentacles, then strike before they grow back!",
+    /* Two guard tentacles fight in front of it and take the hits first.
+       Once both are down, they grow back after a few rounds -- a race to
+       hurt the Kraken while the way is clear. */
+    guard: { count: 2, name: "Kraken Tentacle", hpPct: 0.12, regrowEvery: 4, line: "The tentacles grow back!" },
+  },
+  {
+    name: "Sphinx",
+    emoji: "\u{1F981}",
+    glow: "#e8c060",
+    hpMult: 1.8,
+    hint: "Riddles hit 3× as hard, but missing one hurts double!",
+    /* Every third problem is a riddle (same math rank, never harder): a
+       right answer hits three times as hard, a miss hurts twice as much.
+       High-stakes rounds rather than harder math. */
+    riddle: { every: 3, mult: 3, missMult: 2, line: "The Sphinx asks a riddle!" },
+  },
 ];
 
 /* The live boss (if any) that has the given mechanic. */
@@ -2574,6 +2619,31 @@ function showBossBanner(line) {
   const rid = S.runId;
   render();
   setTimeout(() => { if (S.runId === rid && S.bossBanner === line) { S.bossBanner = null; render(); } }, 2000);
+}
+
+/* Kraken: puts its guard tentacles in front of it. */
+function spawnGuards(boss) {
+  const spec = boss.guard;
+  const hp = Math.max(3, Math.round(boss.maxHP * spec.hpPct));
+  for (let i = 0; i < spec.count; i++) {
+    S.enemies.push({ name: spec.name, emoji: "\u{1F419}", glow: boss.glow, isBoss: false, isMinion: true, isGuard: true,
+      age: 0, maxHP: hp, hp, poisonTurns: 0 });
+  }
+  const first = S.enemies.findIndex((e) => e.isGuard && e.hp > 0);
+  if (first !== -1) S.activeEnemyIdx = first;
+}
+
+/* Kraken: counts rounds with no tentacles up, and regrows them. */
+function tickKrakenGuard() {
+  const boss = liveBoss("guard");
+  if (!boss) return null;
+  if (S.enemies.some((e) => e.isGuard && e.hp > 0)) { boss.guardTimer = 0; return null; }
+  boss.guardTimer = (boss.guardTimer || 0) + 1;
+  if (boss.guardTimer < boss.guard.regrowEvery) return null;
+  boss.guardTimer = 0;
+  S.enemies = S.enemies.filter((e) => !(e.isGuard && e.hp <= 0));
+  spawnGuards(boss);
+  return boss.guard.line;
 }
 
 /* Hydra: a wrong answer regrows health. Returns the banner line if it did. */
@@ -3258,6 +3328,11 @@ function newProblem(lvl) {
   S.problem = p;
   S.choices = makeChoices(p);
   S.problemShownAt = Date.now();
+  const sphinx = liveBoss("riddle");
+  if (sphinx) {
+    sphinx.riddleCount = (sphinx.riddleCount || 0) + 1;
+    if (sphinx.riddleCount % sphinx.riddle.every === 0) { p.riddle = true; showBossBanner(sphinx.riddle.line); }
+  }
   startBossClock();
   if (Prefs.autoRead && S.screen === "playing") setTimeout(readProblem, 250);
 }
@@ -3441,7 +3516,10 @@ function spawnWave(wave, level) {
       streakArmor: base.streakArmor || null,
       thief: base.thief || null, stolen: 0,
       brew: base.brew || null, brewCounter: 0,
+      guard: base.guard || null, guardTimer: 0,
+      riddle: base.riddle || null, riddleCount: 0,
     }];
+    if (base.guard) spawnGuards(S.enemies[0]);
     S.currentWaveMeta = { isBoss: base.isBoss, name: base.name, count: 1 };
     if (base.isBoss) {
       // Full-screen takeover rather than a banner that slides past. The
@@ -3452,7 +3530,8 @@ function spawnWave(wave, level) {
       S.locked = true;
     }
   }
-  S.activeEnemyIdx = 0;
+  // A guarded boss (the Kraken) starts with its tentacles in front.
+  S.activeEnemyIdx = Math.max(0, S.enemies.findIndex((e) => e.isGuard && e.hp > 0));
 }
 
 /* Poison ticks resolve once per round (correct or wrong answer), for every
@@ -3490,6 +3569,9 @@ function finishRound() {
       if (S.runId === crid && S.bossBanner === cMsg) { S.bossBanner = null; render(); }
     }, 2000);
   }
+
+  const guardLine = tickKrakenGuard();
+  if (guardLine) { Sound.play("split"); showBossBanner(guardLine); }
 
   const brewLine = tickBossBrew();
   if (brewLine) { Sound.play("slurp"); showBossBanner(brewLine); }
@@ -4017,7 +4099,9 @@ function handleAnswer(val) {
         const weakMult = getWeaknessMult(target, answeredProblem);
         const armorMult = getArmorMult(target, elapsed, answeredProblem);
         const streakMult = getStreakArmorMult(target);
-        const dmg = Math.max(1, Math.round(skillDmg * weakMult * armorMult * streakMult));
+        const riddleMult = answeredProblem.riddle && target && target.riddle ? target.riddle.mult : 1;
+        const dmg = Math.max(1, Math.round(skillDmg * weakMult * armorMult * streakMult * riddleMult));
+        if (riddleMult > 1) addPopup(`🔮 RIDDLE x${riddleMult}!`, "enemy", "crit");
         if (streakMult !== 1) addPopup(`💎 x${streakMult}`, "enemy", streakMult > 1 ? "crit" : "dmg");
         if (weakMult > 1) addPopup("WEAK!", "enemy", "crit");
         // Armour has to announce itself or it just reads as the game being
@@ -4103,7 +4187,8 @@ function handleAnswer(val) {
       if (regrowLine) { Sound.play("slurp"); showBossBanner(regrowLine); }
       // Wave-scaled and hard-capped at 35% of max HP, so a miss on a big
       // two-digit problem can never one-shot a full-health dragon.
-      enemyStrikePlayer(getEnemyDamage(), () => {
+      const riddleBoss = answeredProblem.riddle ? liveBoss("riddle") : null;
+      enemyStrikePlayer(getEnemyDamage() * (riddleBoss ? riddleBoss.riddle.missMult : 1), () => {
         applyPoisonTicks();
         finishRound();
       });
@@ -4922,12 +5007,12 @@ function playingHTML() {
   return `
   <div class="arena fit">
     <div class="topbar">
-      <button class="wave-chip map-btn" data-action="open-map" aria-label="World map">🗺️ Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti ? ` · ${S.enemies.length} Foes` : ""}</button>
+      <button class="wave-chip map-btn" data-action="open-map" aria-label="World map">🗺️ Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti && !meta.isBoss ? ` ×${S.enemies.filter((e) => e.hp > 0).length}` : ""}</button>
       <span class="topbar-actions">
         <button class="icon-btn" data-action="open-book" aria-label="Dragon Book">📖</button>
         <button class="icon-btn" data-action="open-settings" aria-label="Settings">⚙️</button>
         <button class="icon-btn" data-action="switch-save" aria-label="Saves">💾</button>
-        <button class="icon-btn" data-action="open-shop">🪙 ${S.coins} · 🛒</button>
+        <button class="icon-btn" data-action="open-shop">🪙 ${S.coins >= 10000 ? `${Math.floor(S.coins / 1000)}k` : S.coins} 🛒</button>
       </span>
     </div>
     <div class="topbar sub-row">
@@ -4970,7 +5055,7 @@ function playingHTML() {
       </div>
     </div>
 
-    <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}">
+    <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}${S.problem.riddle ? " riddle" : ""}">
       ${S.bossClock ? `<div class="boss-clock" aria-label="Time left"><i style="animation-duration:${S.bossClock.ms}ms;animation-delay:-${Math.max(0, Date.now() - S.bossClock.start)}ms"></i></div>` : ""}
       <div class="streak">${S.streak >= 10 ? `⚡ LEGENDARY! ${S.streak} in a row` : S.streak >= 7 ? `🔥 UNSTOPPABLE! ${S.streak} in a row` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
       <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span>${Speech.available() ? `<button class="speak-btn" data-action="read-problem" aria-label="Read the problem aloud">🔊</button>` : ""}</div>
@@ -8681,6 +8766,301 @@ const PIX_SAND_SCORPION = pixDraw(44, 32, 2, (g, f) => {
   g.px(11, 19, "e"); g.px(13, 19, "e");                                           // beady eyes
 });
 
+/* ---------- 20 more enemies (batch 3) and two bosses ---------- */
+const PIX_PHOENIX_CHICK = pixDraw(30, 30, 2, (g, f) => {
+  g.poly([[22, 16], [29, f ? 8 : 10], [27, 18], [29, 22], [23, 21]], "h", 0);         // tail flames
+  g.line(12, 25, 11, 28, "d", 1, 1); g.line(17, 25, 18, 28, "d", 1, 1);               // legs
+  g.ellipse(15, 18, 9, 8, "b");                                                       // body
+  g.ellipse(13, 21, 5, 4, "l");                                                       // belly
+  g.ellipse(19, f ? 14 : 17, 5, f ? 3 : 4, "w");                                      // wing flaps
+  g.poly([[10, 11], [11, f ? 3 : 5], [14, 9], [16, f ? 2 : 4], [18, 10]], "h", 1);   // flame crest
+  g.eye(9, 14, true);
+  g.poly([[6, 17], [2, 18], [6, 19]], "h", 0);                                        // beak
+});
+
+const PIX_CINDER_HOUND = pixDraw(42, 30, 2, (g, f) => {
+  g.poly([[34, 14], [41, f ? 6 : 9], [38, 14], [41, 17]], "h", 0);                    // flame tail
+  g.line(15, 20, f ? 12 : 15, 28, "d", 1, 3); g.line(29, 20, f ? 32 : 29, 28, "d", 1, 3);
+  g.ellipse(22, 16, 12, 6, "d");                                                      // body
+  [[16, 13, 20, 17], [24, 12, 27, 18]].forEach(([a, b, c, d]) => g.line(a, b, c, d, "h", 1, 1));   // ember cracks
+  g.line(18, 20, f ? 20 : 17, 28, "b", 1, 3); g.line(27, 20, f ? 25 : 28, 28, "b", 1, 3);
+  g.poly([[12, 8], [15, 3], [17, 9]], "h", f ? 0 : 1);                                // mane flame
+  g.poly([[7, 9], [9, 3], [11, 8]], "d");                                             // ear
+  g.ellipse(9, 13, 6, 5, "d");                                                        // head
+  g.ellipse(4, 15, 3, 2.5, "d");
+  g.px(2, 14, "e"); g.rect(7, 11, 8, 11, "h", 0);                                     // nose, glowing eye
+  g.line(2, 17, 6, 17, "l", 1, 1);
+});
+
+const PIX_LAVA_SNAIL = pixDraw(36, 28, 2, (g, f) => {
+  g.ellipse(17, 23, 15, 4, "b");                                                      // slug body
+  g.ellipse(4, 20, 3, 3, "b");                                                        // head
+  g.line(3, 18, f ? 0 : 1, 12, "b", 1, 1); g.line(6, 18, f ? 7 : 6, 12, "b", 1, 1);   // eye stalks
+  g.ellipse(f ? 0 : 1, 11, 1.5, 1.5, "W", 1); g.ellipse(f ? 7 : 6, 11, 1.5, 1.5, "W", 1);
+  g.px(f ? 0 : 1, 11, "e"); g.px(f ? 7 : 6, 11, "e");
+  g.ellipse(22, 13, 10, 9, "w");                                                      // shell
+  g.ellipse(22, 13, 6, 5, "d", 2); g.ellipse(22, 13, 3, 2.5, "w", 0);                 // spiral
+  g.poly([[15, 5], [19, 2], [23, 4], [27, 2], [30, 6]], "h", f ? 0 : 1);             // lava on top
+  g.px(26, 7 + f, "h", 0);                                                            // drip
+});
+
+const PIX_OBSIDIAN_KNIGHT = pixDraw(32, 40, 2, (g, f) => {
+  const s = f ? -3 : 0;
+  g.line(4, 12 + s, 5, 30 + s, "h", 1, 2); g.rect(2, 29 + s, 8, 30 + s, "w", 1);      // glowing sword
+  g.rect(11, 31, 14, 38, "d"); g.rect(18, 31, 21, 38, "d");                          // legs
+  g.poly([[9, 15], [23, 15], [25, 32], [7, 32]], "d", (x) => (x < 11 ? 0 : x > 21 ? 2 : 1));   // armour
+  g.line(15, 17, 16, 30, "h", 2, 1);                                                  // glowing seam
+  g.ellipse(26, 22, 4, 7, "w");                                                       // shield
+  g.line(9, 18, 6, 26 + s, "d", 1, 2);
+  g.ellipse(16, 9, 7, 7, "d");                                                        // helmet
+  g.rect(10, 8, 20, 9, "h", f ? 0 : 1);                                               // visor glow
+  g.poly([[16, 2], [18, -1], [19, 3]], "h", 0);
+});
+
+const PIX_GLOW_JELLY = pixDraw(30, 36, 2, (g, f) => {
+  for (let i = 0; i < 5; i++) {                                                       // wavy tentacles
+    const x0 = 8 + i * 3.5;
+    for (let y = 16; y < 34; y++) g.px(x0 + Math.sin(y / 3 + (f ? 2 : 0) + i) * 1.4, y, i % 2 ? "w" : "l", 1);
+  }
+  g.ellipse(15, 11, 11, 8, "b");                                                      // bell
+  g.rect(4, 16, 26, 17, "b", 2);
+  [[9, 7], [18, 6], [22, 11]].forEach(([x, y]) => g.ellipse(x, y, 1.5, 1.5, "l", 0));
+  g.eye(10, 11, true); g.eye(15, 11, true);
+  g.ellipse(13, 15, 1.5, 1, "e", 1);
+});
+
+const PIX_PIRATE_PARROT = pixDraw(32, 36, 2, (g, f) => {
+  g.poly([[18, 26], [24, 34], [16, 32]], "w");                                         // tail feathers
+  g.line(12, 30, 11, 34, "h", 0, 1); g.line(16, 30, 17, 34, "h", 0, 1);                // feet
+  g.ellipse(15, 22, 8, 9, "b");                                                       // body
+  g.ellipse(19, f ? 18 : 22, 5, f ? 4 : 7, "w");                                      // wing
+  g.ellipse(14, 11, 7, 6, "b");                                                       // head
+  g.poly([[8, 11], [3, 14], [5, 17], [9, 14]], "h", 0);                               // hooked beak
+  g.eye(10, 9, true);
+  g.line(13, 7, 19, 12, "e", 1, 1); g.ellipse(17, 10, 2, 2, "e", 1);                  // eye patch
+  g.poly([[6, 6], [22, 6], [19, 1], [9, 1]], "d");                                     // pirate hat
+  g.ellipse(14, 3, 1.5, 1.5, "l", 0);                                                 // skull badge
+});
+
+const PIX_SHELL_TURTLE = pixDraw(40, 30, 2, (g, f) => {
+  g.line(33, 21, 38, 23, "b", 1, 2);                                                  // tail
+  g.ellipse(14, 24, 3, 4, "b"); g.ellipse(30, 24, 3, 4, "b");                         // back legs
+  g.ellipse(f ? 10 : 13, 25, 3, 4, "b"); g.ellipse(f ? 27 : 24, 25, 3, 4, "b");       // walking legs
+  g.ellipse(22, 16, 13, 9, "w");                                                      // shell
+  [[17, 12], [24, 11], [29, 16], [21, 18], [14, 17]].forEach(([x, y]) => g.ellipse(x, y, 3, 2.5, "d", 2));   // plates
+  g.rect(9, 21, 35, 22, "l", 1);                                                      // shell rim
+  g.ellipse(6, 17 - f, 5, 4, "b");                                                    // head
+  g.eye(3, 15 - f, false); g.line(2, 19 - f, 5, 19 - f, "e", 1, 1);
+});
+
+const PIX_SHARK_PUP = pixDraw(42, 30, 2, (g, f) => {
+  g.poly([[34, 16], [41, f ? 8 : 10], [39, 16], [41, f ? 24 : 22]], "b");              // tail fin
+  g.poly([[18, 10], [22, 2], [26, 10]], "b", 0);                                       // dorsal fin
+  g.ellipse(21, 16, 15, 7, "b");                                                      // body
+  g.ellipse(19, 20, 11, 3, "l");                                                      // belly
+  g.poly([[20, 21], [25, 27], [27, 21]], "w");                                         // side fin
+  g.eye(10, 13, false);
+  g.line(4, 18, 13, 18, "e", 1, 1);
+  [5, 8, 11].forEach((x) => g.px(x, 19, "W"));
+  [[15, 13], [16, 15]].forEach(([x, y]) => g.px(x, y, "d", 2));                       // gills
+});
+
+const PIX_ACORN_KNIGHT = pixDraw(28, 36, 2, (g, f) => {
+  const s = f ? -2 : 0;
+  g.line(4, 14 + s, 5, 26 + s, "l", 0, 1); g.rect(2, 25 + s, 7, 25 + s, "h", 0);     // little sword
+  g.ellipse(9, 33, 3, 1.5, "d"); g.ellipse(18, 33, 3, 1.5, "d");                     // feet
+  g.ellipse(14, 22, 9, 10, "w");                                                     // acorn body
+  g.ellipse(23, 22, 4, 6, "b");                                                      // leaf shield
+  g.line(23, 17, 23, 27, "b", 2, 1);
+  g.ellipse(14, 11, 10, 6, "d");                                                     // cap
+  for (let x = 6; x <= 22; x += 3) g.line(x, 7, x + 2, 15, "d", 2, 1);                // cap texture
+  g.line(14, 5, 15, 2, "d", 1, 1);                                                   // stem
+  g.eye(10, 19, true); g.eye(15, 19, true);
+  g.line(11, 25, 15, 25, "e", 1, 1);
+  g.line(7, 22, 5, 25 + s, "w", 1, 2);
+});
+
+const PIX_FOX_SPIRIT = pixDraw(40, 32, 2, (g, f) => {
+  g.ellipse(34, f ? 11 : 14, 5, 7, "b", 1); g.ellipse(36, f ? 7 : 10, 3, 3, "l", 0);  // big tail with white tip
+  g.line(14, 20, f ? 12 : 14, 28, "d", 1, 2); g.line(26, 20, f ? 28 : 26, 28, "d", 1, 2);
+  g.ellipse(21, 17, 11, 6, "b");                                                     // body
+  g.ellipse(19, 20, 7, 2, "l");
+  g.line(17, 20, f ? 19 : 16, 28, "b", 1, 2); g.line(24, 20, f ? 22 : 25, 28, "b", 1, 2);
+  g.poly([[6, 8], [7, 2], [10, 7]], "b"); g.poly([[11, 7], [13, 1], [14, 8]], "b");   // ears
+  g.ellipse(9, 12, 6, 5, "b");                                                       // head
+  g.poly([[4, 12], [0, 15], [6, 16]], "l");                                           // white muzzle
+  g.px(1, 14, "e"); g.eye(6, 10, false);
+  [[4, 4], [18, 5], [28, 2]].forEach(([x, y], i) => g.ellipse(x, y + ((i + f) % 2), 1.5, 2, "h", 0));   // spirit flames
+});
+
+const PIX_PIXIE = pixDraw(28, 34, 2, (g, f) => {
+  const w = f ? 4 : 7;
+  g.ellipse(8, 14, 5, w, "w", 0); g.ellipse(20, 14, 5, w, "w", 0);                    // wings flutter
+  g.ellipse(14, 20, 4, 6, "b");                                                      // dress
+  g.poly([[9, 24], [19, 24], [16, 29], [12, 29]], "b", 2);
+  g.line(12, 29, 11, 32, "l", 1, 1); g.line(16, 29, 17, 32, "l", 1, 1);               // legs
+  g.ellipse(14, 10, 5, 5, "l");                                                      // head
+  g.poly([[9, 7], [14, 1], [19, 7]], "d");                                            // leaf hat
+  g.eye(11, 10, false); g.eye(15, 10, false);
+  g.line(10, 18, 5, f ? 12 : 15, "l", 1, 1);                                          // wand arm
+  g.poly([[5, f ? 9 : 12], [6, f ? 11 : 14], [8, f ? 11 : 14], [6, f ? 12 : 15], [7, f ? 14 : 17], [5, f ? 13 : 16], [3, f ? 14 : 17], [4, f ? 12 : 15], [2, f ? 11 : 14], [4, f ? 11 : 14]], "h", 0);   // star
+});
+
+const PIX_BEE_SWARM = pixDraw(40, 32, 2, (g, f) => {
+  const bees = f ? [[9, 10], [26, 7], [18, 21]] : [[11, 8], [24, 10], [16, 22]];
+  bees.forEach(([x, y], i) => {
+    g.ellipse(x + 3, y - 4, 3, 2 + ((i + f) % 2), "l", 0);                            // wings
+    g.ellipse(x, y, 6, 4, "h");                                                      // body
+    g.line(x - 1, y - 3, x - 1, y + 3, "d", 2, 1); g.line(x + 2, y - 3, x + 2, y + 3, "d", 2, 1);   // stripes
+    g.px(x + 6, y, "d", 2);                                                          // stinger
+    g.eye(x - 4, y - 1, false);
+  });
+});
+
+const PIX_SCARECROW = pixDraw(34, 42, 2, (g, f) => {
+  const t = f ? 1 : 0;
+  g.line(17, 18, 17, 41, "w", 1, 2);                                                 // pole
+  g.line(4, 18, 30, 18, "w", 1, 2);                                                  // cross bar
+  g.poly([[9, 16], [25, 16], [23, 32], [11, 32]], "b", (x) => (x < 13 ? 0 : x > 21 ? 2 : 1));   // shirt
+  g.line(9, 24, 25, 24, "b", 2, 1); g.line(17, 16, 17, 32, "b", 2, 1);               // plaid
+  [[3, 18], [31, 18], [13, 33], [21, 33]].forEach(([x, y]) => { g.line(x, y, x - 1, y + 3, "h", 0, 1); g.line(x, y, x + 1, y + 3, "h", 1, 1); });   // straw
+  g.ellipse(17 - t, 10, 7, 6, "l");                                                  // sack head
+  g.poly([[8 - t, 5], [26 - t, 5], [22 - t, 0], [12 - t, 0]], "d");                    // hat
+  g.rect(7 - t, 5, 27 - t, 6, "d", 2);
+  g.rect(12 - t, 9, 13 - t, 10, "e"); g.rect(19 - t, 9, 20 - t, 10, "e");            // button eyes
+  g.line(12 - t, 13, 21 - t, 13, "e", 1, 1);
+  [13, 15, 17, 19].forEach((x) => g.px(x - t, 14, "e"));                              // stitches
+});
+
+const PIX_HAUNTED_ARMOR = pixDraw(32, 40, 2, (g, f) => {
+  const y0 = f ? -1 : 0;
+  g.line(4, 4 + y0, 5, 38 + y0, "d", 1, 1);                                           // halberd
+  g.poly([[2, 4 + y0], [8, 7 + y0], [2, 11 + y0]], "w", 0);
+  g.ellipse(24, 36, 3, 2, "b", 0); g.ellipse(9, 37, 2, 1.5, "b", 0);                  // ghost wisps
+  g.rect(11, 30 + y0, 14, 37 + y0, "w"); g.rect(18, 30 + y0, 21, 37 + y0, "w");       // greaves
+  g.poly([[9, 14 + y0], [23, 14 + y0], [24, 31 + y0], [8, 31 + y0]], "w", (x) => (x < 12 ? 0 : x > 20 ? 2 : 1));   // breastplate
+  g.ellipse(9, 16 + y0, 4, 3, "w"); g.ellipse(23, 16 + y0, 4, 3, "w");                // pauldrons
+  g.line(9, 18 + y0, 6, 24 + y0, "w", 1, 2);
+  g.ellipse(16, 8 + y0, 6, 6, "w");                                                   // helmet
+  g.rect(11, 7 + y0, 20, 9 + y0, "e");                                                // empty visor
+  g.px(13, 8 + y0, "h", f ? 0 : 1); g.px(18, 8 + y0, "h", f ? 0 : 1);                 // ghostly eyes
+});
+
+const PIX_GHOST_CAT = pixDraw(32, 30, 2, (g, f) => {
+  for (let i = 0; i < 10; i++) g.px(24 + i * 0.6, 18 - i * 1.2 + Math.sin(i / 2 + (f ? 2 : 0)) * 1.5, "b", 1);   // wavy tail
+  g.line(26, 18, 30, 10, "b", 1, 2);
+  g.ellipse(18, 19, 9, 6, "b");                                                      // body
+  [11, 15, 19, 23].forEach((x, i) => g.ellipse(x, 25 + ((i + f) % 2), 2, 2, "b", 2));   // wispy bottom
+  g.poly([[5, 8], [6, 2], [9, 7]], "b"); g.poly([[12, 7], [14, 2], [15, 8]], "b");    // ears
+  g.ellipse(10, 12, 6, 5, "b");                                                      // head
+  g.ellipse(7, 11, 1.5, 1.5, "h", 0); g.ellipse(12, 11, 1.5, 1.5, "h", 0);           // glowing eyes
+  g.px(7, 11, "e"); g.px(12, 11, "e");
+  g.px(9, 14, "d", 2);
+  g.line(2, 13, 5, 14, "l", 0, 1); g.line(2, 16, 5, 15, "l", 0, 1);                  // whiskers
+});
+
+const PIX_WISP = pixDraw(26, 30, 2, (g, f) => {
+  g.poly([[13, 1], [f ? 18 : 16, 8], [21, 16], [18, 25], [13, 28], [8, 25], [5, 16], [f ? 9 : 10, 8]], "b", 1);   // outer flame
+  g.poly([[13, 7], [f ? 16 : 15, 12], [17, 19], [13, 24], [9, 19], [f ? 11 : 10, 12]], "h", 1);   // core
+  g.ellipse(13, 19, 3, 3, "W", 1);
+  g.eye(10, 15, false); g.eye(14, 15, false);
+  [[3, 6], [23, 10], [4, 25], [22, 24]].forEach(([x, y], i) => { if ((i + f) % 2) g.px(x, y, "l", 0); });   // sparkles
+});
+
+const PIX_WALRUS = pixDraw(42, 34, 2, (g, f) => {
+  g.poly([[34, 26], [41, f ? 22 : 24], [41, 31], [33, 31]], "b");                      // tail flippers
+  g.ellipse(22, 22, 15, 10, "b");                                                    // body
+  g.ellipse(20, 26, 10, 5, "l");                                                     // belly
+  g.ellipse(12, f ? 26 : 29, 5, 2.5, "d");                                           // front flipper slaps
+  g.ellipse(12, 12, 9, 8, "b");                                                      // head
+  g.ellipse(8, 16, 5, 4, "w");                                                       // muzzle
+  g.line(6, 19, 5, 28, "l", 0, 2); g.line(10, 19, 10, 28, "l", 0, 2);                // tusks
+  g.eye(8, 9, false); g.eye(13, 9, false);
+  g.px(7, 14, "e"); g.px(9, 14, "e");
+  g.line(2, 15, 5, 16, "d", 2, 1); g.line(2, 18, 5, 17, "d", 2, 1);                  // whiskers
+});
+
+const PIX_SNOW_OWL = pixDraw(30, 34, 2, (g, f) => {
+  g.line(12, 30, 11, 33, "h", 0, 1); g.line(17, 30, 18, 33, "h", 0, 1);               // feet
+  g.ellipse(15, 21, 9, 10, "l");                                                     // body
+  g.ellipse(f ? 5 : 7, f ? 16 : 21, 3, f ? 7 : 8, "w"); g.ellipse(f ? 25 : 23, f ? 16 : 21, 3, f ? 7 : 8, "w");   // wings
+  [[12, 20], [17, 23], [14, 26], [19, 18]].forEach(([x, y]) => g.px(x, y, "d", 2));   // speckles
+  g.ellipse(15, 9, 8, 7, "l");                                                       // head
+  g.ellipse(11, 9, 3, 3, "h", 0); g.ellipse(18, 9, 3, 3, "h", 0);                    // big yellow eyes
+  g.ellipse(11, 9, 1.2, 1.5, "e", 1); g.ellipse(18, 9, 1.2, 1.5, "e", 1);
+  g.poly([[13, 12], [15, 16], [16, 12]], "d", 2);                                     // beak
+});
+
+const PIX_FROST_MOTH = pixDraw(36, 30, 2, (g, f) => {
+  const up = f ? -3 : 0;
+  g.poly([[17, 13], [3, 2 + up], [1, 12 + up], [15, 17]], "w"); g.poly([[19, 13], [33, 2 + up], [35, 12 + up], [21, 17]], "w");   // upper wings
+  g.poly([[17, 16], [5, 26], [14, 25]], "w", 2); g.poly([[19, 16], [31, 26], [22, 25]], "w", 2);   // lower wings
+  g.ellipse(7, 7 + up, 2, 2, "l", 0); g.ellipse(29, 7 + up, 2, 2, "l", 0);            // wing eyespots
+  g.ellipse(18, 17, 3, 8, "b");                                                      // body
+  g.line(16, 9, 12, 3, "d", 1, 1); g.line(20, 9, 24, 3, "d", 1, 1);                  // antennae
+  g.eye(16, 11, false); g.eye(19, 11, false);
+});
+
+const PIX_ICE_SLIME = pixDraw(30, 26, 2, (g, f) => {
+  const sq = f ? 1 : 0;
+  g.ellipse(15, 17 + sq, 13, 8 - sq, "b");                                           // slime blob
+  g.ellipse(11, 14 + sq, 4, 2, "l", 0);                                              // shine
+  g.poly([[9, 11 + sq], [11, 4 + sq], [13, 11 + sq]], "l", 1); g.poly([[15, 10 + sq], [18, 2 + sq], [20, 10 + sq]], "l", 0);   // ice crystals
+  g.eye(8, 16 + sq, true); g.eye(14, 16 + sq, true);
+  g.line(9, 21 + sq, 14, 21 + sq, "e", 1, 1);
+});
+
+/* Tidal Kraken: a huge head rising out of the water with curling
+   tentacles that wave between frames. Its guard tentacles fight as
+   separate minions (PIX_KRAKEN_TENTACLE). */
+const PIX_KRAKEN = pixDraw(54, 46, 2, (g, f) => {
+  for (let i = 0; i < 5; i++) {                                                       // tentacles
+    const bx = 14 + i * 7, dir = i < 2 ? -1 : 1;
+    let px = bx, py = 26;
+    for (let k = 0; k < 16; k++) {
+      const nx = bx + dir * Math.sin((k + (f ? 2 : 0) + i) / 3) * 4 + dir * k * 0.4, ny = 26 + k;
+      g.line(px, py, nx, ny, "b", 1, Math.max(2, 5 - k / 4));
+      if (k % 3 === 1) g.px(nx - dir, ny, "l", 0);                                    // suckers
+      px = nx; py = ny;
+    }
+  }
+  g.ellipse(29, 18, 16, 14, "b");                                                     // head
+  g.ellipse(24, 12, 5, 3, "b", 0);
+  [[36, 10], [40, 18], [33, 25]].forEach(([x, y]) => g.ellipse(x, y, 2, 1.5, "w", 2));   // spots
+  g.ellipse(20, 20, 4, 4, "W", 1); g.ellipse(32, 20, 4, 4, "W", 1);                   // big eyes
+  g.rect(18, 19, 20, 22, "e"); g.rect(30, 19, 32, 22, "e");
+  g.px(19, 19, "h", f ? 0 : 1); g.px(31, 19, "h", f ? 0 : 1);
+});
+
+const PIX_KRAKEN_TENTACLE = pixDraw(18, 30, 2, (g, f) => {
+  let px = 9, py = 27;
+  for (let k = 0; k < 24; k++) {
+    const nx = 9 + Math.sin((k + (f ? 3 : 0)) / 4) * 4, ny = 27 - k;
+    g.line(px, py, nx, ny, "b", 1, Math.max(2, 6 - k / 5));
+    if (k % 3 === 0 && k < 20) g.px(nx - 2, ny, "l", 0);
+    px = nx; py = ny;
+  }
+  g.ellipse(px - 2, py + 1, 2, 2, "b");                                               // curled tip
+});
+
+/* Sphinx: a lion body lying down, a striped royal headdress and folded
+   wings; her eyes glow when a riddle is coming. */
+const PIX_SPHINX = pixDraw(54, 44, 2, (g, f) => {
+  g.poly([[26, 20], [50, f ? 6 : 9], [52, 18], [34, 26]], "w");                         // wing
+  g.line(20, 18, 47, 22, "w", 2, 1);
+  g.line(46, 34, 52, f ? 26 : 28, "b", 1, 2); g.ellipse(52, f ? 25 : 27, 1.5, 2, "d");   // tail
+  g.ellipse(32, 32, 17, 9, "b");                                                      // lion body
+  g.ellipse(9, 38, 8, 3, "b"); g.ellipse(24, 39, 7, 3, "b");                          // paws
+  g.ellipse(14, 26, 7, 10, "b");                                                      // chest
+  g.poly([[5, 8], [23, 8], [26, 24], [20, 18], [8, 18], [2, 24]], "h", (x, y) => ((y % 3 === 0) ? 2 : 0));   // striped headdress
+  g.ellipse(14, 12, 6, 7, "l");                                                       // face
+  g.rect(8, 4, 20, 7, "h", 0);                                                        // crown band
+  g.px(14, 3, "w", 0);
+  g.eye(10, 10, false); g.eye(15, 10, false);
+  if (f) { g.px(11, 10, "w", 0); g.px(16, 10, "w", 0); }                               // eyes glow
+  g.line(11, 16, 16, 16, "d", 2, 1);
+});
+
 const PIX_ENEMY_ART = {
   "Muck Slime": { art: PIX_SLIME, palette: { body: "#5ec96f", dark: "#2f8f47", belly: "#d6f5c8", wing: "#a8e8b0", horn: "#e0c14a" } },
   "Cave Goblin": { art: PIX_GOBLIN, palette: { body: "#8fb03f", dark: "#5c7526", belly: "#e8eec0", wing: "#7a4c28", horn: "#c9a227" } },
@@ -8720,6 +9100,29 @@ const PIX_ENEMY_ART = {
   "Ice Imp": { art: PIX_ICE_IMP, palette: { body: "#6ab8e8", dark: "#2a5a8a", belly: "#f0faff", wing: "#3a7ab8", horn: "#ffffff" } },
   "Snow Yeti": { art: PIX_YETI, palette: { body: "#7a8ab8", dark: "#4a5a88", belly: "#f0f4ff", wing: "#c8d8f0", horn: "#ffffff" } },
   "Penguin Knight": { art: PIX_PENGUIN_KNIGHT, palette: { body: "#f0a030", dark: "#2a2a3a", belly: "#f4f4f8", wing: "#aab8c8", horn: "#d8323a" } },
+  "Phoenix Chick": { art: PIX_PHOENIX_CHICK, palette: { body: "#ff6a3a", dark: "#8a2a1a", belly: "#ffd08a", wing: "#ff9a3a", horn: "#ffe066" } },
+  "Cinder Hound": { art: PIX_CINDER_HOUND, palette: { body: "#4a3a3a", dark: "#2a2020", belly: "#ffb070", wing: "#6a4a3a", horn: "#ff7a2a" } },
+  "Lava Snail": { art: PIX_LAVA_SNAIL, palette: { body: "#c8a070", dark: "#5a3a2a", belly: "#f0d8a8", wing: "#8a5a3a", horn: "#ff7a2a" } },
+  "Obsidian Knight": { art: PIX_OBSIDIAN_KNIGHT, palette: { body: "#3a3a4a", dark: "#22222e", belly: "#8a8aa0", wing: "#5a5a70", horn: "#ff8a2a" } },
+  "Glow Jelly": { art: PIX_GLOW_JELLY, palette: { body: "#ff9ad8", dark: "#a04a88", belly: "#fff0fa", wing: "#9ad8ff", horn: "#ffe066" } },
+  "Pirate Parrot": { art: PIX_PIRATE_PARROT, palette: { body: "#3aa84a", dark: "#2a2a2a", belly: "#f4f0e0", wing: "#3a6ad8", horn: "#f2c440" } },
+  "Shell Turtle": { art: PIX_SHELL_TURTLE, palette: { body: "#7ab04f", dark: "#4a6a2a", belly: "#e8e0a0", wing: "#8a6a3a", horn: "#f2c440" } },
+  "Shark Pup": { art: PIX_SHARK_PUP, palette: { body: "#6a8aa8", dark: "#3a4a68", belly: "#f0f4f8", wing: "#5a7a98", horn: "#ffffff" } },
+  "Acorn Knight": { art: PIX_ACORN_KNIGHT, palette: { body: "#6fbf4a", dark: "#6a4a2a", belly: "#dfe6f0", wing: "#b8803a", horn: "#f2c440" } },
+  "Fox Spirit": { art: PIX_FOX_SPIRIT, palette: { body: "#f08a3a", dark: "#8a4a1a", belly: "#fff4e8", wing: "#c86a2a", horn: "#7fe3ff" } },
+  "Pixie Trickster": { art: PIX_PIXIE, palette: { body: "#ff9ac8", dark: "#4a9a3a", belly: "#ffe0cc", wing: "#c8f0ff", horn: "#ffe84a" } },
+  "Bee Swarm": { art: PIX_BEE_SWARM, palette: { body: "#f2c440", dark: "#3a2a1a", belly: "#ffffff", wing: "#d8f0ff", horn: "#f2c440" } },
+  "Scarecrow": { art: PIX_SCARECROW, palette: { body: "#c8503a", dark: "#3a2a1a", belly: "#e8d0a0", wing: "#8a5a32", horn: "#f2d060" } },
+  "Haunted Armor": { art: PIX_HAUNTED_ARMOR, palette: { body: "#a8d8ff", dark: "#5a4a3a", belly: "#e8e8f0", wing: "#9aa8b8", horn: "#7fffd0" } },
+  "Ghost Cat": { art: PIX_GHOST_CAT, palette: { body: "#c8d8f0", dark: "#6a7a98", belly: "#ffffff", wing: "#a8b8d8", horn: "#7fff7a" } },
+  "Will-o-Wisp": { art: PIX_WISP, palette: { body: "#5ab0ff", dark: "#2a5a9a", belly: "#d8f0ff", wing: "#8ad0ff", horn: "#c8f8ff" } },
+  "Walrus Brute": { art: PIX_WALRUS, palette: { body: "#9a6a4a", dark: "#5a3a28", belly: "#d8b898", wing: "#c8a888", horn: "#ffffff" } },
+  "Snow Owl": { art: PIX_SNOW_OWL, palette: { body: "#f0f4ff", dark: "#6a7a98", belly: "#f8faff", wing: "#d8e0f0", horn: "#ffd23a" } },
+  "Frost Moth": { art: PIX_FROST_MOTH, palette: { body: "#9ab8e8", dark: "#3a4a78", belly: "#ffffff", wing: "#b8e0ff", horn: "#ffffff" } },
+  "Ice Slime": { art: PIX_ICE_SLIME, palette: { body: "#8fd8ff", dark: "#3a8ac0", belly: "#f4fcff", wing: "#c8f0ff", horn: "#ffffff" } },
+  "Tidal Kraken": { art: PIX_KRAKEN, palette: { body: "#b04a78", dark: "#5a1a3a", belly: "#f0c0d8", wing: "#7a2a50", horn: "#ffe066" } },
+  "Kraken Tentacle": { art: PIX_KRAKEN_TENTACLE, sizePct: 0.6, palette: { body: "#b04a78", dark: "#5a1a3a", belly: "#f0c0d8", wing: "#7a2a50", horn: "#ffe066" } },
+  "Sphinx": { art: PIX_SPHINX, palette: { body: "#d8b060", dark: "#6a4a2a", belly: "#f0d0a0", wing: "#e8c060", horn: "#3a6ad8" } },
   "Cyclops Ogre": { art: PIX_OGRE, palette: { body: "#b08050", dark: "#7a5636", belly: "#e8d2a8", wing: "#4a3a2a", horn: "#f0e0a0" } },
   // The Monarch's minions. Without an entry here they fell through to the
    // emoji fallback, so the boss visibly reverted to a green circle the
