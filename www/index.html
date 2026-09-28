@@ -1062,6 +1062,9 @@ html, body {
 /* Night-sky page: a deep violet gradient plus two tiled layers of pixel
    stars (hard-edged 2px dots), so the space around the game card never
    reads as an empty browser page on tablets. */
+/* Pop-ups render into #overlay-root (outside .wrap), so it shares the font. */
+#overlay-root { font-family: 'Nunito', sans-serif; color: var(--text); }
+
 .wrap {
   font-family: 'Nunito', sans-serif;
   image-rendering: auto;
@@ -1535,6 +1538,19 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
 @keyframes bossClock { from { width: 100%; } to { width: 0%; } }
 
 /* ---------- falling in battle / dragon eggs ---------- */
+.egg-spot {
+  position: absolute; left: 38%; bottom: 10%; z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border: none; background: none; cursor: pointer; padding: 0;
+}
+.egg-emoji { font-size: 34px; line-height: 1; filter: drop-shadow(0 3px 0 var(--ink)); animation: eggWobble 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+.egg-label { font: 900 12px var(--font-ui); color: #1a0f1e; background: var(--gold); border-radius: 999px; padding: 2px 9px; box-shadow: 0 0 0 2px var(--ink); }
+@keyframes eggWobble { 0%, 70%, 100% { transform: rotate(0); } 78% { transform: rotate(-9deg); } 86% { transform: rotate(8deg); } 93% { transform: rotate(-4deg); } }
+html.reduce-motion .egg-emoji { animation: none; }
+.hatch-overlay { z-index: 72; }
+.hatch-card { text-align: center; max-width: 340px; }
+.hatch-egg { font-size: 72px; line-height: 1.1; animation: eggWobble 1.4s ease-in-out infinite; transform-origin: 50% 90%; }
+.hatch-card p { color: var(--text); }
+.hatch-short { color: #ffb0a0 !important; font-weight: 800; }
 .death-loss { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: #3a1420; color: #ffd0d0; font-weight: 800; box-shadow: 0 0 0 2px var(--ink); }
 .death-egg { display: flex; align-items: center; gap: 10px; text-align: left; margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: #1a1230; color: var(--text); font-weight: 700; box-shadow: 0 0 0 2px #c9a227; }
 .death-egg-icon { font-size: 36px; }
@@ -1631,6 +1647,7 @@ html.reduce-motion .fireworks { display: none; }
 </head>
 <body>
 <div id="root"></div>
+<div id="overlay-root"></div>
 <script src="hd-art.js"></script>
 <script>
 /* ===================================================================
@@ -1655,7 +1672,8 @@ html.reduce-motion .fireworks { display: none; }
    HTML view functions ...... saveSelectHTML, heroSelectHTML, titleHTML, playingHTML,
                                gameOverHTML, shopHTML, levelUpHTML  (each returns a string;
                                render() below picks one and sets #root.innerHTML)
-   render() + click routing.. function render()  /  root.addEventListener("click", ...)
+   render() + click routing.. function render()  /  document.body.addEventListener("click", ...)
+                               (pop-ups render into #overlay-root, only when their HTML changes)
                                (data-action attributes in the HTML fns above route here)
    Pixel-art sprite data ..... PIX_DRAGON, PIX_SLIME, PIX_HERO_BOY(_SEAT), PIX_HERO_GIRL(_SEAT),
                                PIX_GOBLIN..PIX_ANCIENT_EFFIGY (one block per monster),
@@ -2386,7 +2404,7 @@ const ENEMIES = [
 /* Roughly a 1-in-5 chance per wave (never on boss waves, never twice in a
    row) that the next wave is a treasure chest instead of a real enemy. */
 function decideChest(wave) {
-  if (wave <= 1 || wave % 5 === 0) return false;
+  if (wave <= 1 || isBossWave(wave)) return false;
   S.wavesSinceChest = (S.wavesSinceChest || 0) + 1;
   if (S.wavesSinceChest < 2) return false;
   const trigger = Math.random() < 0.18;
@@ -2549,9 +2567,10 @@ const BOSSES = [
     glow: "#e0b050",
     hpMult: 1.8,
     hint: "Answer before the clock runs out!",
-    /* Every problem gets a visible 20-second countdown. Let it run out and
+    /* Every problem gets a visible countdown: 30 seconds at math rank 1,
+       shrinking evenly to 20 seconds at the top rank. Let it run out and
        the Colossus strikes, then a new problem comes. */
-    clock: { ms: 20000, line: "Tick-tock... too slow!" },
+    clock: { maxMs: 30000, minMs: 20000, line: "Tick-tock... too slow!" },
   },
   {
     name: "Crystal Queen",
@@ -2683,7 +2702,8 @@ function startBossClock() {
   stopBossClock();
   const boss = liveBoss("clock");
   if (!boss || S.screen !== "playing" || !S.problem) return;
-  const ms = boss.clock.ms || 20000;   // fights saved before the change carry the old spec
+  const c = boss.clock, hi = c.maxMs || 30000, lo = c.minMs || 20000;   // older saved fights lack these
+  const ms = Math.round(hi - (hi - lo) * (Math.max(1, S.mathBand) - 1) / (MAX_BAND - 1));
   S.bossClock = { ms, start: Date.now(), problem: S.problem };
   scheduleBossClock(ms);
 }
@@ -2700,7 +2720,7 @@ function scheduleBossClock(wait) {
     const c = S.bossClock;
     const boss = liveBoss("clock");
     if (S.runId !== rid || !c || !boss || S.problem !== c.problem || S.pick) return;
-    const covered = S.bossIntro || S.celebrations.length || S.settingsOpen || S.shopOpen || S.bookOpen
+    const covered = S.bossIntro || S.celebrations.length || S.settingsOpen || S.shopOpen || S.bookOpen || S.hatchOpen
       || S.mapOpen || S.levelUpData || S.locked || document.visibilityState !== "visible";
     if (covered) { c.start += 500; scheduleBossClock(500); return; }
     const left = c.start + c.ms - Date.now();
@@ -2717,7 +2737,7 @@ function scheduleBossClock(wait) {
 }
 
 /* The first boss is always the Ooze Monarch, so every kid meets the same
-   creature at wave 5 and learns what a boss wave is against a fight that's
+   creature at the first boss wave and learns what a boss wave is against a fight that's
    been tuned for it. Every boss wave after that draws from a shuffled bag,
    same as normal enemies -- varied order, but no repeats until the whole
    boss roster has been seen. */
@@ -2733,7 +2753,7 @@ function refillBossBag() {
 
 function getBossForWave(wave) {
   let base;
-  if (wave === 5) {
+  if (wave === firstBossWave()) {
     base = BOSSES[0];                       // always the Ooze Monarch
     S.lastBossName = base.name;
   } else {
@@ -2864,7 +2884,7 @@ function getWeaknessMult(target, problem) {
 
 function getEnemyForWave(wave) {
   const base = drawEnemyFromBag();
-  const isBoss = wave % 5 === 0;
+  const isBoss = isBossWave(wave);
   const maxHP = scaledEnemyHP(wave, isBoss ? 1.5 : 1);
   return { ...base, isBoss, maxHP };
 }
@@ -2928,6 +2948,21 @@ const COSMETICS = [
 function seededRandom01(n) {
   n = (n << 13) ^ n;
   return ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 0x7fffffff;
+}
+
+/* Boss waves come every 10-15 waves. The gaps are seeded, so they're the
+   same every run and the world map can show where the bosses are. */
+const BOSS_GAP_MIN = 10, BOSS_GAP_MAX = 15;
+function isBossWave(wave) {
+  let w = 0;
+  for (let i = 0; w < wave; i++) {
+    w += BOSS_GAP_MIN + Math.floor(seededRandom01(1000 + i) * (BOSS_GAP_MAX - BOSS_GAP_MIN + 1));
+    if (w === wave) return true;
+  }
+  return false;
+}
+function firstBossWave() {
+  return BOSS_GAP_MIN + Math.floor(seededRandom01(1000) * (BOSS_GAP_MAX - BOSS_GAP_MIN + 1));
 }
 
 /* Permanent +1 DMG upgrades, incremental cost, gated by dragon level.
@@ -3264,6 +3299,7 @@ const S = {
   // the dragon's price, no dragon can be ridden or bought.
   egg: null,
   lastDeath: null,
+  hatchOpen: false,
   // Secret admin panel (owner testing). Unlocked by code for this session
   // only; "Turn off & lock" saves and locks it again.
   adminGate: null,
@@ -3465,8 +3501,8 @@ function advanceActiveEnemy() {
 /* Roughly every 2-3 eligible waves (dragon level 3+, non-boss) spawns a pack
    of enemies instead of a single foe. Boss waves always stay solo. */
 function decideMulti(wave, level) {
-  const isBossWave = wave % 5 === 0;
-  if (isBossWave || level < 3) return false;
+  const bossWave = isBossWave(wave);
+  if (bossWave || level < 3) return false;
   S.wavesSinceMulti = (S.wavesSinceMulti || 0) + 1;
   let trigger = false;
   if (S.wavesSinceMulti >= 3) trigger = true;
@@ -3478,8 +3514,8 @@ function decideMulti(wave, level) {
 function spawnWave(wave, level) {
   S.waveMisses = 0;
   // Boss waves draw from the boss roster; everything else from the bag.
-  const isBossWave = wave % 5 === 0;
-  const base = isBossWave ? getBossForWave(wave) : getEnemyForWave(wave);
+  const bossWave = isBossWave(wave);
+  const base = bossWave ? getBossForWave(wave) : getEnemyForWave(wave);
   if (decideChest(wave)) {
     const chestHP = Math.max(4, Math.round(base.maxHP * 0.5));
     S.enemies = [{
@@ -5048,6 +5084,7 @@ function playingHTML() {
          it stretches to fill whatever height the phone has left, so the
          battle never scrolls. Banners float over the bottom of it. -->
     <div id="battlefield-anchor" class="battlefield-anchor">
+      ${S.egg ? `<button class="egg-spot" data-action="open-hatch" aria-label="Hatch your dragon egg"><span class="egg-emoji">🥚</span><span class="egg-label">Hatch</span></button>` : ""}
       <div class="stage-banners">
         ${S.banner ? `<div class="banner">${S.banner}</div>` : ""}
         ${S.bossBanner ? `<div class="banner boss-banner">${S.bossBanner}</div>` : ""}
@@ -5099,6 +5136,24 @@ function fallInBattle() {
   S.lastDeath = { lostCoins, newEgg };
 }
 
+function hatchHTML() {
+  const egg = COSMETICS.find((c) => c.id === S.egg);
+  if (!egg) return "";
+  const cost = hatchCost(egg.id);
+  const short = cost - S.coins;
+  return `
+  <div class="shop-overlay hatch-overlay">
+    <div class="card hatch-card">
+      <div class="hatch-egg">🥚</div>
+      <h2>${esc(egg.name)} Egg</h2>
+      <p>Your dragon is waiting inside! Hatch it to ride into battle again.</p>
+      <button class="btn primary big" data-action="hatch-egg" ${short > 0 ? "disabled" : ""}>🐣 Hatch for 🪙${cost}</button>
+      ${short > 0 ? `<p class="hatch-short">You need 🪙${short} more. Keep battling to earn it!</p>` : ""}
+      <button class="btn ghost" data-action="close-hatch">Not yet</button>
+    </div>
+  </div>`;
+}
+
 function hatchEgg() {
   const id = S.egg;
   const cost = hatchCost(id);
@@ -5106,6 +5161,7 @@ function hatchEgg() {
   Sound.play("buy");
   S.coins -= cost;
   S.egg = null;
+  S.hatchOpen = false;
   S.equippedCreature = id;
   const item = COSMETICS.find((c) => c.id === id);
   celebrate({ icon: "🐣", kicker: "Your egg hatched!", title: item ? item.name : "Your dragon", sub: "Climb aboard and ride again!" });
@@ -5320,7 +5376,7 @@ function mapHTML() {
     const nodes = Array.from({ length: WAVES_PER_WORLD }, (_, i) => {
       const wave = first + i;
       const state = wave < S.wave ? "done" : wave === S.wave ? "here" : "ahead";
-      const boss = wave % 5 === 0;
+      const boss = isBossWave(wave);
       const mark = wave === S.wave ? "🐉" : boss ? "👑" : wave < S.wave ? "✓" : wave;
       const flag = wave === best && best > S.wave ? `<i class="map-flag">🚩</i>` : "";
       return `<span class="map-node ${state}${boss ? " boss" : ""}" aria-label="Wave ${wave}">${mark}${flag}</span>`;
@@ -5418,6 +5474,9 @@ function render() {
   });
 }
 
+const overlayRoot = document.getElementById("overlay-root");
+let lastOverlayHTML = "";
+
 function renderNow() {
   const fit = S.screen === "playing";
   document.documentElement.classList.toggle("battle-fit", fit);
@@ -5429,18 +5488,26 @@ function renderNow() {
   else if (S.screen === "gameover") html += gameOverHTML();
   else if (S.screen === "parentgate") html += parentGateHTML();
   else if (S.screen === "parents") html += parentsHTML();
-  if (S.shopOpen) html += shopHTML();
-  if (S.bookOpen) html += bookHTML();
-  if (S.mapOpen) html += mapHTML();
-  if (S.settingsOpen) html += settingsHTML();
-  if (S.adminGate || S.adminOpen) html += adminHTML();
-  if (S.levelUpData) html += levelUpHTML();
-  if (S.celebrations.length) html += celebrationHTML();
-  if (S.badgeToasts.length) html += badgeToastHTML();
   html += "</div>";
-  if (S.bossIntro) { html += bossIntroHTML(); S.bossIntro.seen = true; }
+  // Pop-ups live in their own layer and are only rebuilt when their HTML
+  // actually changes. The battle screen re-renders many times a second
+  // (timers, banners, HP), and rebuilding a pop-up with it restarted its
+  // entrance animation -- level ups, boss intros and celebrations looked
+  // like they were playing two or three times.
+  let ov = "";
+  if (S.shopOpen) ov += shopHTML();
+  if (S.bookOpen) ov += bookHTML();
+  if (S.mapOpen) ov += mapHTML();
+  if (S.settingsOpen) ov += settingsHTML();
+  if (S.hatchOpen) ov += hatchHTML();
+  if (S.adminGate || S.adminOpen) ov += adminHTML();
+  if (S.levelUpData) ov += levelUpHTML();
+  if (S.celebrations.length) ov += celebrationHTML();
+  if (S.badgeToasts.length) ov += badgeToastHTML();
+  if (S.bossIntro) ov += bossIntroHTML();
   const bars = captureBars();
   root.innerHTML = html;
+  if (ov !== lastOverlayHTML) { overlayRoot.innerHTML = ov; lastOverlayHTML = ov; }
   animateBars(bars);
   if (S.screen === "heroselect") paintHeroPortraits();
   if (S.screen === "title") runTitleScene();
@@ -5448,14 +5515,14 @@ function renderNow() {
   syncBattleStage();
 }
 
-root.addEventListener("input", (e) => {
+document.body.addEventListener("input", (e) => {
   if (e.target && e.target.id === "volume-slider") {
     Sound.setVolume(Number(e.target.value));
     const lab = document.getElementById("volume-label");
     if (lab) lab.textContent = `${Sound.volume}%`;
   }
 });
-root.addEventListener("change", (e) => {
+document.body.addEventListener("change", (e) => {
   if (e.target && e.target.id === "volume-slider") Sound.play("coin");   // preview at the new level
 });
 
@@ -5497,7 +5564,7 @@ function animateBars(prev) {
 }
 
 /* ---------- events (delegated) ---------- */
-root.addEventListener("click", (e) => {
+document.body.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
@@ -5507,6 +5574,8 @@ root.addEventListener("click", (e) => {
   else if (action === "open-shop") { S.shopOpen = true; render(); }
   else if (action === "close-shop") { S.shopOpen = false; render(); }
   else if (action === "hatch-egg") hatchEgg();
+  else if (action === "open-hatch") { S.hatchOpen = true; render(); }
+  else if (action === "close-hatch") { S.hatchOpen = false; render(); }
   else if (action === "open-book") { S.bookOpen = true; render(); }
   else if (action === "close-book") { S.bookOpen = false; render(); }
   else if (action === "book-tab") { S.bookTab = btn.dataset.tab; render(); }
@@ -5596,6 +5665,7 @@ document.addEventListener("visibilitychange", () => {
     if (S.settingsOpen) { S.settingsOpen = false; render(); return; }
     if (S.shopOpen) { S.shopOpen = false; render(); return; }
     if (S.bookOpen) { S.bookOpen = false; render(); return; }
+    if (S.hatchOpen) { S.hatchOpen = false; render(); return; }
     if (S.mapOpen) { S.mapOpen = false; render(); return; }
     if (S.screen === "parents" || S.screen === "parentgate") { S.parentGate = null; S.screen = "saveselect"; render(); return; }
     if (S.screen === "title") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
