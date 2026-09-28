@@ -1,19 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { loadSection } from "./load-game.mjs";
 
-const NEW = ["PIX_SALAMANDER", "PIX_MAGMA_BEETLE", "PIX_LAVA_GOLEM", "PIX_CRAB_KNIGHT", "PIX_BUBBLE_PUFFER",
-  "PIX_REEF_EEL", "PIX_BOG_FROG", "PIX_MUSHROOM_IMP", "PIX_TREANT", "PIX_THORN_WOLF", "PIX_OWLBEAR",
-  "PIX_PUMPKIN_GHOUL", "PIX_CANDLE_GHOST", "PIX_MUMMY", "PIX_MIMIC", "PIX_STORM_SPRITE", "PIX_ICE_IMP",
-  "PIX_YETI", "PIX_PENGUIN_KNIGHT", "PIX_SAND_SCORPION",
-  "PIX_PHOENIX_CHICK", "PIX_CINDER_HOUND", "PIX_LAVA_SNAIL", "PIX_OBSIDIAN_KNIGHT", "PIX_GLOW_JELLY",
-  "PIX_PIRATE_PARROT", "PIX_SHELL_TURTLE", "PIX_SHARK_PUP", "PIX_ACORN_KNIGHT", "PIX_FOX_SPIRIT", "PIX_PIXIE",
-  "PIX_BEE_SWARM", "PIX_SCARECROW", "PIX_HAUNTED_ARMOR", "PIX_GHOST_CAT", "PIX_WISP", "PIX_WALRUS", "PIX_SNOW_OWL",
-  "PIX_FROST_MOTH", "PIX_ICE_SLIME", "PIX_KRAKEN", "PIX_KRAKEN_TENTACLE", "PIX_SPHINX",
-  "PIX_HYDRA", "PIX_CLOCKWORK", "PIX_CRYSTAL_QUEEN", "PIX_GOBLIN_KING", "PIX_MOSS_WITCH"];
-const S = loadSection("function pixDraw(", "const PIX_ENEMY_ART", NEW);
+// Every sprite built with pixDraw, found automatically so new art is always covered.
+const html = readFileSync(new URL("../www/index.html", import.meta.url), "utf8");
+const NAMES = [...html.matchAll(/^const (PIX_[A-Z0-9_]+) = pixDraw\(/gm)].map((m) => m[1]);
+const S = loadSection("function pixDraw(", "const PIX_ENEMY_ART", NAMES);
 
-for (const name of NEW) {
+test("found the shape-drawn sprites", () => assert.ok(NAMES.length >= 70, `only ${NAMES.length}`));
+
+for (const name of NAMES) {
   test(`${name}: well-formed, animated, nothing clipped at the edges`, () => {
     const sp = S[name];
     assert.equal(sp.frames.length, 2);

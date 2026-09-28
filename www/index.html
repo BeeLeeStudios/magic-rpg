@@ -1533,6 +1533,10 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
 .boss-intro-hint { font-family: var(--font-ui); color: #fff3c4; font-weight: 800; font-size: 16px; margin: 6px 16px 10px; text-align: center; }
 .problem-card.riddle { box-shadow: 0 0 0 3px #b58cff, 0 0 26px rgba(181,140,255,0.65) !important; }
 .problem-card.riddle .streak::before { content: "🔮 RIDDLE! "; color: #d8c0ff; }
+.problem-card.storm { box-shadow: 0 0 0 3px #ffe84a, 0 0 26px rgba(255,232,74,0.6) !important; }
+.problem-card.storm .streak::before { content: "⚡ ANSWER FAST! "; color: #ffe84a; }
+.problem-card.mirrored { box-shadow: 0 0 0 3px #9fdcff, 0 0 22px rgba(159,220,255,0.6) !important; }
+.problem-card.mirrored .streak::before { content: "🪞 TRY AGAIN: x2! "; color: #bfeaff; }
 .boss-clock { height: 7px; border-radius: 4px; background: #2d2344; overflow: hidden; margin: -4px 0 6px; box-shadow: 0 0 0 2px var(--ink); }
 .boss-clock i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #ff5a3a, #f2c440); animation: bossClock linear forwards; }
 @keyframes bossClock { from { width: 100%; } to { width: 0%; } }
@@ -2325,14 +2329,20 @@ function getEnemyDamage() {
   // exact opposite of what the summon mechanic is for.
   const minions = S.enemies.filter((e) => e.isMinion && e.hp > 0).length;
   if (minions > 0) raw = Math.round(raw * (1 + 0.35 * minions));
+
   // Hard floor on survivability: a full-health player always gets at least
   // MIN_HITS_TO_DIE strikes before dying, at any wave. Without this the
   // wave-scaled damage eventually one- or two-shots them.
   const cap = Math.floor(S.playerMaxHP / MIN_HITS_TO_DIE);
-  return Math.max(2, Math.min(raw, cap));
+  let dmg = Math.max(2, Math.min(raw, cap));
+  // The Vampire Count grows stronger each round, on top of the usual cap
+  // (limited to 2x, so a full-health player still survives three hits).
+  const count = liveBoss("enrage");
+  if (count) dmg = Math.round(dmg * Math.min(count.enrage.max, 1 + count.enrage.step * (count.rounds || 0)));
+  return dmg;
 }
 
-/* Sixty fantasy creatures, drawn from a shuffled bag so none repeats until
+/* A hundred fantasy creatures, drawn from a shuffled bag so none repeats until
    the whole roster has been seen. The first twenty are hand-typed sprites;
    the rest (Fire Salamander onward) are shape-drawn with pixDraw. Every one
    needs a matching PIX_ENEMY_ART entry or it falls back to its emoji. */
@@ -2397,6 +2407,46 @@ const ENEMIES = [
   { name: "Snow Owl", emoji: "\u{1F989}", glow: "#f0f4ff" },
   { name: "Frost Moth", emoji: "\u{1F98B}", glow: "#b8e0ff" },
   { name: "Ice Slime", emoji: "\u{1F4A7}", glow: "#8fd8ff" },
+  { name: "Fire Imp", emoji: "\u{1F608}", glow: "#ff6a3a" },
+  { name: "Ash Wraith", emoji: "\u{1F32B}\uFE0F", glow: "#c8b8b0" },
+  { name: "Magma Toad", emoji: "\u{1F438}", glow: "#ff8a3a" },
+  { name: "Cinder Bat", emoji: "\u{1F987}", glow: "#ff7a2a" },
+  { name: "Rock Rhino", emoji: "\u{1F98F}", glow: "#c8b8a0" },
+  { name: "Smoke Serpent", emoji: "\u{1F40D}", glow: "#a8a0a8" },
+  { name: "Fire Ant", emoji: "\u{1F41C}", glow: "#ff5a3a" },
+  { name: "Volcano Crow", emoji: "\u{1F426}\u200D\u2B1B", glow: "#ff8a3a" },
+  { name: "Octo Pup", emoji: "\u{1F419}", glow: "#ff9ab8" },
+  { name: "Coral Golem", emoji: "\u{1FAB8}", glow: "#ff8a7a" },
+  { name: "Seahorse Knight", emoji: "\u{1F40E}", glow: "#7fd0e8" },
+  { name: "Hermit Crab", emoji: "\u{1F980}", glow: "#ff9a6a" },
+  { name: "Angler Fish", emoji: "\u{1F41F}", glow: "#ffe066" },
+  { name: "Clam Chomper", emoji: "\u{1F41A}", glow: "#f0c8e8" },
+  { name: "Star Brute", emoji: "\u2B50", glow: "#ffb070" },
+  { name: "Manta Glider", emoji: "\u{1F42C}", glow: "#7fb8e8" },
+  { name: "Mossy Boar", emoji: "\u{1F417}", glow: "#a8c870" },
+  { name: "Vine Serpent", emoji: "\u{1F40D}", glow: "#8fd06a" },
+  { name: "Beetle Knight", emoji: "\u{1FAB2}", glow: "#6ad8a8" },
+  { name: "Stump Golem", emoji: "\u{1FAB5}", glow: "#c8a070" },
+  { name: "Hedgehog Scout", emoji: "\u{1F994}", glow: "#c8a070" },
+  { name: "Badger Brawler", emoji: "\u{1F9A1}", glow: "#d8d8d8" },
+  { name: "Leaf Sprite", emoji: "\u{1F343}", glow: "#a8e070" },
+  { name: "Squirrel Ranger", emoji: "\u{1F43F}\uFE0F", glow: "#e8a060" },
+  { name: "Zombie", emoji: "\u{1F9DF}", glow: "#8fd06a" },
+  { name: "Shadow Imp", emoji: "\u{1F47F}", glow: "#b58cff" },
+  { name: "Night Raven", emoji: "\u{1F426}\u200D\u2B1B", glow: "#8a7aa8" },
+  { name: "Banshee", emoji: "\u{1F47B}", glow: "#c8e8ff" },
+  { name: "Werewolf Pup", emoji: "\u{1F43A}", glow: "#a8a0b8" },
+  { name: "Tomb Golem", emoji: "\u{1FAA6}", glow: "#7fe3a0" },
+  { name: "Moon Moth", emoji: "\u{1F98B}", glow: "#f0e8a0" },
+  { name: "Cursed Doll", emoji: "\u{1FA86}", glow: "#ff9ab8" },
+  { name: "Ice Golem", emoji: "\u{1F9CA}", glow: "#bff4ff" },
+  { name: "Frost Fox", emoji: "\u{1F98A}", glow: "#e8f4ff" },
+  { name: "Snow Hare", emoji: "\u{1F407}", glow: "#f0f4ff" },
+  { name: "Polar Bear", emoji: "\u{1F43B}\u200D\u2744\uFE0F", glow: "#f0f4ff" },
+  { name: "Snowman Brute", emoji: "\u26C4", glow: "#e8f4ff" },
+  { name: "Mammoth Calf", emoji: "\u{1F9A3}", glow: "#c8a080" },
+  { name: "Ice Wyrm", emoji: "\u{1F409}", glow: "#9fdcff" },
+  { name: "Frost Troll", emoji: "\u{1F9CC}", glow: "#a8d0f0" },
 ];
 
 /* Treasure chest: a random bonus "wave" that replaces a normal enemy.
@@ -2624,6 +2674,58 @@ const BOSSES = [
        High-stakes rounds rather than harder math. */
     riddle: { every: 3, mult: 3, missMult: 2, line: "The Sphinx asks a riddle!" },
   },
+  {
+    name: "Storm Titan",
+    emoji: "\u26C8\uFE0F",
+    glow: "#ffe84a",
+    hpMult: 1.8,
+    hint: "When lightning charges, answer FAST to throw it back!",
+    /* Every 4th problem is a lightning round: answer right within the
+       rank's time budget and the bolt is thrown back for double damage;
+       too slow or wrong and it strikes you hard. */
+    storm: { every: 4, deflectMult: 2, zapMult: 2, line: "⚡ Lightning is charging! Answer fast!" },
+  },
+  {
+    name: "Vampire Count",
+    emoji: "\u{1F9DB}",
+    glow: "#ff3a4a",
+    hpMult: 1.8,
+    hint: "He grows stronger every round. Beat him quickly!",
+    /* Every round he fights, his hits grow 12% harder (up to 2x): a
+       fight you want to win fast. */
+    enrage: { step: 0.12, max: 2, line: "The Count grows stronger!" },
+  },
+  {
+    name: "Frost Giant",
+    emoji: "\u{1F976}",
+    glow: "#9fdcff",
+    hpMult: 1.8,
+    hint: "Only your answers can hurt him. Fireballs, pets and poison bounce off!",
+    /* Immune to every helper -- fireball, dragon breath, pet and poison --
+       so the math has to do all of the work. */
+    helperImmune: true,
+  },
+  {
+    name: "Shadow Dragon",
+    emoji: "\u{1F409}",
+    glow: "#b58cff",
+    hpMult: 1.8,
+    hint: "When it hides, keep answering! It all hits at once when it comes back.",
+    /* Hides in shadow for 2 of every 5 rounds. Right answers while it's
+       hidden are stored up and all land on the first hit after it
+       reappears. */
+    shadow: { cycle: 5, hidden: 2, hideLine: "The Shadow Dragon vanishes!", showLine: "It's back! Your stored hits land!" },
+  },
+  {
+    name: "Mirror Knight",
+    emoji: "\u{1FA9E}",
+    glow: "#9fdcff",
+    hpMult: 1.8,
+    hint: "Miss a problem and he throws it right back. Get it right for double damage!",
+    /* Any problem you miss comes straight back as the next problem; getting
+       it right the second time hits twice as hard. */
+    mirror: { mult: 2, line: "🪞 The Mirror Knight throws it back!" },
+  },
 ];
 
 /* The live boss (if any) that has the given mechanic. */
@@ -2637,6 +2739,21 @@ function showBossBanner(line) {
   const rid = S.runId;
   render();
   setTimeout(() => { if (S.runId === rid && S.bossBanner === line) { S.bossBanner = null; render(); } }, 2000);
+}
+
+/* Frost Giant: helpers (fireball, breath, pet, poison) bounce off. */
+function helperBlocked(target) {
+  if (!target || !target.helperImmune) return false;
+  addPopup("❄️ BLOCKED", "enemy", "dmg");
+  Sound.play("clink");
+  return true;
+}
+
+/* Shadow Dragon: hidden for the last `hidden` rounds of every cycle. */
+function shadowHidden(boss) {
+  if (!boss || !boss.shadow) return false;
+  const c = boss.shadow.cycle;
+  return (boss.shadowRound % c) >= c - boss.shadow.hidden;
 }
 
 /* Kraken: puts its guard tentacles in front of it. */
@@ -3300,6 +3417,8 @@ const S = {
   egg: null,
   lastDeath: null,
   hatchOpen: false,
+  // Mirror Knight: the last missed problem, thrown back next.
+  mirrorProblem: null,
   // Secret admin panel (owner testing). Unlocked by code for this session
   // only; "Turn off & lock" saves and locks it again.
   adminGate: null,
@@ -3363,6 +3482,19 @@ function newProblem(lvl) {
   S.problem = p;
   S.choices = makeChoices(p);
   S.problemShownAt = Date.now();
+  const mirror = liveBoss("mirror");
+  if (mirror && S.mirrorProblem) {
+    const back = Object.assign({}, S.mirrorProblem, { mirrored: true });
+    S.problem = back;
+    S.choices = makeChoices(back);
+    S.mirrorProblem = null;
+    showBossBanner(mirror.mirror.line);
+  }
+  const titan = liveBoss("storm");
+  if (titan) {
+    titan.stormCount = (titan.stormCount || 0) + 1;
+    if (titan.stormCount % titan.storm.every === 0) { S.problem.storm = true; showBossBanner(titan.storm.line); }
+  }
   const sphinx = liveBoss("riddle");
   if (sphinx) {
     sphinx.riddleCount = (sphinx.riddleCount || 0) + 1;
@@ -3553,6 +3685,11 @@ function spawnWave(wave, level) {
       brew: base.brew || null, brewCounter: 0,
       guard: base.guard || null, guardTimer: 0,
       riddle: base.riddle || null, riddleCount: 0,
+      storm: base.storm || null, stormCount: 0,
+      enrage: base.enrage || null, rounds: 0,
+      helperImmune: !!base.helperImmune,
+      shadow: base.shadow || null, shadowRound: 0, shadowStore: 0,
+      mirror: base.mirror || null,
     }];
     if (base.guard) spawnGuards(S.enemies[0]);
     S.currentWaveMeta = { isBoss: base.isBoss, name: base.name, count: 1 };
@@ -3603,6 +3740,17 @@ function finishRound() {
     setTimeout(() => {
       if (S.runId === crid && S.bossBanner === cMsg) { S.bossBanner = null; render(); }
     }, 2000);
+  }
+
+  const vamp = liveBoss("enrage");
+  if (vamp) { vamp.rounds = (vamp.rounds || 0) + 1; if (vamp.rounds % 3 === 0) showBossBanner(vamp.enrage.line); }
+  const shade = liveBoss("shadow");
+  if (shade) {
+    const wasHidden = shadowHidden(shade);
+    shade.shadowRound = (shade.shadowRound || 0) + 1;
+    const nowHidden = shadowHidden(shade);
+    if (!wasHidden && nowHidden) showBossBanner(shade.shadow.hideLine);
+    if (wasHidden && !nowHidden) showBossBanner(shade.shadow.showLine);
   }
 
   const guardLine = tickKrakenGuard();
@@ -4034,7 +4182,11 @@ function handleAnswer(val) {
   S.lastAnswerCorrect = correct;
   S.pick = { val, correct, answer: S.problem.answer };
   Sound.play(correct ? "correct" : "wrong");
-  if (!correct) { buzz(); S.waveMisses += 1; }
+  if (!correct) {
+    buzz();
+    S.waveMisses += 1;
+    if (liveBoss("mirror")) S.mirrorProblem = { a: S.problem.a, op: S.problem.op, b: S.problem.b, answer: S.problem.answer, band: S.problem.band };
+  }
 
   // Timing drives both the mastery check and the speed damage bonus.
   const elapsed = Math.max(0, Date.now() - (S.problemShownAt || Date.now()));
@@ -4071,6 +4223,13 @@ function handleAnswer(val) {
     // Poison ticks, the monster's occasional free strike, then next problem.
     const endRound = () => {
       if (S.runId !== rid) return;
+      const titanNow = answeredProblem.storm ? liveBoss("storm") : null;
+      if (titanNow && elapsed > getBand(answeredProblem.band || S.mathBand).speedMs) {
+        showBossBanner("ZAP! Too slow!");
+        applyPoisonTicks();
+        enemyStrikePlayer(Math.round(getEnemyDamage() * titanNow.storm.zapMult), finishRound);
+        return;
+      }
       applyPoisonTicks();
       // Even on a correct answer, the monster gets an unprovoked strike
       // every 5-7 rounds (as long as it's still alive). Treasure chests
@@ -4101,7 +4260,7 @@ function handleAnswer(val) {
       setTimeout(() => {
         if (S.runId !== rid) return;
         const t2 = getActiveEnemy();
-        if (t2 && t2.hp > 0) {
+        if (t2 && t2.hp > 0 && !helperBlocked(t2)) {
           t2.hp = Math.max(0, t2.hp - petDmg);
           S.score += petDmg;
           addPopup(`-${petDmg}`, "enemy", "pet");
@@ -4135,7 +4294,16 @@ function handleAnswer(val) {
         const armorMult = getArmorMult(target, elapsed, answeredProblem);
         const streakMult = getStreakArmorMult(target);
         const riddleMult = answeredProblem.riddle && target && target.riddle ? target.riddle.mult : 1;
-        const dmg = Math.max(1, Math.round(skillDmg * weakMult * armorMult * streakMult * riddleMult));
+        const fastEnough = elapsed <= getBand(answeredProblem.band || S.mathBand).speedMs;
+        const stormMult = answeredProblem.storm && target && target.storm && fastEnough ? target.storm.deflectMult : 1;
+        const mirrorMult = answeredProblem.mirrored && target && target.mirror ? target.mirror.mult : 1;
+        let dmg = Math.max(1, Math.round(skillDmg * weakMult * armorMult * streakMult * riddleMult * stormMult * mirrorMult));
+        if (stormMult > 1) addPopup("⚡ DEFLECTED x2!", "enemy", "crit");
+        if (mirrorMult > 1) addPopup("🪞 x2!", "enemy", "crit");
+        if (target && target.shadow) {
+          if (shadowHidden(target)) { target.shadowStore = (target.shadowStore || 0) + dmg; addPopup(`🌑 stored ${dmg}`, "enemy", "dmg"); dmg = 0; }
+          else if (target.shadowStore) { dmg += target.shadowStore; addPopup(`💥 +${target.shadowStore}!`, "enemy", "crit"); target.shadowStore = 0; }
+        }
         if (riddleMult > 1) addPopup(`🔮 RIDDLE x${riddleMult}!`, "enemy", "crit");
         if (streakMult !== 1) addPopup(`💎 x${streakMult}`, "enemy", streakMult > 1 ? "crit" : "dmg");
         if (weakMult > 1) addPopup("WEAK!", "enemy", "crit");
@@ -4143,10 +4311,12 @@ function handleAnswer(val) {
         // broken -- the player needs to know WHY the hit barely landed.
         if (armorMult < 1) { addPopup("🛡️ FROZEN!", "enemy", "dmg"); Sound.play("clink"); }
         if (hit.fast && !isCrit) addPopup("⚡ FAST!", "player", "heal");
-        addPopup(`-${dmg}${isCrit ? "!" : ""}`, "enemy", isCrit ? "crit" : "dmg");
-        addImpact("enemy");
-        S.enemyAnim = "hit";
-        BattleFX.enemyHit();
+        if (dmg > 0) {
+          addPopup(`-${dmg}${isCrit ? "!" : ""}`, "enemy", isCrit ? "crit" : "dmg");
+          addImpact("enemy");
+          S.enemyAnim = "hit";
+          BattleFX.enemyHit();
+        }
         S.score += dmg;
         if (target) target.hp = Math.max(0, target.hp - dmg);
         // Boss phase check: dropping past a threshold splits off minions.
@@ -4189,7 +4359,7 @@ function handleAnswer(val) {
       setTimeout(() => {
         if (S.runId !== rid) return;
         const target = getActiveEnemy();
-        if (target && target.hp > 0) {
+        if (target && target.hp > 0 && !helperBlocked(target)) {
           const bd = randInt(breath.dmg[0], breath.dmg[1]);
           target.hp = Math.max(0, target.hp - bd);
           S.score += bd;
@@ -4223,7 +4393,9 @@ function handleAnswer(val) {
       // Wave-scaled and hard-capped at 35% of max HP, so a miss on a big
       // two-digit problem can never one-shot a full-health dragon.
       const riddleBoss = answeredProblem.riddle ? liveBoss("riddle") : null;
-      enemyStrikePlayer(getEnemyDamage() * (riddleBoss ? riddleBoss.riddle.missMult : 1), () => {
+      const stormBoss = answeredProblem.storm ? liveBoss("storm") : null;
+      const missMult = (riddleBoss ? riddleBoss.riddle.missMult : 1) * (stormBoss ? stormBoss.storm.zapMult : 1);
+      enemyStrikePlayer(Math.round(getEnemyDamage() * missMult), () => {
         applyPoisonTicks();
         finishRound();
       });
@@ -4312,13 +4484,16 @@ function useFireball() {
     if (isCrit) skillDmg = Math.round(skillDmg * (1.5 + eff.critMultAdd / 100));
     const dmg = skillDmg + Math.round(skillDmg * getPetDmgPercent() / 100);
     const target = getActiveEnemy();
-    addPopup(`-${dmg}${isCrit ? "!" : ""}`, "enemy", isCrit ? "crit" : "dmg");
-    addImpact("enemy");
-    S.enemyAnim = "hit";
-    BattleFX.enemyHit();
-    S.score += dmg;
-    if (target) target.hp = Math.max(0, target.hp - dmg);
-    if (eff.lifestealPct > 0) {
+    const blocked = helperBlocked(target);
+    if (!blocked) {
+      addPopup(`-${dmg}${isCrit ? "!" : ""}`, "enemy", isCrit ? "crit" : "dmg");
+      addImpact("enemy");
+      S.enemyAnim = "hit";
+      BattleFX.enemyHit();
+      S.score += dmg;
+      if (target) target.hp = Math.max(0, target.hp - dmg);
+    }
+    if (!blocked && eff.lifestealPct > 0) {
       const lifestealAmt = Math.round(dmg * eff.lifestealPct / 100);
       if (lifestealAmt > 0 && S.playerHP < S.playerMaxHP) {
         S.playerHP = Math.min(S.playerMaxHP, S.playerHP + lifestealAmt);
@@ -4356,7 +4531,7 @@ function usePotionPoison() {
   if (S.locked) return;
   if (S.potionCharge < 3 || S.potionCooldown > 0) return;
   const target = getActiveEnemy();
-  if (target) target.poisonTurns = 3;
+  if (target && !helperBlocked(target)) target.poisonTurns = 3;
   S.potionCharge = 0;
   S.potionCooldown = 10;
   BattleFX.poisonThrow();   // vial arcs over and splashes; sounds + popup land with it
@@ -5091,7 +5266,7 @@ function playingHTML() {
       </div>
     </div>
 
-    <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}${S.problem.riddle ? " riddle" : ""}">
+    <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}${S.problem.riddle ? " riddle" : ""}${S.problem.storm ? " storm" : ""}${S.problem.mirrored ? " mirrored" : ""}">
       ${S.bossClock ? `<div class="boss-clock" aria-label="Time left"><i style="animation-duration:${S.bossClock.ms}ms;animation-delay:-${Math.max(0, Date.now() - S.bossClock.start)}ms"></i></div>` : ""}
       <div class="streak">${S.streak >= 10 ? `⚡ LEGENDARY! ${S.streak} in a row` : S.streak >= 7 ? `🔥 UNSTOPPABLE! ${S.streak} in a row` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
       <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span>${Speech.available() ? `<button class="speak-btn" data-action="read-problem" aria-label="Read the problem aloud">🔊</button>` : ""}</div>
@@ -9130,6 +9305,382 @@ const PIX_SPHINX = pixDraw(54, 44, 2, (g, f) => {
   g.line(11, 16, 16, 16, "d", 2, 1);
 });
 
+/* ---------- batch 4: 40 enemies built from shared body plans ----------
+   Four-legged beasts, two-legged creatures and flyers share one drawing
+   each (so they animate the same way -- legs stride, arms swing, wings
+   flap); every creature adds its own features on top. */
+function pixBeast(g, f, o) {
+  const bx = o.bx ?? 22, by = o.by ?? 17, bw = o.bw ?? 12, bh = o.bh ?? 6, foot = o.foot ?? 28, lw = o.legW ?? 3;
+  const legY = by + bh - 2, st = f ? 2 : 0;
+  if (o.tail) o.tail(g, f, bx + bw, by);
+  g.line(bx - bw * 0.55, legY, bx - bw * 0.55 - st, foot, "d", 1, lw);
+  g.line(bx + bw * 0.55, legY, bx + bw * 0.55 + st, foot, "d", 1, lw);
+  g.ellipse(bx, by, bw, bh, "b");
+  g.ellipse(bx - 1, by + bh * 0.45, bw * 0.7, bh * 0.35, "l");
+  g.line(bx - bw * 0.3, legY, bx - bw * 0.3 + st, foot, "b", 1, lw);
+  g.line(bx + bw * 0.35, legY, bx + bw * 0.35 - st, foot, "b", 1, lw);
+  const hx = o.hx ?? bx - bw + 2, hy = o.hy ?? by - bh + 1, hr = o.hr ?? 5;
+  if (o.ears === "pointy") { g.poly([[hx - 2, hy - hr + 2], [hx - 1, hy - hr - 4], [hx + 2, hy - hr + 1]], "b"); g.poly([[hx + 1, hy - hr + 2], [hx + 3, hy - hr - 3], [hx + 5, hy - hr + 2]], "b"); }
+  if (o.ears === "round") { g.ellipse(hx + 2, hy - hr + 1, 2, 2, "b"); }
+  g.ellipse(hx, hy, hr, hr - 1, "b");
+  if (o.snout) g.ellipse(hx - hr + 1, hy + 1, o.snout, o.snout * 0.75, o.snoutSlot || "b");
+  g.eye(hx - 2, hy - 2, false);
+  if (o.extra) o.extra(g, f, { bx, by, bw, bh, hx, hy, hr });
+}
+
+function pixBiped(g, f, o) {
+  const cx = o.cx ?? 15, hy = o.hy ?? 9, hr = o.hr ?? 6, bw = o.bw ?? 7, bh = o.bh ?? 9, foot = o.foot ?? 36;
+  const by = hy + hr + bh - 1, sw = f ? 2 : 0;
+  if (o.back) o.back(g, f);
+  g.rect(cx - 5, by + bh - 3, cx - 2, foot, "d"); g.rect(cx + 2, by + bh - 3, cx + 5, foot, "d");   // legs
+  g.ellipse(cx, by, bw, bh, o.bodySlot || "b");                                                   // body
+  if (!o.noBelly) g.ellipse(cx - 1, by + 1, bw * 0.55, bh * 0.6, "l");
+  g.line(cx - bw + 1, by - bh + 3, cx - bw - 3, by + 2 - sw * 2, o.armSlot || "b", 1, 2);            // arms swing
+  g.line(cx + bw - 1, by - bh + 3, cx + bw + 3, by + 2 + sw, o.armSlot || "b", 1, 2);
+  g.ellipse(cx, hy, hr, hr, o.headSlot || "b");                                                   // head
+  if (!o.noEyes) { g.eye(cx - 4, hy - 1, true); g.eye(cx + 1, hy - 1, true); }
+  if (o.extra) o.extra(g, f, { cx, hy, hr, by, bw, bh, sw });
+}
+
+function pixFlyer(g, f, o) {
+  const cx = o.cx ?? 18, cy = o.cy ?? 15, bw = o.bw ?? 6, bh = o.bh ?? 5, span = o.span ?? 14;
+  const up = f ? -5 : 2;
+  g.poly([[cx - 2, cy - 1], [cx - span, cy + up - 3], [cx - span + 3, cy + up + 3], [cx - 3, cy + 3]], o.wingSlot || "w");
+  g.poly([[cx + 2, cy - 1], [cx + span, cy + up - 3], [cx + span - 3, cy + up + 3], [cx + 3, cy + 3]], o.wingSlot || "w");
+  g.ellipse(cx, cy, bw, bh, "b");
+  if (o.extra) o.extra(g, f, { cx, cy, bw, bh, up });
+}
+
+// ---- Volcano ----
+const PIX_FIRE_IMP = pixDraw(28, 36, 2, (g, f) => pixBiped(g, f, { cx: 14, bw: 6, bh: 7, foot: 34,
+  back: (g) => { g.line(19, 26, 25, 30, "b", 1, 1); g.poly([[24, 29], [27, 30], [24, 32]], "h", 0); },
+  extra: (g, f, p) => { g.poly([[9, 5], [8, -1], [11, 4]], "d"); g.poly([[18, 4], [21, -1], [20, 5]], "d");   // horns
+    g.line(10, 13, 17, 13, "e", 1, 1); g.poly([[4, f ? 16 : 20], [6, f ? 11 : 15], [8, f ? 16 : 20]], "h", 0); } }));   // fireball in hand
+const PIX_ASH_WRAITH = pixDraw(30, 38, 2, (g, f) => {
+  g.poly([[6, 12], [24, 12], [27, 35], [22, 31], [18, 36], [13, 31], [8, 36], [3, 32]], "d", (x, y) => (y > 28 ? 2 : 1));   // tattered robe
+  g.line(7, 16, 1, f ? 12 : 18, "d", 1, 2); g.line(23, 16, 29, f ? 18 : 12, "d", 1, 2);
+  g.ellipse(15, 9, 7, 7, "b"); g.rect(10, 9, 20, 11, "e");                                          // hood
+  g.px(12, 10, "h", f ? 0 : 1); g.px(17, 10, "h", f ? 0 : 1);
+  [[5, 4], [25, 6], [3, 26]].forEach(([x, y], i) => g.ellipse(x, y + ((i + f) % 2), 1.5, 1.5, "l", 0));   // ash flakes
+});
+const PIX_MAGMA_TOAD = pixDraw(34, 28, 2, (g, f) => {
+  const s = f ? 1 : 0;
+  g.ellipse(9, 25, 5, 2, "d"); g.ellipse(26, 25, 5, 2, "d");
+  g.ellipse(17, 18 + s, 13, 8 - s, "b"); g.ellipse(16, 21 + s, 8, 4, "l");
+  [[12, 13], [20, 12], [25, 17]].forEach(([x, y]) => g.ellipse(x, y + s, 2, 1.5, "h", f ? 0 : 1));   // lava warts
+  g.ellipse(10, 8 + s, 4, 4, "b"); g.ellipse(20, 8 + s, 4, 4, "b");
+  g.eye(9, 7 + s, true); g.eye(19, 7 + s, true);
+  g.line(7, 15 + s, 24, 15 + s, "e", 1, 1);
+});
+const PIX_CINDER_BAT = pixDraw(38, 28, 2, (g, f) => pixFlyer(g, f, { cx: 19, cy: 14, span: 16,
+  extra: (g, f, p) => { g.poly([[15, 10], [16, 5], [18, 9]], "b"); g.poly([[20, 9], [22, 5], [23, 10]], "b");
+    g.rect(16, 13, 17, 13, "h", 0); g.rect(21, 13, 22, 13, "h", 0); g.px(18, 17, "W"); g.px(20, 17, "W");
+    [[8, 20], [30, 21]].forEach(([x, y], i) => g.px(x, y + ((i + f) % 2) * 2, "h", 0)); } }));
+const PIX_ROCK_RHINO = pixDraw(46, 32, 2, (g, f) => pixBeast(g, f, { bx: 25, by: 17, bw: 15, bh: 8, foot: 30, legW: 4, hx: 9, hy: 14, hr: 7, snout: 4, ears: "round",
+  tail: (g, f, x, y) => g.line(x - 1, y - 2, x + 3, y + (f ? 2 : 0), "d", 1, 1),
+  extra: (g) => { g.poly([[3, 14], [0, 5], [6, 12]], "h", 0); g.poly([[8, 9], [7, 4], [10, 8]], "h", 1);   // horns
+    [[20, 12], [28, 11], [33, 16]].forEach(([x, y]) => g.ellipse(x, y, 3, 2, "d", 2)); } }));
+const PIX_SMOKE_SERPENT = pixDraw(44, 32, 2, (g, f) => {
+  const ph = f ? 1.6 : 0, y = (x) => 18 + 5 * Math.sin(x / 7 + ph);
+  for (let x = 10; x < 41; x++) g.line(x, y(x), x + 1, y(x + 1), "b", 1, Math.max(2, 6 - (x - 10) / 7));
+  for (let x = 14; x < 38; x += 4) g.ellipse(x, y(x) - 4, 2, 1.5, "l", 0);                           // smoke puffs
+  g.ellipse(7, y(8) - 1, 6, 5, "b"); g.eye(4, y(8) - 3, false);
+  g.line(1, y(8) + 2, 6, y(8) + 2, "e", 1, 1); g.poly([[1, y(8) + 2], [-1, y(8) + 5], [3, y(8) + 3]], "h", 0);   // forked tongue
+});
+const PIX_FIRE_ANT = pixDraw(40, 26, 2, (g, f) => {
+  for (let i = 0; i < 3; i++) g.line(14 + i * 5, 17, 11 + i * 5 + ((i + f) % 2) * 3, 24, "d", 1, 1);
+  g.ellipse(30, 15, 8, 6, "b"); g.ellipse(19, 15, 4, 4, "b"); g.ellipse(10, 13, 5, 5, "b");            // abdomen, thorax, head
+  g.ellipse(30, 13, 4, 2, "h", f ? 0 : 1);                                                            // glowing stripe
+  g.line(8, 9, 4, f ? 2 : 4, "d", 1, 1); g.line(11, 8, 12, f ? 1 : 3, "d", 1, 1);                     // antennae
+  g.eye(7, 12, false); g.poly([[5, 16], [2, 18], [6, 18]], "w", 0);
+});
+const PIX_VOLCANO_CROW = pixDraw(36, 34, 2, (g, f) => pixFlyer(g, f, { cx: 18, cy: 16, span: 15, bw: 7, bh: 7,
+  extra: (g, f) => { g.ellipse(13, 10, 5, 5, "b"); g.poly([[9, 10], [3, 12], [9, 13]], "h", 0); g.eye(11, 8, false);
+    g.poly([[23, 18], [32, 22], [24, 24]], "b"); g.line(16, 22, 15, 30, "h", 0, 1); g.line(20, 22, 21, 30, "h", 0, 1);
+    g.poly([[12, 5], [14, f ? 0 : 2], [16, 5]], "h", 1); } }));
+
+// ---- Lagoon ----
+const PIX_OCTO_PUP = pixDraw(30, 30, 2, (g, f) => {
+  for (let i = 0; i < 5; i++) { const x = 7 + i * 4; g.line(x, 18, x + Math.sin(i + f * 2) * 3, 27, "b", 1, 2); }
+  g.ellipse(15, 12, 10, 9, "b"); g.ellipse(12, 7, 3, 2, "l", 0);
+  g.eye(9, 11, true); g.eye(16, 11, true); g.ellipse(13, 16, 1.5, 1, "e", 1);
+});
+const PIX_CORAL_GOLEM = pixDraw(36, 38, 2, (g, f) => pixBiped(g, f, { cx: 18, bw: 9, bh: 10, hr: 6, foot: 36, noBelly: true,
+  extra: (g, f, p) => { [[10, 20], [24, 18], [18, 28], [13, 30]].forEach(([x, y]) => g.ellipse(x, y, 2, 2, "l", 1));   // coral bumps
+    [[12, 3], [17, 1], [22, 3]].forEach(([x, y], i) => g.line(x, 6, x + (i - 1), y - 1, "w", i === 1 ? 0 : 1, 2));     // coral antlers
+    g.ellipse(30, 20 - (f ? 2 : 0), 2, 2, "h", 0); } }));
+const PIX_SEAHORSE_KNIGHT = pixDraw(28, 38, 2, (g, f) => {
+  const s = f ? -2 : 0;
+  g.line(3, 10 + s, 4, 26 + s, "w", 0, 1); g.poly([[1, 10 + s], [4, 4 + s], [6, 10 + s]], "h", 0);   // trident-ish spear
+  g.line(14, 20, 16, 30, "b", 1, 5); g.line(16, 30, 20, 34, "b", 1, 3); g.ellipse(21, 33, 2, 2, "b");  // curled tail
+  g.ellipse(14, 18, 5, 8, "b"); g.ellipse(13, 19, 3, 6, "l");
+  g.ellipse(14, 8, 5, 5, "b"); g.ellipse(9, 10, 4, 2, "b");                                           // head + snout
+  g.poly([[15, 3], [18, 0], [20, 4], [18, 7]], "w", 0);                                               // fin crest
+  g.eye(12, 7, false); g.line(9, 16, 5, 20 + s, "b", 1, 1);
+});
+const PIX_HERMIT_CRAB = pixDraw(36, 30, 2, (g, f) => {
+  for (let i = 0; i < 3; i++) g.line(8 + i * 4, 22, 6 + i * 4 + ((i + f) % 2) * 2, 28, "d", 1, 1);
+  g.ellipse(24, 15, 10, 11, "w"); g.ellipse(24, 15, 6, 6, "l", 2); g.ellipse(24, 15, 3, 3, "w", 0);   // spiral shell
+  g.ellipse(12, 19, 6, 4, "b");
+  g.line(10, 15, 9, 10, "b", 1, 1); g.line(13, 15, 14, 10, "b", 1, 1); g.eye(8, 9, false); g.eye(13, 9, false);
+  g.ellipse(4, 18, 3, 3, "b"); g.poly([[1, f ? 13 : 15], [4, 16], [2, 17]], "b");                    // claw
+});
+const PIX_ANGLER_FISH = pixDraw(38, 30, 2, (g, f) => {
+  g.poly([[30, 16], [37, 10], [37, 23]], "w");
+  g.ellipse(18, 17, 14, 10, "b"); g.ellipse(18, 22, 10, 4, "l");
+  g.line(10, 20, 26, 20, "e", 1, 1);
+  [11, 15, 19, 23].forEach((x) => g.poly([[x, 20], [x + 1, 24], [x + 2, 20]], "W", 1));             // big teeth
+  g.eye(10, 12, true);
+  g.line(14, 8, 8, 1, "d", 1, 1); g.line(8, 1, 3, 3, "d", 1, 1); g.ellipse(3, 5, 2.5, 2.5, "h", f ? 0 : 1);   // glowing lure
+});
+const PIX_CLAM_CHOMPER = pixDraw(32, 26, 2, (g, f) => {
+  const o = f ? 4 : 1;
+  g.ellipse(16, 20, 13, 5, "b");                                                                      // bottom shell
+  g.ellipse(16, 17, 9, 2 + o / 2, "w");                                                               // tongue
+  g.ellipse(16, 16, 5, 3, "l", 0);                                                                    // pearl
+  g.ellipse(16, 14 - o, 13, 6, "b"); for (let x = 6; x <= 26; x += 4) g.line(16, 20 - o, x, 9 - o, "d", 2, 1);   // top shell ridges
+  g.eye(11, 11 - o, true); g.eye(18, 11 - o, true);
+});
+const PIX_STAR_BRUTE = pixDraw(34, 34, 2, (g, f) => {
+  const pts = [];
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5 + (f ? 0.12 : 0), r = i % 2 ? 6 : 15; pts.push([17 + Math.cos(a) * r, 17 + Math.sin(a) * r]); }
+  g.poly(pts, "b", (x, y) => (x + y < 30 ? 0 : x + y > 38 ? 2 : 1));
+  [[17, 7], [9, 14], [25, 14], [12, 24], [22, 24]].forEach(([x, y]) => g.px(x, y, "l", 0));
+  g.eye(13, 15, true); g.eye(18, 15, true); g.line(14, 20, 19, 20, "e", 1, 1);
+});
+const PIX_MANTA_GLIDER = pixDraw(44, 26, 2, (g, f) => {
+  const up = f ? -4 : 2;
+  g.poly([[22, 10], [2, 13 + up], [8, 18], [22, 17]], "b"); g.poly([[22, 10], [42, 13 + up], [36, 18], [22, 17]], "b");
+  g.ellipse(22, 14, 7, 5, "b"); g.ellipse(22, 16, 5, 2, "l");
+  g.line(28, 15, 40, 20, "d", 1, 1);                                                                  // tail
+  g.line(16, 11, 14, 7, "b", 1, 2); g.line(19, 10, 18, 6, "b", 1, 2);                                  // head fins
+  g.eye(17, 12, false); g.eye(21, 12, false);
+});
+
+// ---- Forest ----
+const PIX_MOSSY_BOAR = pixDraw(42, 30, 2, (g, f) => pixBeast(g, f, { bx: 23, by: 16, bw: 13, bh: 8, foot: 28, hx: 8, hy: 15, hr: 6, snout: 3, snoutSlot: "l", ears: "pointy",
+  tail: (g, f, x, y) => g.line(x - 1, y - 2, x + 2, y - (f ? 5 : 3), "d", 1, 1),
+  extra: (g) => { g.line(4, 17, 3, 12, "W", 1, 1); g.line(8, 18, 8, 13, "W", 1, 1);                   // tusks
+    [[18, 9], [24, 8], [30, 10]].forEach(([x, y]) => g.ellipse(x, y, 3, 2, "w", 1)); } }));        // moss on the back
+const PIX_VINE_SERPENT = pixDraw(42, 32, 2, (g, f) => {
+  const ph = f ? 1.8 : 0, y = (x) => 20 + 4 * Math.sin(x / 6 + ph);
+  for (let x = 10; x < 40; x++) g.line(x, y(x), x + 1, y(x + 1), "b", 1, 4);
+  for (let x = 13; x < 38; x += 5) g.poly([[x, y(x) - 2], [x + 2, y(x) - 6], [x + 3, y(x) - 2]], "l", 0);   // leaves
+  g.ellipse(7, y(8) - 1, 6, 4, "b"); g.eye(4, y(8) - 3, false);
+  g.ellipse(9, y(8) - 6, 2, 2, "h", 0);                                                              // flower
+  g.line(1, y(8) + 1, 5, y(8) + 1, "e", 1, 1);
+});
+const PIX_BEETLE_KNIGHT = pixDraw(32, 38, 2, (g, f) => pixBiped(g, f, { cx: 16, bw: 8, bh: 10, hr: 6, foot: 36,
+  extra: (g, f, p) => { g.ellipse(16, 24, 8, 10, "w"); g.line(16, 15, 16, 33, "d", 2, 1);            // shell back plates
+    g.poly([[13, 4], [16, -2], [19, 4]], "d", 0);                                                    // horn
+    g.line(4, f ? 12 : 16, 5, f ? 30 : 34, "l", 0, 1); } }));                                        // lance
+const PIX_STUMP_GOLEM = pixDraw(34, 38, 2, (g, f) => {
+  const a = f ? -2 : 0;
+  g.line(9, 34, 5, 37, "d", 1, 2); g.line(25, 34, 29, 37, "d", 1, 2);                                // roots
+  g.line(7, 18, 2, 26 + a, "w", 1, 3); g.line(27, 18, 32, 26 - a, "w", 1, 3);                        // branch arms
+  g.rect(7, 10, 27, 35, "w"); g.rect(7, 10, 9, 35, "w", 0);
+  g.ellipse(17, 9, 10, 3, "l", 1); g.ellipse(17, 9, 6, 1.5, "d", 2);                                 // cut rings on top
+  g.line(12, 20, 13, 30, "d", 2, 1); g.line(22, 22, 21, 32, "d", 2, 1);
+  g.eye(11, 16, true); g.eye(18, 16, true); g.line(12, 24, 20, 24, "e", 1, 1);
+  g.ellipse(25, 7, 2, 2, "b", 0);                                                                    // sprout
+});
+const PIX_HEDGEHOG = pixDraw(34, 26, 2, (g, f) => {
+  for (let i = 0; i < 9; i++) { const a = Math.PI + (i / 8) * Math.PI, x = 18 + Math.cos(a) * 11, y = 16 + Math.sin(a) * 9;
+    g.line(x, y, 18 + Math.cos(a) * 15, 16 + Math.sin(a) * 12 - (f && i % 2 ? 1 : 0), "d", 1, 1); }   // spines
+  g.ellipse(18, 16, 12, 8, "w");
+  g.ellipse(8, 17, 5, 4, "l"); g.px(3, 17, "e"); g.eye(7, 15, false);
+  g.line(12, 23, f ? 10 : 12, 25, "b", 1, 2); g.line(22, 23, f ? 24 : 22, 25, "b", 1, 2);
+});
+const PIX_BADGER = pixDraw(42, 30, 2, (g, f) => pixBeast(g, f, { bx: 24, by: 17, bw: 13, bh: 7, foot: 28, hx: 9, hy: 15, hr: 6, snout: 3, ears: "round",
+  extra: (g) => { g.line(4, 13, 13, 11, "l", 0, 2); g.line(7, 10, 15, 9, "e", 1, 1);                 // face stripe
+    g.line(15, 11, 34, 12, "l", 1, 1); } }));
+const PIX_LEAF_SPRITE = pixDraw(28, 32, 2, (g, f) => {
+  const w = f ? 4 : 7;
+  g.poly([[13, 14], [3, 10 - w / 2], [5, 18]], "w", 0); g.poly([[15, 14], [25, 10 - w / 2], [23, 18]], "w", 0);   // leaf wings
+  g.ellipse(14, 19, 4, 6, "b"); g.poly([[10, 23], [18, 23], [14, 30]], "b", 2);
+  g.ellipse(14, 10, 5, 5, "l"); g.poly([[10, 6], [14, 0], [18, 6]], "b", 0);                        // leaf cap
+  g.eye(11, 10, false); g.eye(15, 10, false);
+  [[4, 26], [23, 25]].forEach(([x, y], i) => g.px(x, y - ((i + f) % 2), "h", 0));
+});
+const PIX_SQUIRREL = pixDraw(34, 34, 2, (g, f) => {
+  g.ellipse(24, f ? 13 : 15, 6, 11, "w"); g.ellipse(26, f ? 7 : 9, 4, 4, "w", 0);                    // bushy tail
+  g.ellipse(14, 21, 7, 8, "b"); g.ellipse(13, 23, 4, 5, "l");
+  g.ellipse(10, 31, 3, 1.5, "d"); g.ellipse(17, 31, 3, 1.5, "d");
+  g.ellipse(12, 11, 6, 5, "b"); g.poly([[12, 7], [14, 1], [16, 7]], "b");
+  g.eye(8, 10, true); g.px(6, 13, "e");
+  g.line(8, 19, 4, 15, "b", 1, 1); g.ellipse(4, 14, 2, 2.5, "h", 0);                                 // acorn slingshot ammo
+  g.line(3, f ? 6 : 8, 5, 17, "d", 1, 1);                                                             // little bow
+});
+
+// ---- Night ----
+const PIX_ZOMBIE = pixDraw(30, 38, 2, (g, f) => pixBiped(g, f, { cx: 15, bw: 7, bh: 9, foot: 36, bodySlot: "w", armSlot: "b",
+  extra: (g, f, p) => { g.line(8, 18, 1, 19 + (f ? 1 : 0), "b", 1, 2); g.line(9, 21, 2, 22 - (f ? 1 : 0), "b", 1, 2);   // arms reaching
+    g.rect(11, 22, 13, 24, "d", 2); g.line(10, 13, 19, 13, "e", 1, 1); g.px(12, 14, "W");
+    g.line(10, 4, 13, 2, "d", 1, 1); g.line(15, 3, 17, 1, "d", 1, 1); } }));                        // hair tufts
+const PIX_SHADOW_IMP = pixDraw(28, 34, 2, (g, f) => pixBiped(g, f, { cx: 14, bw: 6, bh: 7, foot: 32, noEyes: true,
+  back: (g, f) => { g.poly([[8, 16], [0, f ? 8 : 12], [4, 20]], "w"); g.poly([[20, 16], [28, f ? 8 : 12], [24, 20]], "w"); },
+  extra: (g, f) => { g.ellipse(11, 9, 1.5, 1.5, "h", 0); g.ellipse(17, 9, 1.5, 1.5, "h", 0);        // glowing eyes
+    g.line(11, 13, 17, 13, "l", 0, 1); g.poly([[9, 4], [8, -1], [12, 4]], "b"); g.poly([[16, 4], [20, -1], [19, 4]], "b"); } }));
+const PIX_NIGHT_RAVEN = pixDraw(36, 32, 2, (g, f) => pixFlyer(g, f, { cx: 18, cy: 15, span: 16, bw: 7, bh: 6,
+  extra: (g, f) => { g.ellipse(12, 10, 5, 4, "b"); g.poly([[8, 10], [2, 12], [8, 12]], "d", 0);
+    g.ellipse(10, 9, 1.5, 1.5, "h", 0); g.poly([[23, 17], [32, 22], [24, 21]], "b");
+    g.line(16, 20, 15, 28, "d", 1, 1); g.line(20, 20, 21, 28, "d", 1, 1);
+    g.px(28, 5 + f * 2, "l", 0); } }));                                                              // moon sparkle
+const PIX_BANSHEE = pixDraw(30, 38, 2, (g, f) => {
+  g.poly([[8, 12], [22, 12], [26, 30], [22, 27], [19, 34], [15, 28], [11, 34], [7, 27], [3, 31]], "b", (x, y) => (y > 24 ? 2 : 1));   // flowing gown
+  g.line(6, 8, 3, 30, "w", 1, 2); g.line(24, 8, 27, 28, "w", 1, 2);                                  // long hair
+  g.line(9, 16, 2, f ? 10 : 14, "b", 1, 2); g.line(21, 16, 28, f ? 14 : 10, "b", 1, 2);
+  g.ellipse(15, 8, 6, 7, "l");
+  g.eye(11, 7, true); g.eye(16, 7, true);
+  g.ellipse(14, 13, 1.5, f ? 2.5 : 1.5, "e", 1);                                                     // wailing mouth
+});
+const PIX_WEREWOLF_PUP = pixDraw(34, 36, 2, (g, f) => pixBiped(g, f, { cx: 17, bw: 8, bh: 9, foot: 34, hr: 6,
+  back: (g, f) => g.line(22, 26, 30, f ? 18 : 22, "d", 1, 3),
+  extra: (g, f) => { g.poly([[11, 5], [12, -1], [15, 4]], "b"); g.poly([[19, 4], [22, -1], [23, 5]], "b");
+    g.ellipse(12, 12, 4, 3, "l"); g.px(9, 11, "e"); g.px(10, 14, "W"); g.px(13, 14, "W");
+    [[7, 27], [27, 25]].forEach(([x, y]) => g.px(x, y, "w", 0)); } }));                              // claws
+const PIX_TOMB_GOLEM = pixDraw(34, 40, 2, (g, f) => {
+  const a = f ? -2 : 0;
+  g.rect(10, 32, 14, 38, "d"); g.rect(20, 32, 24, 38, "d");
+  g.ellipse(5, 24 + a, 4, 7, "w"); g.ellipse(29, 24 - a, 4, 7, "w");                                // stone fists
+  g.poly([[8, 10], [26, 10], [27, 34], [7, 34]], "w", (x) => (x < 10 ? 0 : x > 24 ? 2 : 1));
+  g.ellipse(17, 10, 9, 6, "w");                                                                      // rounded tombstone top
+  g.rect(15, 15, 19, 26, "d", 2); g.rect(12, 18, 22, 20, "d", 2);                                    // cross
+  g.px(13, 8, "h", f ? 0 : 1); g.px(21, 8, "h", f ? 0 : 1);                                          // glowing eyes
+  g.ellipse(9, 32, 3, 1.5, "l", 1); g.ellipse(26, 31, 2, 1, "l", 1);                                 // moss
+});
+const PIX_MOON_MOTH = pixDraw(36, 30, 2, (g, f) => {
+  const up = f ? -3 : 1;
+  g.poly([[17, 13], [3, 3 + up], [2, 14 + up], [15, 18]], "w"); g.poly([[19, 13], [33, 3 + up], [34, 14 + up], [21, 18]], "w");
+  g.poly([[17, 17], [7, 28], [15, 26]], "w", 2); g.poly([[19, 17], [29, 28], [21, 26]], "w", 2);
+  g.ellipse(8, 9 + up, 2.5, 2.5, "h", 0); g.ellipse(28, 9 + up, 2.5, 2.5, "h", 0);                 // moon spots
+  g.ellipse(18, 17, 3, 8, "b");
+  g.line(16, 9, 12, 3, "l", 1, 1); g.line(20, 9, 24, 3, "l", 1, 1);
+  g.eye(16, 11, false); g.eye(19, 11, false);
+});
+const PIX_CURSED_DOLL = pixDraw(26, 36, 2, (g, f) => {
+  const t = f ? 1 : 0;
+  g.poly([[7, 17], [19, 17], [22, 31], [4, 31]], "w", (x) => (x < 8 ? 0 : x > 18 ? 2 : 1));        // dress
+  g.rect(8, 31, 10, 34, "l"); g.rect(16, 31, 18, 34, "l");
+  g.line(7, 20, 3, 24 + t, "l", 1, 1); g.line(19, 20, 23, 24 - t, "l", 1, 1);
+  g.ellipse(13, 10 + t, 7, 7, "l");                                                                  // porcelain face
+  g.line(6, 4 + t, 5, 18, "d", 1, 2); g.line(20, 4 + t, 21, 18, "d", 1, 2); g.ellipse(13, 5 + t, 7, 3, "d");   // hair
+  g.ellipse(10, 10 + t, 1.5, 1.5, "b", 0); g.ellipse(16, 10 + t, 1.5, 1.5, "b", 0);                   // button eyes
+  g.line(10, 14 + t, 16, 14 + t, "e", 1, 1); [11, 13, 15].forEach((x) => g.px(x, 15 + t, "e"));      // stitched smile
+  g.poly([[15, 3 + t], [19, 1 + t], [19, 5 + t]], "h", 0);                                           // bow
+});
+
+// ---- Frozen North ----
+const PIX_ICE_GOLEM = pixDraw(36, 40, 2, (g, f) => {
+  const a = f ? -2 : 0;
+  g.poly([[11, 31], [15, 31], [15, 38], [10, 38]], "b"); g.poly([[21, 31], [25, 31], [26, 38], [21, 38]], "b");
+  g.poly([[1, 18 + a], [8, 15], [9, 30 + a], [3, 31 + a]], "b"); g.poly([[35, 18 - a], [28, 15], [27, 30 - a], [33, 31 - a]], "b");   // crystal arms
+  g.poly([[8, 12], [28, 12], [30, 32], [6, 32]], "b", (x, y) => (x < 12 ? 0 : x > 24 ? 2 : 1));
+  g.poly([[12, 12], [18, 1], [24, 12]], "l", (x) => (x < 18 ? 0 : 1));                               // crystal head
+  g.rect(14, 8, 16, 9, "d", 2); g.rect(20, 8, 22, 9, "d", 2);
+  g.line(12, 18, 16, 26, "l", 0, 1); g.line(24, 17, 20, 28, "l", 0, 1);
+});
+const PIX_FROST_FOX = pixDraw(40, 30, 2, (g, f) => pixBeast(g, f, { bx: 22, by: 16, bw: 11, bh: 6, foot: 28, legW: 2, hx: 9, hy: 12, hr: 5, snout: 3, snoutSlot: "l", ears: "pointy",
+  tail: (g, f, x, y) => { g.ellipse(x + 3, y - (f ? 6 : 3), 4, 6, "b"); g.ellipse(x + 4, y - (f ? 10 : 7), 2.5, 2.5, "l", 0); },
+  extra: (g, f) => [[4, 3], [30, 4]].forEach(([x, y], i) => g.px(x, y + ((i + f) % 2), "h", 0)) }));   // snowflakes
+const PIX_SNOW_HARE = pixDraw(30, 34, 2, (g, f) => {
+  const h = f ? -2 : 0;
+  g.ellipse(22, 25 + h, 3, 3, "l", 0);                                                               // tail puff
+  g.ellipse(15, 24 + h, 9, 7, "b"); g.ellipse(13, 26 + h, 5, 4, "l");
+  g.ellipse(8, 31, 4, 1.5, "d"); g.ellipse(20, 31, 4, 1.5, "d");                                     // big feet
+  g.ellipse(11, 14 + h, 5, 5, "b");
+  g.ellipse(10, 6 + h, 2, 5, "b"); g.ellipse(15, 6 + h, 2, 5, "b"); g.ellipse(10, 6 + h, 1, 3, "w", 1);   // long ears
+  g.eye(8, 13 + h, true); g.px(6, 16 + h, "h", 0);
+  g.line(5, 22 + h, 3, 16 + h, "b", 1, 1);                                                            // boxing paw up
+});
+const PIX_POLAR_BEAR = pixDraw(44, 34, 2, (g, f) => pixBeast(g, f, { bx: 25, by: 18, bw: 15, bh: 9, foot: 32, legW: 5, hx: 9, hy: 15, hr: 7, snout: 4, ears: "round",
+  extra: (g) => { g.px(4, 16, "e"); g.ellipse(35, 12, 3, 2, "w", 1); } }));
+const PIX_SNOWMAN = pixDraw(30, 40, 2, (g, f) => {
+  const a = f ? -3 : 0;
+  g.ellipse(15, 31, 11, 8, "b"); g.ellipse(15, 18, 8, 7, "b");                                      // snowballs
+  g.line(8, 17, 1, 12 + a, "d", 1, 1); g.line(22, 17, 29, 12 - a, "d", 1, 1);                        // stick arms
+  g.ellipse(15, 8, 6, 5, "b");
+  g.rect(9, 2, 21, 3, "w"); g.rect(11, -1, 19, 2, "w");                                              // top hat
+  g.eye(11, 7, false); g.eye(16, 7, false);
+  g.poly([[13, 9], [7, 11], [13, 11]], "h", 0);                                                      // carrot nose
+  [[15, 17], [15, 21], [15, 28]].forEach(([x, y]) => g.px(x, y, "e"));                               // coal buttons
+  g.rect(8, 12, 22, 13, "l", 1);                                                                     // scarf
+});
+const PIX_MAMMOTH = pixDraw(46, 38, 2, (g, f) => pixBeast(g, f, { bx: 27, by: 19, bw: 15, bh: 11, foot: 36, legW: 5, hx: 12, hy: 13, hr: 8,
+  extra: (g, f) => { g.line(6, 14, 4, 30 + (f ? -2 : 0), "b", 1, 4);                                  // trunk swings
+    g.line(9, 20, 3, 25, "l", 0, 2); g.line(3, 25, 1, 21, "l", 0, 2);                                // curly tusk
+    g.ellipse(18, 12, 5, 7, "w");                                                                   // big ear
+    [[24, 9], [30, 10], [36, 13]].forEach(([x, y]) => g.line(x, y, x + 1, y + 4, "d", 2, 1)); } }));   // shaggy fur
+const PIX_ICE_WYRM = pixDraw(46, 32, 2, (g, f) => {
+  const ph = f ? 1.6 : 0, y = (x) => 18 + 4 * Math.sin(x / 6 + ph);
+  for (let x = 12; x < 44; x++) g.line(x, y(x), x + 1, y(x + 1), "b", 1, Math.max(2, 7 - (x - 12) / 6));
+  for (let x = 14; x < 40; x += 4) g.poly([[x, y(x) - 3], [x + 1, y(x) - 7], [x + 2, y(x) - 3]], "l", 0);   // ice spikes
+  g.ellipse(9, y(9) - 1, 7, 5, "b"); g.poly([[8, y(9) - 5], [11, y(9) - 11], [12, y(9) - 5]], "l", 0);
+  g.eye(6, y(9) - 3, false); g.line(2, y(9) + 2, 8, y(9) + 2, "e", 1, 1); g.px(4, y(9) + 3, "W");
+});
+const PIX_FROST_TROLL = pixDraw(38, 40, 2, (g, f) => pixBiped(g, f, { cx: 19, bw: 10, bh: 11, hr: 7, foot: 38,
+  extra: (g, f) => { g.line(7, 22, 2, f ? 12 : 16, "w", 1, 3); g.ellipse(2, f ? 10 : 14, 3, 3, "l", 0);   // ice club
+    g.px(18, 13, "W"); g.px(22, 13, "W"); g.line(15, 12, 24, 12, "e", 1, 1);
+    [[11, 4], [27, 4]].forEach(([x, y]) => g.poly([[x - 2, y + 2], [x, y - 3], [x + 2, y + 2]], "l", 0)); } }));   // frosty brows
+
+/* ---------- five more bosses ---------- */
+const PIX_STORM_TITAN = pixDraw(50, 52, 2, (g, f) => {
+  g.rect(16, 40, 22, 51, "d"); g.rect(28, 40, 34, 51, "d");
+  g.poly([[12, 18], [38, 18], [40, 42], [10, 42]], "b", (x) => (x < 16 ? 0 : x > 34 ? 2 : 1));
+  g.ellipse(25, 30, 5, 5, "h", f ? 0 : 1);                                                            // storm core
+  g.line(12, 20, 4, f ? 8 : 12, "b", 1, 5); g.line(38, 20, 46, 30, "b", 1, 5);
+  g.poly([[2, f ? 2 : 6], [7, f ? 8 : 12], [4, f ? 8 : 12], [8, f ? 16 : 20], [1, f ? 9 : 13], [4, f ? 9 : 13]], "h", 0);   // lightning in hand
+  g.ellipse(25, 11, 8, 8, "b");
+  g.ellipse(25, 4, 11, 4, "w"); g.ellipse(17, 6, 5, 3, "w"); g.ellipse(33, 6, 5, 3, "w");            // cloud crown
+  g.rect(19, 10, 22, 12, "h", 0); g.rect(28, 10, 31, 12, "h", 0);
+  g.line(21, 16, 29, 16, "d", 2, 1);
+});
+const PIX_VAMPIRE_COUNT = pixDraw(44, 52, 2, (g, f) => {
+  g.poly([[22, 12], [42, f ? 46 : 50], [30, 44], [22, 50], [14, 44], [2, f ? 46 : 50]], "w", (x) => (x < 12 ? 0 : x > 32 ? 2 : 1));   // cape
+  g.rect(17, 40, 20, 50, "d"); g.rect(24, 40, 27, 50, "d");
+  g.poly([[15, 18], [29, 18], [30, 42], [14, 42]], "d");
+  g.poly([[19, 18], [25, 18], [22, 30]], "l", 1); g.px(22, 21, "h", 0);                              // shirt + gem
+  g.line(15, 21, 9, 30, "d", 1, 2);
+  g.ellipse(22, 11, 6, 7, "b");
+  g.poly([[16, 7], [22, 2], [28, 7], [22, 5]], "e", 1);                                              // widow's peak
+  g.px(20, 10, "h", 0); g.px(24, 10, "h", 0); g.px(21, 15, "W"); g.px(23, 15, "W");
+  g.poly([[13, 12], [9, 4], [16, 10]], "w"); g.poly([[31, 12], [35, 4], [28, 10]], "w");            // high collar
+});
+const PIX_FROST_GIANT = pixDraw(52, 54, 2, (g, f) => {
+  const a = f ? -2 : 0;
+  g.rect(17, 42, 24, 53, "d"); g.rect(29, 42, 36, 53, "d");
+  g.ellipse(7, 30 + a, 5, 11, "b"); g.ellipse(46, 30 - a, 5, 11, "b");
+  g.ellipse(7, 42 + a, 4, 3, "l"); g.ellipse(46, 42 - a, 4, 3, "l");
+  g.ellipse(26, 30, 17, 14, "b"); g.ellipse(26, 34, 11, 8, "w");                                    // fur vest
+  g.ellipse(26, 11, 9, 9, "b");
+  g.ellipse(26, 17, 9, 5, "l");                                                                      // frosty beard
+  g.eye(21, 9, false); g.eye(28, 9, false);
+  g.poly([[17, 5], [18, -2], [21, 4]], "l", 0); g.poly([[31, 4], [34, -2], [35, 5]], "l", 0);       // ice horns
+  g.rect(18, 22, 34, 24, "h", 1); g.ellipse(26, 23, 2.5, 2.5, "l", 0);                              // belt + ice gem
+});
+const PIX_SHADOW_DRAGON = pixDraw(56, 46, 2, (g, f) => {
+  g.poly([[30, 16], [50, f ? 0 : 4], [54, 18], [40, 26]], "w"); g.line(30, 16, 50, f ? 0 : 4, "d", 1, 1);   // wing
+  g.line(40, 30, 54, 38, "b", 1, 4); g.poly([[52, 36], [55, 32], [55, 40]], "d");                   // tail
+  g.line(20, 36, 18, 44, "d", 1, 4); g.line(34, 36, 36, 44, "d", 1, 4);
+  g.ellipse(28, 30, 15, 9, "b"); g.ellipse(27, 34, 10, 4, "l");
+  g.line(16, 26, 10, 14, "b", 1, 6);                                                                 // neck
+  g.ellipse(8, 11, 7, 5, "b"); g.ellipse(3, 13, 3.5, 3, "b");
+  g.poly([[9, 7], [14, 1], [13, 8]], "d"); g.poly([[6, 7], [8, 0], [10, 7]], "d");                    // horns
+  g.ellipse(6, 10, 1.5, 1.5, "h", f ? 0 : 1); g.px(1, 15, "W"); g.px(4, 15, "W");
+  [[18, 8], [44, 38], [4, 30]].forEach(([x, y], i) => g.ellipse(x, y, 1.5, 1.5, "w", (i + f) % 2 ? 0 : 2));   // shadow wisps
+});
+const PIX_MIRROR_KNIGHT = pixDraw(40, 50, 2, (g, f) => {
+  const s = f ? -3 : 0;
+  g.line(33, 14 + s, 34, 40 + s, "l", 0, 2); g.rect(30, 38 + s, 37, 39 + s, "h", 0);                // sword
+  g.rect(14, 38, 18, 49, "d"); g.rect(22, 38, 26, 49, "d");
+  g.poly([[11, 18], [29, 18], [31, 40], [9, 40]], "w", (x) => (x < 14 ? 0 : x > 26 ? 2 : 1));        // armour
+  g.ellipse(20, 12, 7, 8, "w"); g.rect(15, 11, 25, 12, "e"); g.px(17, 11, "h", 0); g.px(22, 11, "h", 0);
+  g.poly([[20, 3], [22, -1], [23, 4]], "h", 0);
+  g.ellipse(7, 28, 7, 11, "l", 0);                                                                   // mirror shield
+  g.ellipse(7, 28, 5, 9, "b", f ? 0 : 1); g.line(4, 22, 9, 30, "l", 0, 1); g.line(5, 30, 8, 34, "l", 0, 1);   // reflections
+  g.line(29, 22, 33, 26 + s, "w", 1, 2);
+});
+
 const PIX_ENEMY_ART = {
   "Muck Slime": { art: PIX_SLIME, palette: { body: "#5ec96f", dark: "#2f8f47", belly: "#d6f5c8", wing: "#a8e8b0", horn: "#e0c14a" } },
   "Cave Goblin": { art: PIX_GOBLIN, palette: { body: "#8fb03f", dark: "#5c7526", belly: "#e8eec0", wing: "#7a4c28", horn: "#c9a227" } },
@@ -9192,6 +9743,51 @@ const PIX_ENEMY_ART = {
   "Tidal Kraken": { art: PIX_KRAKEN, palette: { body: "#b04a78", dark: "#5a1a3a", belly: "#f0c0d8", wing: "#7a2a50", horn: "#ffe066" } },
   "Kraken Tentacle": { art: PIX_KRAKEN_TENTACLE, sizePct: 0.6, palette: { body: "#b04a78", dark: "#5a1a3a", belly: "#f0c0d8", wing: "#7a2a50", horn: "#ffe066" } },
   "Sphinx": { art: PIX_SPHINX, palette: { body: "#d8b060", dark: "#6a4a2a", belly: "#f0d0a0", wing: "#e8c060", horn: "#3a6ad8" } },
+  "Fire Imp": { art: PIX_FIRE_IMP, palette: { body: "#e0402a", dark: "#5a1a1a", belly: "#ffb080", wing: "#8a2a1a", horn: "#ffd23a" } },
+  "Ash Wraith": { art: PIX_ASH_WRAITH, palette: { body: "#6a5a5a", dark: "#3a3030", belly: "#d8d0c8", wing: "#4a4040", horn: "#ff7a2a" } },
+  "Magma Toad": { art: PIX_MAGMA_TOAD, palette: { body: "#c8502a", dark: "#6a2a14", belly: "#ffc080", wing: "#8a3a1a", horn: "#ffd23a" } },
+  "Cinder Bat": { art: PIX_CINDER_BAT, palette: { body: "#4a3030", dark: "#2a1a1a", belly: "#ff9a4a", wing: "#6a3a2a", horn: "#ffd23a" } },
+  "Rock Rhino": { art: PIX_ROCK_RHINO, palette: { body: "#8a7a6a", dark: "#4a4038", belly: "#c8b8a0", wing: "#6a5a4a", horn: "#f0e0c0" } },
+  "Smoke Serpent": { art: PIX_SMOKE_SERPENT, palette: { body: "#6a6070", dark: "#3a3440", belly: "#d8d0d8", wing: "#8a8090", horn: "#ff5a3a" } },
+  "Fire Ant": { art: PIX_FIRE_ANT, palette: { body: "#c8302a", dark: "#4a1414", belly: "#ffb0a0", wing: "#f0e0c0", horn: "#ffd23a" } },
+  "Volcano Crow": { art: PIX_VOLCANO_CROW, palette: { body: "#3a3038", dark: "#1a1418", belly: "#8a8088", wing: "#4a3a44", horn: "#ff8a2a" } },
+  "Octo Pup": { art: PIX_OCTO_PUP, palette: { body: "#f07a9a", dark: "#a03a5a", belly: "#ffd0e0", wing: "#c05a7a", horn: "#ffe066" } },
+  "Coral Golem": { art: PIX_CORAL_GOLEM, palette: { body: "#e8705a", dark: "#8a3a30", belly: "#ffc8b8", wing: "#ff9a8a", horn: "#7fe3ff" } },
+  "Seahorse Knight": { art: PIX_SEAHORSE_KNIGHT, palette: { body: "#3ab0c8", dark: "#1a5a78", belly: "#c8f0ff", wing: "#dfe6f0", horn: "#f2c440" } },
+  "Hermit Crab": { art: PIX_HERMIT_CRAB, palette: { body: "#e0603a", dark: "#8a2a18", belly: "#f0e0c8", wing: "#c8a080", horn: "#f2c440" } },
+  "Angler Fish": { art: PIX_ANGLER_FISH, palette: { body: "#3a4a78", dark: "#1a2240", belly: "#8aa0d0", wing: "#4a5a90", horn: "#ffe84a" } },
+  "Clam Chomper": { art: PIX_CLAM_CHOMPER, palette: { body: "#c8a8d8", dark: "#6a4a7a", belly: "#fff8ff", wing: "#ff7a9a", horn: "#ffffff" } },
+  "Star Brute": { art: PIX_STAR_BRUTE, palette: { body: "#ff8a4a", dark: "#a0401a", belly: "#ffe0b0", wing: "#ffa060", horn: "#ffffff" } },
+  "Manta Glider": { art: PIX_MANTA_GLIDER, palette: { body: "#3a6a9a", dark: "#1a3050", belly: "#d0e8ff", wing: "#5a8ab8", horn: "#ffffff" } },
+  "Mossy Boar": { art: PIX_MOSSY_BOAR, palette: { body: "#8a5a3a", dark: "#4a2e1a", belly: "#c8a080", wing: "#6fbf4a", horn: "#ffffff" } },
+  "Vine Serpent": { art: PIX_VINE_SERPENT, palette: { body: "#4a9a3a", dark: "#2a5a1a", belly: "#a8e070", wing: "#6fbf4a", horn: "#ff8ab8" } },
+  "Beetle Knight": { art: PIX_BEETLE_KNIGHT, palette: { body: "#2a8a6a", dark: "#14443a", belly: "#a8e8d0", wing: "#3aa888", horn: "#e8f0f8" } },
+  "Stump Golem": { art: PIX_STUMP_GOLEM, palette: { body: "#6fbf4a", dark: "#4a2e1a", belly: "#e8d0a0", wing: "#8a5a32", horn: "#ffffff" } },
+  "Hedgehog Scout": { art: PIX_HEDGEHOG, palette: { body: "#b08a6a", dark: "#5a3a24", belly: "#f0dcc0", wing: "#8a6444", horn: "#ffffff" } },
+  "Badger Brawler": { art: PIX_BADGER, palette: { body: "#6a6a70", dark: "#2a2a30", belly: "#d8d8d8", wing: "#4a4a50", horn: "#ffffff" } },
+  "Leaf Sprite": { art: PIX_LEAF_SPRITE, palette: { body: "#5fae4a", dark: "#2a5a1a", belly: "#f0e8c8", wing: "#8fd06a", horn: "#ffe84a" } },
+  "Squirrel Ranger": { art: PIX_SQUIRREL, palette: { body: "#c8702a", dark: "#6a3a14", belly: "#f8e0c0", wing: "#e08a3a", horn: "#b8803a" } },
+  "Zombie": { art: PIX_ZOMBIE, palette: { body: "#8ab87a", dark: "#3a3a4a", belly: "#c8d8b8", wing: "#6a5a8a", horn: "#ffffff" } },
+  "Shadow Imp": { art: PIX_SHADOW_IMP, palette: { body: "#3a2a5a", dark: "#1a1430", belly: "#b58cff", wing: "#2a1f44", horn: "#ff5aa8" } },
+  "Night Raven": { art: PIX_NIGHT_RAVEN, palette: { body: "#2a2438", dark: "#141020", belly: "#6a6080", wing: "#3a3050", horn: "#ffe066" } },
+  "Banshee": { art: PIX_BANSHEE, palette: { body: "#a8c8e8", dark: "#5a7aa0", belly: "#f0f8ff", wing: "#d8e8f8", horn: "#ffffff" } },
+  "Werewolf Pup": { art: PIX_WEREWOLF_PUP, palette: { body: "#6a6070", dark: "#3a3440", belly: "#c8c0d0", wing: "#e8e0f0", horn: "#ffffff" } },
+  "Tomb Golem": { art: PIX_TOMB_GOLEM, palette: { body: "#8a8a90", dark: "#4a4a50", belly: "#6fbf4a", wing: "#9a9aa0", horn: "#7fffa0" } },
+  "Moon Moth": { art: PIX_MOON_MOTH, palette: { body: "#8a7ab8", dark: "#3a3060", belly: "#f0e8c8", wing: "#6a5a98", horn: "#fff4a0" } },
+  "Cursed Doll": { art: PIX_CURSED_DOLL, palette: { body: "#2a2a3a", dark: "#4a2a1a", belly: "#f4ece8", wing: "#b84a6a", horn: "#ff5a8a" } },
+  "Ice Golem": { art: PIX_ICE_GOLEM, palette: { body: "#8fd0f0", dark: "#2a5a8a", belly: "#f0fcff", wing: "#6ab8e8", horn: "#ffffff" } },
+  "Frost Fox": { art: PIX_FROST_FOX, palette: { body: "#d8e8f8", dark: "#6a8ab0", belly: "#ffffff", wing: "#a8c8e8", horn: "#bff4ff" } },
+  "Snow Hare": { art: PIX_SNOW_HARE, palette: { body: "#f0f4fc", dark: "#8a9ab8", belly: "#ffffff", wing: "#ffc8d8", horn: "#ff9ab8" } },
+  "Polar Bear": { art: PIX_POLAR_BEAR, palette: { body: "#eef2fa", dark: "#8a9ab8", belly: "#ffffff", wing: "#c8d8f0", horn: "#ffffff" } },
+  "Snowman Brute": { art: PIX_SNOWMAN, palette: { body: "#f4f8ff", dark: "#5a3a24", belly: "#d8323a", wing: "#2a2a3a", horn: "#ff8a2a" } },
+  "Mammoth Calf": { art: PIX_MAMMOTH, palette: { body: "#8a5a3a", dark: "#4a2e1a", belly: "#c89a70", wing: "#a0704a", horn: "#ffffff" } },
+  "Ice Wyrm": { art: PIX_ICE_WYRM, palette: { body: "#6ab8e8", dark: "#2a5a8a", belly: "#dff6ff", wing: "#8fd0f0", horn: "#ffffff" } },
+  "Frost Troll": { art: PIX_FROST_TROLL, palette: { body: "#7a9ac0", dark: "#3a4a6a", belly: "#c8d8f0", wing: "#a8c8e8", horn: "#ffffff" } },
+  "Storm Titan": { art: PIX_STORM_TITAN, palette: { body: "#8a9ab8", dark: "#3a4a6a", belly: "#d8e8f8", wing: "#c8d8e8", horn: "#ffe84a" } },
+  "Vampire Count": { art: PIX_VAMPIRE_COUNT, palette: { body: "#e8d8d8", dark: "#2a2030", belly: "#f4f0f0", wing: "#8a1a2a", horn: "#ff3a4a" } },
+  "Frost Giant": { art: PIX_FROST_GIANT, palette: { body: "#7a9ac8", dark: "#3a4a6a", belly: "#f0f8ff", wing: "#c8a888", horn: "#6ab8e8" } },
+  "Shadow Dragon": { art: PIX_SHADOW_DRAGON, palette: { body: "#3a2a4a", dark: "#1a1024", belly: "#6a5a80", wing: "#2a1f3a", horn: "#b58cff" } },
+  "Mirror Knight": { art: PIX_MIRROR_KNIGHT, palette: { body: "#9fdcff", dark: "#3a3a4a", belly: "#e8f4ff", wing: "#aab8c8", horn: "#f2c440" } },
   "Cyclops Ogre": { art: PIX_OGRE, palette: { body: "#b08050", dark: "#7a5636", belly: "#e8d2a8", wing: "#4a3a2a", horn: "#f0e0a0" } },
   // The Monarch's minions. Without an entry here they fell through to the
    // emoji fallback, so the boss visibly reverted to a green circle the
@@ -11060,7 +11656,9 @@ const BattleStage = {
       const flash = now < this.enemyFlashUntil;
       const img = (flash ? this.enemyFlash : this.enemyStrips)[frame];
       if (img) {
-        img.visible = true; img.alpha = this.enemyLayer.alpha;
+        // a hiding Shadow Dragon is only a faint outline
+        const hideMul = active && active.shadow && shadowHidden(active) ? 0.22 : 1;
+        img.visible = true; img.alpha = this.enemyLayer.alpha * hideMul;
         img.x = this._enemyBaseX; img.y = this._enemyBaseY - bobPx * scale;
         drawSprite(ctx, img);
       }
