@@ -2336,7 +2336,7 @@ function getEnemyDamage() {
   const cap = Math.floor(S.playerMaxHP / MIN_HITS_TO_DIE);
   let dmg = Math.max(2, Math.min(raw, cap));
   // The Vampire Count grows stronger each round, on top of the usual cap
-  // (limited to 2x, so a full-health player still survives three hits).
+  // (limited to 1.4x, so a full-health player still survives four hits).
   const count = liveBoss("enrage");
   if (count) dmg = Math.round(dmg * Math.min(count.enrage.max, 1 + count.enrage.step * (count.rounds || 0)));
   return dmg;
@@ -2691,9 +2691,9 @@ const BOSSES = [
     glow: "#ff3a4a",
     hpMult: 1.8,
     hint: "He grows stronger every round. Beat him quickly!",
-    /* Every round he fights, his hits grow 12% harder (up to 2x): a
+    /* Every round he fights, his hits grow 4% harder (up to 1.4x): a
        fight you want to win fast. */
-    enrage: { step: 0.12, max: 2, line: "The Count grows stronger!" },
+    enrage: { step: 0.04, max: 1.4, line: "The Count grows stronger!" },
   },
   {
     name: "Frost Giant",
