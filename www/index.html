@@ -1588,6 +1588,12 @@ html.reduce-motion .egg-emoji { animation: none; }
 .death-kept { color: var(--text-dim); font-size: 13px; font-weight: 700; }
 .shop-item-emoji.egg-icon { width: 44px; height: 36px; font-size: 30px; display: flex; align-items: center; justify-content: center; }
 
+/* ---------- Boss Tower ---------- */
+.tower-card { text-align: center; max-width: 360px; }
+.tower-icon { font-size: 60px; line-height: 1.1; filter: drop-shadow(0 3px 0 var(--ink)); }
+.tower-card p { color: var(--text); }
+.tower-best { font-weight: 900; color: var(--gold) !important; }
+
 /* ---------- Dragon Lair ---------- */
 .map-hub { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 8px; }
 .map-hub-btn { font-size: 14px; padding: 8px 4px; }
@@ -2553,7 +2559,7 @@ const ENEMIES = [
 /* Roughly a 1-in-5 chance per wave (never on boss waves, never twice in a
    row) that the next wave is a treasure chest instead of a real enemy. */
 function decideChest(wave) {
-  if (wave <= 1 || isBossWave(wave)) return false;
+  if (S.tower || wave <= 1 || isBossWave(wave)) return false;
   S.wavesSinceChest = (S.wavesSinceChest || 0) + 1;
   if (S.wavesSinceChest < 2) return false;
   const trigger = Math.random() < 0.18;
@@ -3252,10 +3258,75 @@ const BADGES = [
   { id: "chests10", icon: "🎁", name: "Treasure Hunter", desc: "Open 10 treasure chests", coins: 15, test: (g) => g.chests >= 10 },
   { id: "dragons3", icon: "🐉", name: "Dragon Keeper", desc: "Own 3 dragons", coins: 15, test: (g) => g.dragons >= 3 },
   { id: "pet1", icon: "🐾", name: "Best Friends", desc: "Get a pet", coins: 10, test: (g) => g.pets >= 1 },
+  { id: "tower5", icon: "🗼", name: "Tower Climber", desc: "Reach floor 5 of the Boss Tower", coins: 15, test: (g) => g.towerBest >= 5 },
+  { id: "tower15", icon: "🏰", name: "Tower Champion", desc: "Clear the whole Boss Tower", coins: 25, test: (g) => g.towerBest >= 15 },
   { id: "friend1", icon: "🤝", name: "Monster Whisperer", desc: "Befriend your first monster", coins: 15, test: (g) => g.friends >= 1 },
   { id: "friend10", icon: "💞", name: "Friend of Beasts", desc: "Befriend 10 monsters", coins: 25, test: (g) => g.friends >= 10 },
 ];
 const NEW_STATS = () => ({ correct: 0, bestStreak: 0, chests: 0, bossesNoMiss: 0 });
+
+/* ================= BOSS TOWER =================
+   A practice mode: all 15 bosses in a row, one per floor, each floor a
+   little tougher. Clearing a floor restores half your HP. Falling costs
+   nothing (no gold, no egg), and the adventure run you were on is kept --
+   saveActiveSlot leaves its snapshot alone while you're in the tower. */
+const TOWER_REWARD = 100;
+function towerFloors() { return BOSSES.length; }
+function towerBoss(floor) {
+  const base = BOSSES[Math.max(0, Math.min(BOSSES.length - 1, floor - 1))];
+  return { ...base, isBoss: true, maxHP: scaledEnemyHP(8 + floor * 4, base.hpMult || 1.5) };
+}
+
+function startTower() {
+  saveActiveSlot();
+  flushSaves();
+  S.tower = { floor: 1 };
+  S.towerOpen = false;
+  S.mapOpen = false;
+  startGame();
+}
+
+function towerFloorCleared(meta) {
+  const floor = S.tower.floor;
+  S.defeated[meta.name] = (S.defeated[meta.name] || 0) + 1;
+  S.towerBest = Math.max(S.towerBest || 0, floor);
+  checkBadges();
+  if (floor >= towerFloors()) {
+    const first = !S.towerCleared;
+    S.towerCleared = true;
+    if (first) S.coins += TOWER_REWARD;
+    S.lastDeath = { towerWin: true, first };
+    celebrate({ icon: "🏆", kicker: "Boss Tower cleared!", title: "Champion of the Tower!", sub: first ? `All ${towerFloors()} bosses beaten! +${TOWER_REWARD} gold` : `All ${towerFloors()} bosses beaten again!` });
+    saveActiveSlot();
+    S.screen = "gameover";
+    render();
+    return;
+  }
+  S.tower.floor += 1;
+  const heal = Math.round(S.playerMaxHP * 0.5);
+  S.playerHP = Math.min(S.playerMaxHP, S.playerHP + heal);
+  celebrate({ icon: "🏰", kicker: `Floor ${floor} cleared!`, title: `Up to floor ${floor + 1}`, sub: `${BOSSES[floor].name} is waiting. +50% HP` });
+  saveActiveSlot();
+  render();
+  const rid = S.runId;
+  setTimeout(() => { if (S.runId === rid && S.tower) nextWave(S.playerHP, S.playerMaxHP, levelFromXP(S.xp).level); }, 1200);
+}
+
+function towerHTML() {
+  const best = S.towerBest || 0;
+  return `
+  <div class="shop-overlay">
+    <div class="card tower-card">
+      <div class="tower-icon">🏰</div>
+      <h2>Boss Tower</h2>
+      <p>Fight all ${towerFloors()} bosses in a row, one on each floor. Clearing a floor restores half your HP.</p>
+      <p class="tower-best">Best: floor ${best} of ${towerFloors()}${S.towerCleared ? " · 🏆 Cleared!" : ` · First clear: +${TOWER_REWARD} gold`}</p>
+      <p class="parent-note">Falling in the tower costs nothing, and your adventure waits right where you left it.</p>
+      <button class="btn primary big" data-action="start-tower">Climb the Tower!</button>
+      <button class="btn ghost" data-action="close-tower">Not now</button>
+    </div>
+  </div>`;
+}
 
 /* ================= DRAGON LAIR =================
    A cave with eight spots to decorate. Decorations are bought with gold or
@@ -3789,6 +3860,10 @@ const S = {
   lair: {},
   chestsSinceDecor: 0,
   lairOpen: false,
+  tower: null,
+  towerOpen: false,
+  towerBest: 0,
+  towerCleared: false,
   // Mirror Knight: the last missed problem, thrown back next.
   mirrorProblem: null,
   // Fact review: missed facts come back a few problems later (this session)
@@ -4068,8 +4143,8 @@ function decideMulti(wave, level) {
 function spawnWave(wave, level) {
   S.waveMisses = 0;
   // Boss waves draw from the boss roster; everything else from the bag.
-  const bossWave = isBossWave(wave);
-  const base = bossWave ? getBossForWave(wave) : getEnemyForWave(wave);
+  const bossWave = S.tower ? true : isBossWave(wave);
+  const base = S.tower ? towerBoss(S.tower.floor) : bossWave ? getBossForWave(wave) : getEnemyForWave(wave);
   if (decideChest(wave)) {
     const chestHP = Math.max(4, Math.round(base.maxHP * 0.5));
     S.enemies = [{
@@ -4248,6 +4323,7 @@ function problemLineHTML(p) {
 
 function handleWaveClear() {
   const meta = S.currentWaveMeta || { isBoss: false, name: "Enemy", count: 1 };
+  if (S.tower && meta.isBoss) { towerFloorCleared(meta); return; }
   const eff = getActiveBuffs();
   const dragonLevel = levelFromXP(S.xp).level;
   let coinReward, xpReward, label;
@@ -4392,6 +4468,9 @@ function selectSave(id) {
   S.decor = (d && d.decor) || {};
   S.lair = (d && d.lair) || {};
   S.chestsSinceDecor = (d && d.chestsSinceDecor) || 0;
+  S.towerBest = (d && d.towerBest) || 0;
+  S.towerCleared = !!(d && d.towerCleared);
+  S.tower = null;
   S.retryQueue = [];
   S.warmup = 3;
   S.hint = null;
@@ -4474,6 +4553,8 @@ function saveActiveSlot() {
     decor: S.decor,
     lair: S.lair,
     chestsSinceDecor: S.chestsSinceDecor,
+    towerBest: S.towerBest,
+    towerCleared: S.towerCleared,
     ownedCosmetics: S.ownedCosmetics,
     ownedUpgrades: S.ownedUpgrades,
     equippedAccessory: S.equippedAccessory,
@@ -4488,7 +4569,7 @@ function saveActiveSlot() {
     // cooldowns) so closing the game mid-fight resumes exactly where you
     // left off instead of dropping you back at wave 1. Cleared (null) once
     // the run ends, so a finished/lost run doesn't try to resume.
-    battle: S.screen === "playing" ? {
+    battle: S.tower ? (slot.data && slot.data.battle) || null : S.screen === "playing" ? {
       wave: S.wave,
       score: S.score,
       playerMaxHP: S.playerMaxHP,
@@ -4627,7 +4708,7 @@ function nextWave(currentPlayerHP, currentMaxHP, currentLevel) {
   spawnWave(w, currentLevel);
   newProblem(currentLevel);
   S.banner = null;
-  if (w > 1 && (w - 1) % WAVES_PER_WORLD === 0) {
+  if (!S.tower && w > 1 && (w - 1) % WAVES_PER_WORLD === 0) {
     const world = WORLDS[worldIndexForWave(w)];
     celebrate({ icon: world.emoji, kicker: "New world!", title: `Now entering ${world.name}`, sub: `Waves ${w}–${w + WAVES_PER_WORLD - 1}${journeyLoop(w) ? " · tougher monsters ahead!" : ""}` });
   }
@@ -4942,7 +5023,8 @@ function enemyStrikePlayer(rawDmg, onSurvive) {
 
     if (S.playerHP <= 0) {
       setTimeout(() => {
-        fallInBattle();
+        if (S.tower) { S.towerBest = Math.max(S.towerBest || 0, S.tower.floor - 1); S.lastDeath = { tower: true, floor: S.tower.floor }; }
+        else fallInBattle();
         saveActiveSlot();
         S.screen = "gameover";
         Sound.play("gameover");
@@ -5826,7 +5908,7 @@ function playingHTML() {
   return `
   <div class="arena fit">
     <div class="topbar">
-      <button class="wave-chip map-btn" data-action="open-map" aria-label="World map">🗺️ Wave ${S.wave}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti && !meta.isBoss ? ` ×${S.enemies.filter((e) => e.hp > 0).length}` : ""}</button>
+      <button class="wave-chip map-btn" data-action="open-map" aria-label="World map">${S.tower ? `🏰 Floor ${S.tower.floor}` : `🗺️ Wave ${S.wave}`}${meta.isBoss ? ` <span class="boss-tag">BOSS</span>` : ""}${isMulti && !meta.isBoss ? ` ×${S.enemies.filter((e) => e.hp > 0).length}` : ""}</button>
       <span class="topbar-actions">
         <button class="icon-btn" data-action="open-book" aria-label="Dragon Book">📖</button>
         <button class="icon-btn" data-action="open-settings" aria-label="Settings">⚙️</button>
@@ -5957,6 +6039,16 @@ function hatchEgg() {
 
 function gameOverHTML() {
   const d = S.lastDeath || { lostCoins: 0, newEgg: null };
+  if (d.tower || d.towerWin) {
+    return `
+  <div class="card title-card death-card">
+    <div class="title-emoji">${d.towerWin ? "🏆" : "🏰"}</div>
+    <h1>${d.towerWin ? "Tower Champion!" : `Fell on floor ${d.floor}`}</h1>
+    <p class="sub">${d.towerWin ? `You beat all ${towerFloors()} bosses!` : `Best so far: floor ${S.towerBest || 0} of ${towerFloors()}. Nothing was lost.`}</p>
+    <button class="btn primary big" data-action="start-tower">${d.towerWin ? "Climb again" : "Try the Tower again"}</button>
+    <button class="btn ghost" data-action="leave-tower">⚔️ Back to my adventure</button>
+  </div>`;
+  }
   const egg = S.egg && COSMETICS.find((c) => c.id === S.egg);
   const eggLine = egg
     ? `<div class="death-egg"><span class="death-egg-icon">🥚</span><span>${d.newEgg ? `Your <b>${esc(egg.name)}</b> turned into an egg!` : `Your <b>${esc(egg.name)}</b> is still an egg.`} Hatch it in the shop for <b>🪙${hatchCost(egg.id)}</b> to ride again.</span></div>`
@@ -6060,7 +6152,7 @@ function badgeFacts() {
   const owned = (type) => COSMETICS.filter((c) => c.type === type && S.ownedCosmetics[c.id]).length;
   return Object.assign({}, S.stats, {
     monsters, bosses, rank: S.mathBand, bestWave: Math.max(S.bestWave || 0, S.wave || 0),
-    dragons: owned("creature"), pets: owned("pet"), friends: friendCount(),
+    dragons: owned("creature"), pets: owned("pet"), friends: friendCount(), towerBest: S.towerBest || 0,
   });
 }
 
@@ -6296,6 +6388,7 @@ function renderNow() {
   if (S.bookOpen) ov += bookHTML();
   if (S.mapOpen) ov += mapHTML();
   if (S.lairOpen) ov += lairHTML();
+  if (S.towerOpen) ov += towerHTML();
   if (S.settingsOpen) ov += settingsHTML();
   if (S.hatchOpen) ov += hatchHTML();
   if (S.adminGate || S.adminOpen) ov += adminHTML();
@@ -6368,7 +6461,11 @@ document.body.addEventListener("click", (e) => {
   const action = btn.dataset.action;
   // Generic click for menu buttons; actions with their own sound skip it.
   if (!["answer", "toggle-sound", "buy-item", "use-potion-hp", "use-potion-poison", "cast-fireball"].includes(action)) Sound.play("tap");
-  if (action === "start-game") startGame();
+  if (action === "start-game") { S.tower = null; startGame(); }
+  else if (action === "open-tower") { S.mapOpen = false; S.towerOpen = true; render(); }
+  else if (action === "close-tower") { S.towerOpen = false; render(); }
+  else if (action === "start-tower") startTower();
+  else if (action === "leave-tower") { S.tower = null; S.lastDeath = null; selectSave(S.activeSaveId); }
   else if (action === "open-shop") { S.shopOpen = true; render(); }
   else if (action === "close-shop") { S.shopOpen = false; render(); }
   else if (action === "dismiss-hint") { if (S.hint) S.hint.until = 0; }
@@ -6476,6 +6573,7 @@ document.addEventListener("visibilitychange", () => {
     if (S.hatchOpen) { S.hatchOpen = false; render(); return; }
     if (S.mapOpen) { S.mapOpen = false; render(); return; }
     if (S.lairOpen) { S.lairOpen = false; render(); return; }
+    if (S.towerOpen) { S.towerOpen = false; render(); return; }
     if (S.screen === "parents" || S.screen === "parentgate") { S.parentGate = null; S.screen = "saveselect"; render(); return; }
     if (S.screen === "title") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
     if (S.screen === "saveselect") { S.screen = "title"; render(); return; }
