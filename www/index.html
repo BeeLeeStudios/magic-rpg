@@ -1532,6 +1532,29 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
 .admin-owned { color: #7fe3a0; font-weight: 900; font-size: 13px; white-space: nowrap; }
 .admin-lock { margin-top: 16px; }
 
+/* ---------- problem formats and picture hints ---------- */
+.problem.story { font-size: 20px !important; line-height: 1.35; padding: 0 44px 0 6px; text-align: left; font-family: var(--font-ui); }
+.gate-words { font-family: var(--font-ui); font-weight: 900; font-size: 20px; color: #fff3c4; margin: 6px 0; }
+.problem-card { position: relative; }
+.hint-card {
+  position: absolute; inset: 4px; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: #1d1533f2; border-radius: 14px; box-shadow: 0 0 0 3px #7fe3ff; cursor: pointer; padding: 10px; animation: hintIn 0.2s ease-out;
+}
+@keyframes hintIn { from { opacity: 0; transform: scale(0.96); } }
+html.reduce-motion .hint-card { animation: none; }
+.hint-card i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin: 2px; }
+.hint-card i.d1 { background: #7fe3ff; } .hint-card i.d2 { background: #ffb04a; }
+.hint-card i.gone { background: transparent; box-shadow: inset 0 0 0 2px #ff6a5a; position: relative; }
+.hint-card i.ten { width: 8px; height: 40px; border-radius: 3px; background: #7fe3ff; vertical-align: bottom; }
+.hint-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; max-width: 100%; }
+.hint-row b { font: 900 22px var(--font-ui); color: var(--gold); margin: 0 6px; }
+.hint-grid { display: grid; gap: 1px; }
+.hint-grid i { width: 15px; height: 15px; margin: 1px; }
+.hint-groups { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.hint-group { display: inline-flex; flex-wrap: wrap; max-width: 64px; justify-content: center; padding: 3px; border-radius: 8px; box-shadow: 0 0 0 2px #ffb04a; }
+.hint-say { font: 900 18px var(--font-ui); color: #fff; text-align: center; }
+.hint-tap { font-size: 12px; color: var(--text-dim); font-weight: 800; }
+
 /* ---------- boss mechanics ---------- */
 .boss-intro-hint { font-family: var(--font-ui); color: #fff3c4; font-weight: 800; font-size: 16px; margin: 6px 16px 10px; text-align: center; }
 .problem-card.riddle { box-shadow: 0 0 0 3px #b58cff, 0 0 26px rgba(181,140,255,0.65) !important; }
@@ -2027,7 +2050,7 @@ function makeChoices(problem) {
   const answer = problem.answer;
   const band = getBand(problem.band || S.mathBand);
   const set = new Set([answer]);
-  const candidates = (band.errors ? band.errors(problem) : [])
+  const candidates = (problem.form === "missing" ? missingErrors(problem) : band.errors ? band.errors(problem) : [])
     .filter((v) => Number.isInteger(v) && v >= 0 && v !== answer);
 
   for (const c of shuffle(candidates)) {
@@ -2044,6 +2067,59 @@ function makeChoices(problem) {
     if (val >= 0) set.add(val);
   }
   return shuffle([...set]);
+}
+
+/* ================= PROBLEM FORMATS =================
+   Beyond "a + b = ?", some problems hide a different number: "3 + ? = 7"
+   (missing number) or "? = 9 + 8" (answer first) -- research ties both to
+   a better grasp of what "=" means -- and easier ranks get short picture
+   word problems. p.fact always keeps the plain underlying fact, which is
+   what picture hints, fact review and the Mirror Knight work from. */
+const FORM_CHANCE = { missing: 0.2, first: 0.08, story: 0.1 };
+const STORY_RANKS = [1, 2, 3, 4, 5, 6, 7, 12, 13, 14];
+
+function factOf(p) {
+  return p.fact || { a: p.a, op: p.op, b: p.b, result: p.answer };
+}
+
+/* A plain "a op b = ?" problem for a fact (used to re-ask it). */
+function plainProblem(fact, band) {
+  return { a: fact.a, op: fact.op, b: fact.b, answer: fact.result, band, fact: Object.assign({}, fact) };
+}
+
+function applyForm(p, r = Math.random()) {
+  const fact = factOf(p);
+  p.fact = fact;
+  if (r < FORM_CHANCE.missing) {
+    p.form = "missing";
+    p.display = [String(fact.a), fact.op, "?", "=", String(fact.result)];
+    p.answer = fact.b;
+  } else if (r < FORM_CHANCE.missing + FORM_CHANCE.first) {
+    p.form = "first";
+    p.display = ["?", "=", String(fact.a), fact.op, String(fact.b)];
+  } else if (r < FORM_CHANCE.missing + FORM_CHANCE.first + FORM_CHANCE.story && STORY_RANKS.includes(p.band)) {
+    const st = storyFor(fact);
+    if (st) { p.form = "story"; p.story = st.text; p.storySpeech = st.speech; }
+  }
+  return p;
+}
+
+const STORY_THINGS = [["🍎", "apples"], ["💎", "gems"], ["🪙", "coins"], ["🥚", "eggs"], ["⭐", "stars"], ["🍪", "cookies"]];
+function storyFor(fact) {
+  const [icon, word] = STORY_THINGS[(fact.a * 7 + fact.b * 3) % STORY_THINGS.length];
+  const { a, b } = fact;
+  if (fact.op === "+") return { text: `🐉 has ${a} ${icon} and finds ${b} more. How many ${icon} now?`, speech: `The dragon has ${a} ${word} and finds ${b} more. How many ${word} now?` };
+  if (fact.op === "-") return { text: `🐉 has ${a} ${icon} and gives away ${b}. How many ${icon} are left?`, speech: `The dragon has ${a} ${word} and gives away ${b}. How many are left?` };
+  if (fact.op === "×") return { text: `${a} bags each hold ${b} ${icon}. How many ${icon} in all?`, speech: `${a} bags each hold ${b} ${word}. How many ${word} in all?` };
+  if (fact.op === "÷") return { text: `${a} ${icon} are shared by ${b} dragons. How many does each get?`, speech: `${a} ${word} are shared by ${b} dragons. How many does each get?` };
+  return null;
+}
+
+/* Wrong choices for a missing-number problem: near misses, the total
+   itself, and adding when it should subtract (or vice versa). */
+function missingErrors(p) {
+  const f = p.fact, ans = p.answer;
+  return [ans + 1, ans - 1, ans + 2, ans - 2, f.result, Math.abs(f.a - f.result), f.a + f.result];
 }
 
 /* ================= MASTERY =================
@@ -3423,6 +3499,14 @@ const S = {
   hatchOpen: false,
   // Mirror Knight: the last missed problem, thrown back next.
   mirrorProblem: null,
+  // Fact review: missed facts come back a few problems later (this session)
+  // and the child's "tricky facts" (saved per slot) warm up the next one.
+  problemCount: 0,
+  retryQueue: [],
+  tricky: [],
+  warmup: 0,
+  // Picture hint shown after a miss ({ fact, until }).
+  hint: null,
   // Secret admin panel (owner testing). Unlocked by code for this session
   // only; "Turn off & lock" saves and locks it again.
   adminGate: null,
@@ -3482,9 +3566,49 @@ function choiceFeedbackClass(c) {
   return "";
 }
 
+/* Missed facts: re-asked 3 problems later this session, and kept on the
+   slot's tricky list (up to 20) until answered right twice in a row. */
+const RETRY_AFTER = 3, TRICKY_MAX = 20;
+const factKey = (f) => `${f.a}${f.op}${f.b}`;
+
+function noteMiss(p) {
+  const f = factOf(p);
+  S.retryQueue.push({ fact: f, band: p.band, due: S.problemCount + RETRY_AFTER });
+  const k = factKey(f);
+  const t = S.tricky.find((x) => x.key === k);
+  if (t) t.right = 0;
+  else {
+    S.tricky.push({ key: k, fact: f, band: p.band, right: 0 });
+    if (S.tricky.length > TRICKY_MAX) S.tricky.shift();
+  }
+}
+
+function noteRight(p) {
+  const k = factKey(factOf(p));
+  const t = S.tricky.find((x) => x.key === k);
+  if (t && ++t.right >= 2) S.tricky = S.tricky.filter((x) => x !== t);
+}
+
+/* The next problem: a due re-ask, then a warm-up tricky fact at the start
+   of a session, otherwise a fresh one (sometimes in a new format). */
+function nextProblem() {
+  const due = S.retryQueue.findIndex((r) => r.due <= S.problemCount);
+  if (due !== -1) { const r = S.retryQueue.splice(due, 1)[0]; return plainProblem(r.fact, r.band); }
+  if (S.warmup > 0 && S.tricky.length) {
+    S.warmup -= 1;
+    const t = S.tricky[randInt(0, S.tricky.length - 1)];
+    return plainProblem(t.fact, t.band);
+  }
+  const p = generateProblem(pickProblemBand());
+  // Bosses with their own problem rules get plain problems.
+  return liveBoss("riddle") || liveBoss("storm") || liveBoss("mirror") ? p : applyForm(p);
+}
+
 function newProblem(lvl) {
   S.pick = null;
-  const p = generateProblem(pickProblemBand());
+  S.hint = null;
+  S.problemCount = (S.problemCount || 0) + 1;
+  const p = nextProblem();
   S.problem = p;
   S.choices = makeChoices(p);
   S.problemShownAt = Date.now();
@@ -3504,7 +3628,7 @@ function newProblem(lvl) {
   const sphinx = liveBoss("riddle");
   if (sphinx) {
     sphinx.riddleCount = (sphinx.riddleCount || 0) + 1;
-    if (sphinx.riddleCount % sphinx.riddle.every === 0) { p.riddle = true; showBossBanner(sphinx.riddle.line); }
+    if (sphinx.riddleCount % sphinx.riddle.every === 0) { S.problem.riddle = true; showBossBanner(sphinx.riddle.line); }
   }
   startBossClock();
   if (Prefs.autoRead && S.screen === "playing") setTimeout(readProblem, 250);
@@ -3780,15 +3904,54 @@ function finishRound() {
   if (allEnemiesDead()) {
     handleWaveClear();
   } else {
-    setTimeout(() => {
+    const rid = S.runId;
+    const next = () => {
+      if (S.runId !== rid) return;
+      // A picture hint stays up until it times out or is tapped away.
+      if (S.hint && S.hint.until > Date.now()) { setTimeout(next, 150); return; }
       S.dragonAnim = "";
       S.enemyAnim = "";
       newProblem(levelFromXP(S.xp).level);
       S.locked = false;
       saveActiveSlot();
       render();
-    }, 500);
+    };
+    setTimeout(next, 500);
   }
+}
+
+/* Picture hint for a fact: dots for small sums, tens sticks and ones for
+   bigger ones, an array for x, equal groups for ÷. */
+function hintHTML(f) {
+  const dots = (n, cls) => Array.from({ length: n }, () => `<i class="${cls}"></i>`).join("");
+  let pic = "", say = "";
+  if (f.op === "×") {
+    const rows = Math.min(f.a, 10), cols = Math.min(f.b, 10);
+    pic = `<div class="hint-grid" style="grid-template-columns:repeat(${cols},1fr)">${dots(rows * cols, "d1")}</div>`;
+    say = `${f.a} rows of ${f.b} = ${f.result}`;
+  } else if (f.op === "÷") {
+    pic = `<div class="hint-groups">${Array.from({ length: f.b }, () => `<span class="hint-group">${dots(f.result, "d1")}</span>`).join("")}</div>`;
+    say = `${f.a} shared into ${f.b} equal groups = ${f.result} each`;
+  } else if (f.a <= 20 && f.b <= 20) {
+    pic = f.op === "+"
+      ? `<div class="hint-row">${dots(f.a, "d1")}<b>+</b>${dots(f.b, "d2")}</div>`
+      : `<div class="hint-row">${dots(f.result, "d1")}${dots(f.b, "d1 gone")}</div>`;
+    say = f.op === "+" ? `${f.a} and ${f.b} more makes ${f.result}` : `${f.a} take away ${f.b} leaves ${f.result}`;
+  } else {
+    const blocks = (n) => `<span class="hint-blocks">${Array.from({ length: Math.floor(n / 10) }, () => "<i class='ten'></i>").join("")}${dots(n % 10, "d1")}</span>`;
+    pic = `<div class="hint-row">${blocks(f.a)}<b>${f.op === "-" ? "−" : "+"}</b>${blocks(f.b)}</div>`;
+    say = `${f.a} ${f.op === "-" ? "−" : "+"} ${f.b} = ${f.result} (tens and ones)`;
+  }
+  return `<div class="hint-card" data-action="dismiss-hint">${pic}<div class="hint-say">${esc(say)}</div><div class="hint-tap">tap to continue</div></div>`;
+}
+
+/* The problem line: tokens for the new formats, story text for word problems. */
+function problemLineHTML(p) {
+  const tok = (t) => t === "?" ? `<span class="q">?</span>` : ["+", "-", "×", "÷", "="].includes(t) ? `<span class="op">${t === "-" ? "−" : t}</span>` : t;
+  const speak = Speech.available() ? `<button class="speak-btn" data-action="read-problem" aria-label="Read the problem aloud">🔊</button>` : "";
+  if (p.story) return `<div class="problem story">${esc(p.story)}${speak}</div>`;
+  const tokens = p.display || [String(p.a), p.op, String(p.b), "=", "?"];
+  return `<div class="problem">${tokens.map(tok).join(" ")}${speak}</div>`;
 }
 
 function handleWaveClear() {
@@ -3920,6 +4083,10 @@ function selectSave(id) {
   S.stats = Object.assign(NEW_STATS(), d && d.stats);
   S.badges = (d && d.badges) || {};
   S.egg = (d && d.egg) || null;
+  S.tricky = (d && Array.isArray(d.tricky)) ? d.tricky : [];
+  S.retryQueue = [];
+  S.warmup = 3;
+  S.hint = null;
   S.badgeToasts = [];
   checkBadges(true);
   S.runId += 1;
@@ -3994,6 +4161,7 @@ function saveActiveSlot() {
     stats: S.stats,
     badges: S.badges,
     egg: S.egg,
+    tricky: S.tricky,
     ownedCosmetics: S.ownedCosmetics,
     ownedUpgrades: S.ownedUpgrades,
     equippedAccessory: S.equippedAccessory,
@@ -4191,7 +4359,13 @@ function handleAnswer(val) {
   if (!correct) {
     buzz();
     S.waveMisses += 1;
-    if (liveBoss("mirror")) S.mirrorProblem = { a: S.problem.a, op: S.problem.op, b: S.problem.b, answer: S.problem.answer, band: S.problem.band };
+    if (liveBoss("mirror")) S.mirrorProblem = plainProblem(factOf(S.problem), S.problem.band);
+    const f = factOf(S.problem);
+    const missedBefore = S.tricky.some((t) => t.key === factKey(f));
+    noteMiss(S.problem);
+    // Picture hint: always for x and ÷ (new to most kids), and for + and -
+    // at the lower ranks or when this fact has been missed before.
+    if (f.op === "×" || f.op === "÷" || S.mathBand <= 7 || missedBefore) S.hint = { fact: f, until: Date.now() + 3500 };
   }
 
   // Timing drives both the mastery check and the speed damage bonus.
@@ -4202,6 +4376,7 @@ function handleAnswer(val) {
   const rid = S.runId;
 
   if (correct) {
+    noteRight(answeredProblem);
     S.streak += 1;
     S.stats.correct += 1;
     S.stats.bestStreak = Math.max(S.stats.bestStreak, S.streak);
@@ -4937,12 +5112,29 @@ function adminHTML() {
 }
 
 /* ================= PARENT AREA =================
-   "For Parents" first asks a grown-up question (a times-table fact from
-   6x6 to 9x9, typed on a pad) so kids don't wander into the rank controls.
+   "For Parents" first asks a grown-up question (a four-digit number written
+   in words, typed on a pad) so kids don't wander into the rank controls.
    Behind it: every save slot's progress, a rank override, and the privacy
    notice. Everything shown is read from the save slots on this device. */
+/* "3851" -> "three thousand eight hundred fifty-one" */
+function numberWords(n) {
+  const ones = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+    "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+  const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+  const under100 = (x) => (x < 20 ? ones[x] : tens[Math.floor(x / 10)] + (x % 10 ? "-" + ones[x % 10] : ""));
+  const parts = [];
+  if (n >= 1000) { parts.push(ones[Math.floor(n / 1000)] + " thousand"); n %= 1000; }
+  if (n >= 100) { parts.push(ones[Math.floor(n / 100)] + " hundred"); n %= 100; }
+  if (n > 0) parts.push(under100(n));
+  return parts.join(" ");
+}
+
 function openParentGate() {
-  S.parentGate = { a: randInt(6, 9), b: randInt(6, 9), input: "" };
+  // A number written in words, typed as digits: easy for a grown-up, hard
+  // for the 6-10s who are practising exactly the times tables the old gate
+  // used. Always four digits so it can't be guessed from the length.
+  const n = randInt(1000, 9999);
+  S.parentGate = { n, words: numberWords(n), input: "" };
   S.screen = "parentgate";
   render();
 }
@@ -4952,9 +5144,9 @@ function parentGateKey(key) {
   if (!g) return;
   if (key === "del") g.input = g.input.slice(0, -1);
   else if (key === "ok") {
-    if (Number(g.input) === g.a * g.b) { S.parentGate = null; S.parentTab = "progress"; S.screen = "parents"; }
+    if (Number(g.input) === g.n) { S.parentGate = null; S.parentTab = "progress"; S.screen = "parents"; }
     else { S.parentGate = null; S.screen = "saveselect"; }
-  } else if (g.input.length < 3) g.input += key;
+  } else if (g.input.length < 4) g.input += key;
   render();
 }
 
@@ -4964,8 +5156,9 @@ function parentGateHTML() {
   return `
   <div class="card gate-card">
     <h1>Grown-ups only</h1>
-    <p>To open the parent area, answer:</p>
-    <div class="gate-question">${g.a} × ${g.b} = <span class="gate-input">${g.input || "?"}</span></div>
+    <p>To open the parent area, type this number using digits:</p>
+    <div class="gate-words">${esc(g.words)}</div>
+    <div class="gate-question"><span class="gate-input">${g.input || "____"}</span></div>
     <div class="gate-pad">${keys.map((k) => `<button class="btn gate-key${k === "ok" ? " primary" : ""}" data-action="gate-key" data-key="${k}">${k === "del" ? "⌫" : k === "ok" ? "OK" : k}</button>`).join("")}</div>
     <button class="btn ghost" data-action="close-info">Cancel</button>
   </div>`;
@@ -5373,7 +5566,8 @@ function playingHTML() {
     <div class="problem-card${S.streak >= 3 ? " on-fire" : ""}${S.streak >= 7 ? " blazing" : ""}${S.problem.riddle ? " riddle" : ""}${S.problem.storm ? " storm" : ""}${S.problem.mirrored ? " mirrored" : ""}">
       ${S.bossClock ? `<div class="boss-clock" aria-label="Time left"><i style="animation-duration:${S.bossClock.ms}ms;animation-delay:-${Math.max(0, Date.now() - S.bossClock.start)}ms"></i></div>` : ""}
       <div class="streak">${S.streak >= 10 ? `⚡ LEGENDARY! ${S.streak} in a row` : S.streak >= 7 ? `🔥 UNSTOPPABLE! ${S.streak} in a row` : S.streak >= 3 ? `🔥 ON FIRE! ${S.streak} in a row` : S.streak > 1 ? `${S.streak} in a row` : "&nbsp;"}</div>
-      <div class="problem">${S.problem.a} <span class="op">${S.problem.op === "-" ? "−" : S.problem.op}</span> ${S.problem.b} <span class="op">=</span> <span class="q">?</span>${Speech.available() ? `<button class="speak-btn" data-action="read-problem" aria-label="Read the problem aloud">🔊</button>` : ""}</div>
+      ${problemLineHTML(S.problem)}
+      ${S.hint ? hintHTML(S.hint.fact) : ""}
       <div class="choices">
         ${S.choices.map((c) => `
           <button class="btn choice ${choiceFeedbackClass(c)}"
@@ -5852,6 +6046,7 @@ document.body.addEventListener("click", (e) => {
   if (action === "start-game") startGame();
   else if (action === "open-shop") { S.shopOpen = true; render(); }
   else if (action === "close-shop") { S.shopOpen = false; render(); }
+  else if (action === "dismiss-hint") { if (S.hint) S.hint.until = 0; }
   else if (action === "hatch-egg") hatchEgg();
   else if (action === "open-hatch") { S.hatchOpen = true; render(); }
   else if (action === "close-hatch") { S.hatchOpen = false; render(); }
@@ -10543,7 +10738,11 @@ const Speech = {
     }
   },
 };
-function problemSpeech(p) { return `${p.a} ${SPOKEN_OP[p.op] || p.op} ${p.b} equals what?`; }
+function problemSpeech(p) {
+  if (p.storySpeech) return p.storySpeech;
+  const tokens = p.display || [String(p.a), p.op, String(p.b), "=", "?"];
+  return tokens.map((t) => t === "?" ? "what" : t === "=" ? "equals" : SPOKEN_OP[t] || t).join(" ") + "?";
+}
 function readProblem() { if (S.problem) Speech.say(problemSpeech(S.problem)); }
 
 const Sound = {
