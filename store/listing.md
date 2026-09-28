@@ -29,7 +29,7 @@ Dragons vs Math is a pixel-art battle adventure where kids practice addition, su
 MATH THAT FITS YOUR CHILD
 • Starts tiny (numbers 1 to 4) and climbs one small step at a time, through two-digit carrying and borrowing, then times tables and division.
 • Adapts automatically: the game moves up only after steady, accurate, fluent answers, and quietly eases off if your child is struggling — no "you failed" screens.
-• Wrong answers teach: the correct answer lights up so every mistake becomes practice.
+• Wrong answers teach: a picture shows why the answer is right, and missed facts come back for another try.
 • Mastered skills come back for review so they aren't forgotten.
 • Speed bonuses reward real fluency, not guessing.
 
@@ -37,7 +37,8 @@ AN ADVENTURE KIDS WANT TO PLAY
 • 100 pixel monsters and 15 bosses with their own tricks — one splits into minions, one steals your gold, one asks riddles, one throws your mistakes back at you, and more.
 • Cross five worlds on the world map: volcano, lagoon, forest, haunted night and frozen north.
 • Watch your dragon grow from a little hatchling into a golden Elder.
-• Fill the Dragon Book with every monster and treasure, and earn 20 badges.
+• Fill the Dragon Book, befriend monsters, earn 25 badges, and decorate your own Dragon Lair.
+• Climb the Boss Tower, and spend tokens earned by right answers in the Arcade.
 • Save up gold for 10 dragon mounts with their own breath attacks, pets that fight alongside you, and five swords.
 • Fireballs, potions, level-up rewards and treasure chests.
 • Up to 12 save slots so brothers, sisters and classmates each keep their own progress and math level.
