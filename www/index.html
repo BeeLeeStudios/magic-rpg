@@ -1481,6 +1481,7 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
 .arena.fit { justify-content: center; }
 .arena.fit .battlefield-anchor { flex: 1 1 auto; height: auto; min-height: 140px; max-height: 520px; margin: 10px 3px 8px; }
 .stage-banners { position: absolute; left: 6px; right: 6px; top: 6px; z-index: 5; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+.chest-banner { background: #3a2a10 !important; color: #ffe8a8 !important; }
 .stage-banners .banner { margin: 0; font-size: 13px; padding: 5px 8px; text-align: center; opacity: 0.96; }
 .arena.fit .problem-card { margin: 6px 3px 3px; padding: 6px 10px 10px; }
 .arena.fit .streak { height: 16px; font-size: 13px; }
@@ -1586,6 +1587,19 @@ html.reduce-motion .egg-emoji { animation: none; }
 .death-egg-icon { font-size: 36px; }
 .death-kept { color: var(--text-dim); font-size: 13px; font-weight: 700; }
 .shop-item-emoji.egg-icon { width: 44px; height: 36px; font-size: 30px; display: flex; align-items: center; justify-content: center; }
+
+/* ---------- Dragon Lair ---------- */
+.map-hub { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 8px; }
+.map-hub-btn { font-size: 14px; padding: 8px 4px; }
+.lair-scene {
+  position: relative; width: 100%; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; margin: 6px 0 4px;
+  background: radial-gradient(ellipse at 50% 110%, #6a4a2a 0 32%, transparent 33%), radial-gradient(ellipse at 50% 45%, #3a2a48 0%, #22182e 55%, #120c1a 100%);
+  box-shadow: inset 0 0 30px #000a, 0 0 0 3px var(--ink);
+}
+.lair-scene { display: block; height: auto; }
+.decor-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; border-top: 1px solid #2d2344; color: #fff; font-weight: 800; font-size: 14px; }
+.decor-row canvas { width: 40px; height: 32px; object-fit: contain; image-rendering: pixelated; }
+.decor-row span { flex: 1; }
 
 /* ---------- Dragon Book, badges, world map ---------- */
 .friend-bar { display: block; height: 5px; margin: 3px 6px 1px; border-radius: 3px; background: #2d2344; overflow: hidden; }
@@ -3243,6 +3257,263 @@ const BADGES = [
 ];
 const NEW_STATS = () => ({ correct: 0, bestStreak: 0, chests: 0, bossesNoMiss: 0 });
 
+/* ================= DRAGON LAIR =================
+   A cave with eight spots to decorate. Decorations are bought with gold or
+   found in treasure chests (every third chest guarantees one you don't
+   own yet), and each spot shows one of its decorations at a time. */
+const LAIR_SLOTS = {
+  ceiling: { label: "Ceiling" }, wallL: { label: "Left wall" }, wallR: { label: "Right wall" }, back: { label: "Back wall" },
+  floorL: { label: "Left floor" }, floorR: { label: "Right floor" }, rug: { label: "Rug" }, bed: { label: "Dragon bed" },
+};
+const DECOR = [
+  { id: "torch", name: "Wall Torch", slot: "wallL", cost: 30, art: "PIX_DECOR_TORCH", pal: { wing: "#7a4a2a", dark: "#4a2e1a", horn: "#ffb040" } },
+  { id: "shield", name: "Knight's Shield", slot: "wallL", cost: 60, art: "PIX_DECOR_SHIELD", pal: { wing: "#aab8c8", horn: "#f2c440" } },
+  { id: "banner", name: "Dragon Banner", slot: "wallR", cost: 40, art: "PIX_DECOR_BANNER", pal: { wing: "#8a5a32", body: "#c8323a", horn: "#f2c440" } },
+  { id: "starmap", name: "Star Map", slot: "wallR", cost: 70, art: "PIX_DECOR_STARMAP", pal: { wing: "#8a5a32", dark: "#1f2a5a", body: "#7fa0e8", horn: "#ffe066" } },
+  { id: "bookshelf", name: "Spell Bookshelf", slot: "back", cost: 90, art: "PIX_DECOR_BOOKSHELF", pal: { wing: "#7a4a2a", dark: "#3a2414", body: "#c8323a", horn: "#3a6ad8", belly: "#4a9a3a" } },
+  { id: "potions", name: "Potion Shelf", slot: "back", cost: 80, art: "PIX_DECOR_POTIONS", pal: { wing: "#7a4a2a", body: "#ff5a8a", horn: "#4ad8a8", belly: "#b58cff" } },
+  { id: "statue", name: "Dragon Statue", slot: "back", cost: 120, art: "PIX_DECOR_STATUE", pal: { wing: "#8a8a90", dark: "#9a9aa8", horn: "#ffcf4a" } },
+  { id: "fountain", name: "Crystal Fountain", slot: "back", cost: 150, art: "PIX_DECOR_FOUNTAIN", pal: { wing: "#9aa8b8", body: "#3a8ad8", belly: "#bff4ff" } },
+  { id: "treasure", name: "Treasure Pile", slot: "floorL", cost: 100, art: "PIX_DECOR_TREASURE", pal: { horn: "#f2c440", body: "#e0335a", belly: "#5ab0ff" } },
+  { id: "mushlamp", name: "Mushroom Lamp", slot: "floorL", cost: 45, art: "PIX_DECOR_MUSHLAMP", pal: { horn: "#b58cff", belly: "#f0e8c8", dark: "#3a2a4a" } },
+  { id: "crystals", name: "Crystal Cluster", slot: "floorR", cost: 60, art: "PIX_DECOR_CRYSTALS", pal: { body: "#7fe3ff", dark: "#3a4a6a" } },
+  { id: "fern", name: "Cave Fern", slot: "floorR", cost: 35, art: "PIX_DECOR_FERN", pal: { wing: "#b0603a", body: "#5fae4a" } },
+  { id: "rugred", name: "Round Red Rug", slot: "rug", cost: 50, art: "PIX_DECOR_RUG_RED", pal: { body: "#c8323a", horn: "#f2c440" } },
+  { id: "rugroyal", name: "Royal Rug", slot: "rug", cost: 110, art: "PIX_DECOR_RUG_ROYAL", pal: { dark: "#3a1a4a", body: "#6a3aa8", horn: "#f2c440" } },
+  { id: "nest", name: "Straw Nest", slot: "bed", cost: 40, art: "PIX_DECOR_NEST", pal: { horn: "#e8c060", dark: "#8a6030", belly: "#fff4d8" } },
+  { id: "cushion", name: "Giant Cushion", slot: "bed", cost: 90, art: "PIX_DECOR_CUSHION", pal: { body: "#5a7ad8", horn: "#f2c440" } },
+  { id: "hangcrystals", name: "Hanging Crystals", slot: "ceiling", cost: 70, art: "PIX_DECOR_HANGING_CRYSTALS", pal: { dark: "#6a6a80", body: "#b58cff" } },
+  { id: "lanterns", name: "Lanterns", slot: "ceiling", cost: 55, art: "PIX_DECOR_LANTERNS", pal: { dark: "#4a3a2a", wing: "#8a5a32", horn: "#ffcf4a" } },
+];
+const decorById = (id) => DECOR.find((d) => d.id === id);
+
+/* Chests: 10-20 gold and 20 XP, plus a chance at a decoration -- and every
+   third chest in a row without one guarantees a decoration you don't own. */
+const CHEST_DECOR_CHANCE = 0.35, CHEST_PITY = 3;
+function chestDecorDrop() {
+  const missing = DECOR.filter((d) => !S.decor[d.id]);
+  if (!missing.length) return null;
+  S.chestsSinceDecor = (S.chestsSinceDecor || 0) + 1;
+  if (S.chestsSinceDecor < CHEST_PITY && Math.random() >= CHEST_DECOR_CHANCE) return null;
+  S.chestsSinceDecor = 0;
+  const d = missing[randInt(0, missing.length - 1)];
+  S.decor[d.id] = true;
+  if (!S.lair[d.slot]) S.lair[d.slot] = d.id;          // an empty spot gets it right away
+  return d;
+}
+
+function buyDecor(id) {
+  const d = decorById(id);
+  if (!d || S.decor[id] || S.coins < d.cost) return;
+  S.coins -= d.cost;
+  S.decor[id] = true;
+  S.lair[d.slot] = id;
+  Sound.play("buy");
+  saveActiveSlot();
+  render();
+}
+
+function placeDecor(id) {
+  const d = decorById(id);
+  if (!d || !S.decor[id]) return;
+  S.lair[d.slot] = S.lair[d.slot] === id ? null : id;   // tap again to put it away
+  saveActiveSlot();
+  render();
+}
+
+function lairHTML() {
+  const list = Object.keys(LAIR_SLOTS).map((slot) => {
+    const items = DECOR.filter((d) => d.slot === slot).map((d) => {
+      const owned = !!S.decor[d.id], here = S.lair[slot] === d.id;
+      const btn = !owned
+        ? `<button class="pref-pill" data-action="buy-decor" data-id="${d.id}" ${S.coins < d.cost ? "disabled" : ""}>🪙${d.cost}</button>`
+        : `<button class="pref-pill${here ? " on" : ""}" data-action="place-decor" data-id="${d.id}">${here ? "Placed ✓" : "Place"}</button>`;
+      return `<div class="decor-row"><canvas data-pix="decor:${d.id}" width="${(DECOR_SPRITES[d.art].w + 2) * 2}" height="${(DECOR_SPRITES[d.art].h + 2) * 2}"></canvas><span>${esc(d.name)}</span>${btn}</div>`;
+    }).join("");
+    return `<h3 class="book-section">${LAIR_SLOTS[slot].label}</h3>${items}`;
+  }).join("");
+  return `
+  <div class="shop-overlay">
+    <div class="shop-card lair-card">
+      <div class="shop-header">
+        <h2>Dragon Lair</h2>
+        <button class="close-btn" data-action="close-lair">✕</button>
+      </div>
+      <p class="book-count">🪙 ${S.coins} · ${DECOR.filter((d) => S.decor[d.id]).length} of ${DECOR.length} decorations · find more in treasure chests!</p>
+      <canvas id="lair-canvas" class="lair-scene" aria-label="Your dragon's lair"></canvas>
+      ${list}
+    </div>
+  </div>`;
+}
+
+/* ---------- the living lair scene ----------
+   A 160x120 pixel cave (scaled up crisp) drawn every frame: stalactites,
+   glowing wall crystals, drifting dust and embers, torch and lantern light
+   that flickers, the dragon asleep and breathing with floating Zs, and the
+   Buddy wandering the floor. Placed decorations sit in their spots. */
+const LAIR_W = 160, LAIR_H = 120;
+const LAIR_ANCHOR = {             // x centre, y bottom (in cave pixels)
+  ceiling: [80, 18], wallL: [20, 56], wallR: [140, 54], back: [80, 60],
+  floorL: [24, 108], floorR: [136, 108], rug: [80, 116], bed: [80, 110],
+};
+const lairCache = { bg: null, sprites: new Map(), dragon: null, dragonKey: "" };
+
+function lairBackground() {
+  if (lairCache.bg) return lairCache.bg;
+  const c = makeTextureCanvas(LAIR_W, LAIR_H), x = c.getContext("2d"), rnd = mulberry(42);
+  const g = x.createLinearGradient(0, 0, 0, LAIR_H);
+  g.addColorStop(0, "#120c1c"); g.addColorStop(0.55, "#2a1d3a"); g.addColorStop(1, "#3a2a30");
+  x.fillStyle = g; x.fillRect(0, 0, LAIR_W, LAIR_H);
+  // cave walls: rough dark rock bulging in from both sides
+  x.fillStyle = "#0c0814";
+  for (let yy = 0; yy < LAIR_H; yy++) {
+    const l = 10 + Math.sin(yy / 9) * 5 + rnd() * 2, r = 10 + Math.cos(yy / 8) * 5 + rnd() * 2;
+    x.fillRect(0, yy, l, 1); x.fillRect(LAIR_W - r, yy, r, 1);
+  }
+  // stalactites
+  for (let i = 0; i < 16; i++) {
+    const sx = 6 + i * 10 + rnd() * 5, len = 6 + rnd() * 12;
+    x.fillStyle = i % 2 ? "#1c1428" : "#231a32";
+    for (let k = 0; k < len; k++) x.fillRect(sx - (len - k) / 5, k, Math.max(1, (len - k) / 2.5), 1);
+  }
+  // floor: warm rock with a lighter centre
+  x.fillStyle = "#2e2028"; x.fillRect(0, 96, LAIR_W, 24);
+  x.fillStyle = "#3e2c30"; x.beginPath(); x.ellipse(80, 108, 62, 12, 0, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "#4a3638"; x.beginPath(); x.ellipse(80, 108, 40, 7, 0, 0, Math.PI * 2); x.fill();
+  for (let i = 0; i < 70; i++) { x.fillStyle = rnd() < 0.5 ? "#1a1220" : "#57404a"; x.fillRect(rnd() * LAIR_W | 0, 96 + (rnd() * 24 | 0), 1, 1); }
+  // wall pebbles
+  for (let i = 0; i < 90; i++) { x.fillStyle = rnd() < 0.5 ? "#1c1428" : "#3a2c48"; x.fillRect(rnd() * LAIR_W | 0, 20 + (rnd() * 76 | 0), 1, 1); }
+  lairCache.bg = c;
+  return c;
+}
+
+/* A pixel sprite painted at 1 cave pixel per sprite pixel (cached). */
+function lairSprite(key, art, palette, frame) {
+  const k = `${key}|${frame}`;
+  let c = lairCache.sprites.get(k);
+  if (!c) {
+    c = makeTextureCanvas(art.w + 2, art.h + 2);
+    paintPixelFrame(c.getContext("2d"), art, frame % art.frames.length, palette, 1, 1, 1);
+    lairCache.sprites.set(k, c);
+  }
+  return c;
+}
+
+function runLairScene() {
+  const cv = document.getElementById("lair-canvas");
+  if (!S.lairOpen) { lairCache.running = false; return; }
+  lairCache.running = true;
+  if (!cv) { requestAnimationFrame(runLairScene); return; }   // the pop-up is still being drawn
+  lairCache.running = true;
+  const now = performance.now(), dpr = window.devicePixelRatio || 1;
+  const cssW = cv.clientWidth || 320, cssH = cssW * LAIR_H / LAIR_W;
+  if (cv.width !== Math.round(cssW * dpr)) { cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr); }
+  const ctx = cv.getContext("2d"), k = cv.width / LAIR_W;          // device px per cave pixel
+  const calm = document.documentElement.classList.contains("reduce-motion");
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(lairBackground(), 0, 0, cv.width, cv.height);
+
+  // glowing wall crystals (always there) pulse gently
+  const pulse = calm ? 0.6 : 0.5 + 0.35 * Math.sin(now / 700);
+  [[16, 40, "#7fe3ff"], [146, 70, "#b58cff"], [30, 84, "#7fe3ff"], [128, 30, "#ff8ab8"]].forEach(([x, y, col]) => {
+    const g = ctx.createRadialGradient(x * k, y * k, 0, x * k, y * k, 9 * k);
+    g.addColorStop(0, col + "88"); g.addColorStop(1, col + "00");
+    ctx.globalAlpha = pulse; ctx.fillStyle = g; ctx.fillRect((x - 9) * k, (y - 9) * k, 18 * k, 18 * k);
+    ctx.globalAlpha = 1; ctx.fillStyle = col; ctx.fillRect(x * k, y * k, 2 * k, 3 * k);
+  });
+
+  // warm light from torches, lanterns and the mushroom lamp
+  const flick = calm ? 1 : 0.85 + 0.15 * Math.sin(now / 90) * Math.sin(now / 230);
+  const glow = (x, y, r, col) => {
+    const g = ctx.createRadialGradient(x * k, y * k, 0, x * k, y * k, r * k);
+    g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalAlpha = flick; ctx.fillStyle = g; ctx.fillRect((x - r) * k, (y - r) * k, r * 2 * k, r * 2 * k); ctx.globalAlpha = 1;
+  };
+  const placedIds = Object.values(S.lair);
+  if (placedIds.includes("torch")) glow(20, 40, 38, "rgba(255,170,70,0.45)");
+  if (placedIds.includes("lanterns")) glow(80, 14, 50, "rgba(255,200,110,0.35)");
+  if (placedIds.includes("mushlamp")) glow(24, 96, 26, "rgba(190,140,255,0.4)");
+  if (placedIds.includes("fountain") || placedIds.includes("crystals") || placedIds.includes("hangcrystals")) glow(110, 70, 44, "rgba(120,220,255,0.18)");
+
+  // decorations, back to front
+  const frame = calm ? 0 : Math.floor(now / 480);
+  for (const slot of ["ceiling", "back", "wallL", "wallR", "rug", "bed", "floorL", "floorR"]) {
+    const d = decorById(S.lair[slot]);
+    if (!d) continue;
+    const art = DECOR_SPRITES[d.art], img = lairSprite(`decor|${d.id}`, art, d.pal, frame);
+    const [ax, ay] = LAIR_ANCHOR[slot];
+    const top = slot === "ceiling" ? 0 : ay - img.height;
+    ctx.drawImage(img, Math.round(ax - img.width / 2) * k, Math.round(top) * k, img.width * k, img.height * k);
+  }
+
+  // the dragon, asleep and breathing (or its egg)
+  const owned = S.equippedCreature || Object.keys(S.ownedCosmetics).find((id) => id.startsWith("creature_") && S.ownedCosmetics[id]);
+  const breathe = calm ? 0 : Math.sin(now / 900);
+  if (S.egg) {
+    ctx.font = `${22 * k}px serif`; ctx.textAlign = "center";
+    ctx.save(); ctx.translate(80 * k, 104 * k); ctx.rotate(calm ? 0 : Math.sin(now / 400) * 0.08); ctx.fillText("🥚", 0, 0); ctx.restore();
+  } else if (owned && ELEMENT_PALETTES[owned]) {
+    const w = 70, h = w * HD_DRAGON_FIT.h / HD_DRAGON_FIT.w;
+    const key = `${owned}|${Math.round(w * k)}`;
+    if (lairCache.dragonKey !== key) {
+      lairCache.dragon = hdRender((c) => drawHDDragon(c, ELEMENT_PALETTES[owned], 0.1), HD_DRAGON_FIT, w * k / dpr, h * k / dpr, dpr, 1);
+      lairCache.dragonKey = key;
+    }
+    const sy = 1 + breathe * 0.025;
+    ctx.save();
+    ctx.translate(80 * k, 106 * k);
+    ctx.scale(1, sy);
+    ctx.drawImage(lairCache.dragon, -w * k / 2, -h * k, w * k, h * k);
+    ctx.restore();
+    // floating Zs from the dragon's head
+    if (!calm) for (let i = 0; i < 3; i++) {
+      const t = ((now / 1800) + i / 3) % 1;
+      ctx.globalAlpha = Math.sin(t * Math.PI);
+      ctx.fillStyle = "#e8e0ff"; ctx.font = `bold ${(5 + t * 5) * k}px sans-serif`; ctx.textAlign = "center";
+      ctx.fillText("z", (104 + t * 14) * k, (62 - t * 26) * k);
+    }
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.fillStyle = "#c9b8e0"; ctx.font = `bold ${6 * k}px sans-serif`; ctx.textAlign = "center";
+    ctx.fillText("Your dragon will live here!", 80 * k, 90 * k);
+  }
+
+  // the Buddy wanders the floor, turning around at each end
+  if (S.buddy && isFriend(S.buddy) && PIX_ENEMY_ART[S.buddy]) {
+    const sp = PIX_ENEMY_ART[S.buddy], img = lairSprite(`buddy|${S.buddy}`, sp.art, sp.palette, frame);
+    const scale = 22 / img.height, bw = img.width * scale, bh = 22;
+    const t = calm ? 0.25 : (now / 9000) % 1, dir = t < 0.5 ? 1 : -1;
+    const bx = 40 + (t < 0.5 ? t * 2 : (1 - t) * 2) * 80;
+    ctx.save();
+    ctx.translate(bx * k, (114 - bh - Math.abs(Math.sin(now / 160)) * (calm ? 0 : 1)) * k);
+    if (dir > 0) { ctx.scale(-1, 1); ctx.translate(-bw * k, 0); }
+    ctx.drawImage(img, 0, 0, bw * k, bh * k);
+    ctx.restore();
+  }
+
+  // drifting dust and embers, and glints on the treasure
+  if (!calm) {
+    for (let i = 0; i < 18; i++) {
+      const sx = (i * 37 + now / (40 + i * 3)) % LAIR_W, sy = LAIR_H - ((now / (60 + i * 7) + i * 23) % LAIR_H);
+      ctx.globalAlpha = 0.35 + 0.35 * Math.sin(now / 300 + i);
+      ctx.fillStyle = i % 3 ? "#e8d8c0" : "#ffb04a";
+      ctx.fillRect(sx * k, sy * k, k, k);
+    }
+    if (placedIds.includes("treasure")) {
+      const t = (now / 600) % 1, [ax, ay] = LAIR_ANCHOR.floorL;
+      ctx.globalAlpha = Math.sin(t * Math.PI); ctx.fillStyle = "#fffbe0";
+      const gx = ax - 8 + ((Math.floor(now / 600) * 7) % 16), gy = ay - 10 + ((Math.floor(now / 600) * 3) % 7);
+      ctx.fillRect(gx * k, (gy - 1) * k, k, 3 * k); ctx.fillRect((gx - 1) * k, gy * k, 3 * k, k);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // soft vignette
+  const v = ctx.createRadialGradient(cv.width / 2, cv.height * 0.55, cv.width * 0.25, cv.width / 2, cv.height * 0.55, cv.width * 0.75);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.55)");
+  ctx.fillStyle = v; ctx.fillRect(0, 0, cv.width, cv.height);
+  requestAnimationFrame(runLairScene);
+}
+
 /* ================= FRIENDS & BUDDY =================
    Beat the same kind of monster FRIEND_AT times and it becomes a friend
    (a visible progress bar in the Dragon Book -- no hidden random catch
@@ -3514,6 +3785,10 @@ const S = {
   lastDeath: null,
   hatchOpen: false,
   buddy: null,
+  decor: {},
+  lair: {},
+  chestsSinceDecor: 0,
+  lairOpen: false,
   // Mirror Knight: the last missed problem, thrown back next.
   mirrorProblem: null,
   // Fact review: missed facts come back a few problems later (this session)
@@ -3992,7 +4267,12 @@ function handleWaveClear() {
   const wonBack = S.enemies.reduce((t, e) => t + (e.stolen || 0), 0) * 2;
   coinReward += wonBack;
   S.coins += coinReward;
-  if (meta.isChest) S.stats.chests += 1;
+  let chestDecor = null;
+  if (meta.isChest) {
+    S.stats.chests += 1;
+    chestDecor = chestDecorDrop();
+    if (!chestDecor && DECOR.every((d) => S.decor[d.id])) S.coins += 10;   // every decoration found: bonus gold instead
+  }
   else {
     const wasFriend = isFriend(meta.name);
     S.defeated[meta.name] = (S.defeated[meta.name] || 0) + (meta.isBoss ? 1 : (meta.count || 1));
@@ -4018,6 +4298,7 @@ function handleWaveClear() {
   const healSuffix = actualHeal > 0 ? ` · +${actualHeal} HP` : "";
   if (meta.isChest) {
     S.banner = `Treasure Chest opened! +${coinReward} coins · +${xpReward} XP${healSuffix}`;
+    if (chestDecor) celebrate({ icon: "🎁", kicker: "Found in the chest!", title: chestDecor.name, sub: "A new decoration for your Dragon Lair." });
   } else {
     S.banner = `${label} defeated! +${coinReward} coins · +${xpReward} XP${healSuffix}`;
     if (meta.isBoss) celebrate({ icon: "🏆", kicker: "Boss defeated!", title: `${meta.name} is beaten!`, sub: `+${coinReward} coins${wonBack ? ` (${wonBack} won back!)` : ""} · +${xpReward} XP` });
@@ -4108,6 +4389,9 @@ function selectSave(id) {
   S.egg = (d && d.egg) || null;
   S.tricky = (d && Array.isArray(d.tricky)) ? d.tricky : [];
   S.buddy = (d && d.buddy) || null;
+  S.decor = (d && d.decor) || {};
+  S.lair = (d && d.lair) || {};
+  S.chestsSinceDecor = (d && d.chestsSinceDecor) || 0;
   S.retryQueue = [];
   S.warmup = 3;
   S.hint = null;
@@ -4187,6 +4471,9 @@ function saveActiveSlot() {
     egg: S.egg,
     tricky: S.tricky,
     buddy: S.buddy,
+    decor: S.decor,
+    lair: S.lair,
+    chestsSinceDecor: S.chestsSinceDecor,
     ownedCosmetics: S.ownedCosmetics,
     ownedUpgrades: S.ownedUpgrades,
     equippedAccessory: S.equippedAccessory,
@@ -5585,6 +5872,7 @@ function playingHTML() {
       <div class="stage-banners">
         ${S.banner ? `<div class="banner">${S.banner}</div>` : ""}
         ${S.bossBanner ? `<div class="banner boss-banner">${S.bossBanner}</div>` : ""}
+        ${meta.isChest ? `<div class="banner chest-banner">📦 This chest can hold: 🪙10–20 · 20 XP · ${DECOR.some((d) => !S.decor[d.id]) ? `a Lair decoration${(S.chestsSinceDecor || 0) >= CHEST_PITY - 1 ? " (guaranteed this time!)" : ""}` : "bonus gold"}</div>` : ""}
       </div>
     </div>
 
@@ -5898,6 +6186,11 @@ function mapHTML() {
         <h2>World Map</h2>
         <button class="close-btn" data-action="close-map">✕</button>
       </div>
+      <div class="map-hub">
+        <button class="btn map-hub-btn" data-action="open-lair">🐉 Lair</button>
+        <button class="btn map-hub-btn" data-action="open-tower">🏰 Boss Tower</button>
+        <button class="btn map-hub-btn" data-action="open-arcade">🎮 Arcade</button>
+      </div>
       <p class="book-count">${loop ? `Journey ${loop + 1}: the monsters are tougher now! · ` : ""}Best wave: ${best} 🚩</p>
       ${worlds}
     </div>
@@ -6002,6 +6295,7 @@ function renderNow() {
   if (S.shopOpen) ov += shopHTML();
   if (S.bookOpen) ov += bookHTML();
   if (S.mapOpen) ov += mapHTML();
+  if (S.lairOpen) ov += lairHTML();
   if (S.settingsOpen) ov += settingsHTML();
   if (S.hatchOpen) ov += hatchHTML();
   if (S.adminGate || S.adminOpen) ov += adminHTML();
@@ -6086,6 +6380,10 @@ document.body.addEventListener("click", (e) => {
   else if (action === "book-tab") { S.bookTab = btn.dataset.tab; render(); }
   else if (action === "set-buddy") { if (isFriend(btn.dataset.name)) { S.buddy = btn.dataset.name; saveActiveSlot(); render(); } }
   else if (action === "open-map") { S.mapOpen = true; render(); }
+  else if (action === "open-lair") { S.mapOpen = false; S.lairOpen = true; render(); if (!lairCache.running) requestAnimationFrame(runLairScene); }
+  else if (action === "close-lair") { S.lairOpen = false; render(); }
+  else if (action === "buy-decor") buyDecor(btn.dataset.id);
+  else if (action === "place-decor") placeDecor(btn.dataset.id);
   else if (action === "close-map") { S.mapOpen = false; render(); }
   else if (action === "answer") handleAnswer(Number(btn.dataset.value));
   else if (action === "cast-fireball") useFireball();
@@ -6177,6 +6475,7 @@ document.addEventListener("visibilitychange", () => {
     if (S.bookOpen) { S.bookOpen = false; render(); return; }
     if (S.hatchOpen) { S.hatchOpen = false; render(); return; }
     if (S.mapOpen) { S.mapOpen = false; render(); return; }
+    if (S.lairOpen) { S.lairOpen = false; render(); return; }
     if (S.screen === "parents" || S.screen === "parentgate") { S.parentGate = null; S.screen = "saveselect"; render(); return; }
     if (S.screen === "title") { saveActiveSlot(); flushSaves(); App.exitApp(); return; }
     if (S.screen === "saveselect") { S.screen = "title"; render(); return; }
@@ -10016,6 +10315,106 @@ const PIX_MIRROR_KNIGHT = pixDraw(40, 50, 2, (g, f) => {
   g.line(29, 22, 33, 26 + s, "w", 1, 2);
 });
 
+
+/* ---------- Dragon Lair decorations ----------
+   Small props for the lair's eight spots. Each twinkles or flickers
+   between its two frames so the lair feels alive. */
+const PIX_DECOR_TORCH = pixDraw(14, 24, 2, (g, f) => {
+  g.rect(6, 10, 7, 23, "w"); g.rect(4, 9, 9, 10, "d");
+  g.ellipse(6.5, 5, 3, f ? 5 : 4, "h", 0); g.ellipse(6.5, 6, 1.5, 2.5, "W", 1);
+});
+const PIX_DECOR_SHIELD = pixDraw(20, 22, 2, (g, f) => {
+  g.poly([[2, 2], [18, 2], [18, 11], [10, 21], [2, 11]], "w", (x) => (x < 7 ? 0 : 1));
+  g.line(10, 3, 10, 18, "h", 1, 2); g.line(3, 8, 17, 8, "h", 1, 2);
+  g.px(f ? 5 : 14, f ? 4 : 5, "W");
+});
+const PIX_DECOR_BANNER = pixDraw(16, 28, 2, (g, f) => {
+  g.rect(1, 1, 15, 2, "w");
+  g.poly([[3, 3], [13, 3], [13, 25], [8, 21 + f], [3, 25]], "b", (x) => (x < 6 ? 0 : 1));
+  g.poly([[8, 8], [11, 12], [8, 16], [5, 12]], "h", 0);
+});
+const PIX_DECOR_STARMAP = pixDraw(24, 20, 2, (g, f) => {
+  g.rect(1, 1, 23, 19, "w"); g.rect(3, 3, 21, 17, "d");
+  [[6, 6], [11, 9], [16, 5], [19, 12], [8, 14], [14, 14]].forEach(([x, y], i) => g.px(x, y, (i + f) % 2 ? "h" : "W", 0));
+  g.line(6, 6, 11, 9, "b", 1, 1); g.line(11, 9, 16, 5, "b", 1, 1); g.line(11, 9, 14, 14, "b", 1, 1);
+});
+const PIX_DECOR_BOOKSHELF = pixDraw(26, 30, 2, (g, f) => {
+  g.rect(1, 1, 25, 29, "w"); g.rect(3, 3, 23, 27, "d");
+  [8, 16, 24].forEach((y) => g.rect(3, y, 23, y, "w"));
+  const cols = ["b", "h", "l", "b", "h"];
+  for (let r = 0; r < 3; r++) for (let i = 0; i < 5; i++) g.rect(4 + i * 4, 3 + r * 8 + ((i + r) % 2), 6 + i * 4, 7 + r * 8, cols[(i + r) % 5], 1);
+  g.px(f ? 21 : 5, 18, "W");
+});
+const PIX_DECOR_POTIONS = pixDraw(26, 22, 2, (g, f) => {
+  g.rect(1, 18, 25, 20, "w");
+  [[5, "b"], [12, "h"], [19, "l"]].forEach(([x, c], i) => {
+    g.ellipse(x + 1, 13, 3.5, 4, c); g.rect(x, 6, x + 2, 9, "W", 1); g.rect(x - 1, 5, x + 3, 6, "w", 0);
+    if ((i + f) % 2) g.px(x, 11, "W");
+  });
+});
+const PIX_DECOR_STATUE = pixDraw(22, 30, 2, (g, f) => {
+  g.rect(3, 24, 19, 29, "w"); g.rect(5, 22, 17, 24, "w", 0);
+  g.ellipse(11, 16, 6, 6, "d"); g.line(9, 12, 5, 4, "d", 1, 3); g.ellipse(4, 4, 3, 2.5, "d");
+  g.poly([[13, 12], [20, 4], [19, 13]], "d", 2); g.px(3, 3, f ? "h" : "W");
+});
+const PIX_DECOR_FOUNTAIN = pixDraw(26, 26, 2, (g, f) => {
+  g.ellipse(13, 22, 11, 3, "w"); g.ellipse(13, 21, 9, 2, "b");
+  g.rect(11, 9, 14, 21, "w"); g.ellipse(13, 9, 5, 2, "w");
+  g.line(13, 8, f ? 7 : 8, f ? 16 : 14, "l", 0, 1); g.line(13, 8, f ? 19 : 18, f ? 16 : 14, "l", 0, 1);
+  g.px(13, 4 + f, "l", 0);
+});
+const PIX_DECOR_TREASURE = pixDraw(28, 20, 2, (g, f) => {
+  g.poly([[1, 19], [8, 8], [14, 5], [21, 9], [27, 19]], "h", (x, y) => (y < 10 ? 0 : 1));
+  [[8, 14, "b"], [16, 11, "l"], [21, 16, "b"]].forEach(([x, y, c]) => g.poly([[x, y - 2], [x + 2, y], [x, y + 2], [x - 2, y]], c, 0));
+  g.px(f ? 11 : 18, f ? 9 : 12, "W");
+});
+const PIX_DECOR_CRYSTALS = pixDraw(22, 24, 2, (g, f) => {
+  g.poly([[6, 23], [8, 8], [11, 23]], "b", 0); g.poly([[10, 23], [13, 3], [16, 23]], "b", 1); g.poly([[15, 23], [18, 11], [20, 23]], "b", 2);
+  g.ellipse(11, 23, 10, 1.5, "d");
+  g.px(f ? 12 : 8, f ? 7 : 13, "W");
+});
+const PIX_DECOR_MUSHLAMP = pixDraw(20, 24, 2, (g, f) => {
+  g.rect(9, 12, 11, 23, "l"); g.ellipse(10, 10, 8, 5, "h", f ? 0 : 1);
+  [[6, 9], [13, 8], [10, 12]].forEach(([x, y]) => g.px(x, y, "W"));
+  g.ellipse(10, 23, 5, 1.5, "d");
+});
+const PIX_DECOR_FERN = pixDraw(22, 26, 2, (g, f) => {
+  g.poly([[6, 17], [16, 17], [14, 25], [8, 25]], "w");
+  [[11, 17, 4, 4], [11, 17, 18, 5], [11, 17, 11, 1], [11, 17, 2, 10], [11, 17, 20, 11]].forEach(([a, b, c, d], i) => g.line(a, b, c + (i === 2 ? f : 0), d, "b", i % 2 ? 1 : 0, 2));
+});
+const PIX_DECOR_RUG_RED = pixDraw(40, 10, 2, (g, f) => {
+  g.ellipse(20, 5, 19, 4, "b"); g.ellipse(20, 5, 14, 2.5, "h", 1); g.ellipse(20, 5, 8, 1.5, "b", 0);
+  g.px(f ? 9 : 31, 5, "W");
+});
+const PIX_DECOR_RUG_ROYAL = pixDraw(40, 10, 2, (g, f) => {
+  g.rect(1, 2, 39, 8, "d"); g.rect(3, 3, 37, 7, "b"); g.rect(6, 4, 34, 6, "h", 1);
+  for (let x = 2; x <= 38; x += 3) g.px(x, 9, "h", 0);
+  g.px(f ? 12 : 28, 5, "W");
+});
+const PIX_DECOR_NEST = pixDraw(40, 14, 2, (g, f) => {
+  g.ellipse(20, 8, 19, 5, "h"); g.ellipse(20, 6, 15, 3, "d", 2);
+  for (let x = 3; x <= 37; x += 4) g.line(x, 10, x + 2, 12, "h", 0, 1);
+  g.px(f ? 8 : 32, 4, "l", 0);
+});
+const PIX_DECOR_CUSHION = pixDraw(40, 14, 2, (g, f) => {
+  g.ellipse(20, 8, 19, 5, "b"); g.ellipse(20, 6, 16, 3, "b", 0);
+  [5, 35].forEach((x) => g.ellipse(x, 11, 2, 2, "h", 0));
+  g.px(f ? 12 : 26, 5, "W");
+});
+const PIX_DECOR_HANGING_CRYSTALS = pixDraw(36, 16, 2, (g, f) => {
+  [[6, 9], [13, 13], [20, 8], [27, 12], [33, 7]].forEach(([x, len], i) => {
+    g.line(x, 0, x, len - 4, "d", 1, 1); g.poly([[x - 2, len - 4], [x, len + 1], [x + 2, len - 4], [x, len - 7]], "b", (i + f) % 2 ? 0 : 1);
+  });
+});
+const PIX_DECOR_LANTERNS = pixDraw(36, 18, 2, (g, f) => {
+  [[7, 10], [18, 13], [29, 9]].forEach(([x, len], i) => {
+    g.line(x, 0, x, len - 5, "d", 1, 1); g.rect(x - 3, len - 5, x + 3, len + 2, "w"); g.rect(x - 2, len - 4, x + 2, len + 1, "h", (i + f) % 2 ? 0 : 1);
+  });
+});
+const DECOR_SPRITES = { PIX_DECOR_TORCH, PIX_DECOR_SHIELD, PIX_DECOR_BANNER, PIX_DECOR_STARMAP, PIX_DECOR_BOOKSHELF, PIX_DECOR_POTIONS,
+  PIX_DECOR_STATUE, PIX_DECOR_FOUNTAIN, PIX_DECOR_TREASURE, PIX_DECOR_CRYSTALS, PIX_DECOR_MUSHLAMP, PIX_DECOR_FERN, PIX_DECOR_RUG_RED,
+  PIX_DECOR_RUG_ROYAL, PIX_DECOR_NEST, PIX_DECOR_CUSHION, PIX_DECOR_HANGING_CRYSTALS, PIX_DECOR_LANTERNS };
+
 const PIX_ENEMY_ART = {
   "Muck Slime": { art: PIX_SLIME, palette: { body: "#5ec96f", dark: "#2f8f47", belly: "#d6f5c8", wing: "#a8e8b0", horn: "#e0c14a" } },
   "Cave Goblin": { art: PIX_GOBLIN, palette: { body: "#8fb03f", dark: "#5c7526", belly: "#e8eec0", wing: "#7a4c28", horn: "#c9a227" } },
@@ -10992,6 +11391,11 @@ function paintPixIcons() {
     if (cv.dataset.pix.startsWith("mount:")) {
       const id = cv.dataset.pix.slice(6);
       paintHDInto(cv, `mount|${id}`, (ctx) => drawHDDragon(ctx, ELEMENT_PALETTES[id] || ELEMENT_PALETTES.starter, 0.15), HD_DRAGON_FIT, 1);
+      return;
+    }
+    if (cv.dataset.pix.startsWith("decor:")) {
+      const d = decorById(cv.dataset.pix.slice(6));
+      if (d) paintSpriteInto(cv, DECOR_SPRITES[d.art], d.pal, Math.floor(Date.now() / 1000) % 2, `decor|${d.id}`);
       return;
     }
     if (cv.dataset.pix.startsWith("pet:")) {
