@@ -2549,10 +2549,9 @@ const BOSSES = [
     glow: "#e0b050",
     hpMult: 1.8,
     hint: "Answer before the clock runs out!",
-    /* Every problem gets a visible countdown -- 1.5x the rank's own time
-       budget, so it follows the math instead of a fixed number of seconds.
-       Let it run out and the Colossus strikes, then a new problem comes. */
-    clock: { pct: 1.5, line: "Tick-tock... too slow!" },
+    /* Every problem gets a visible 20-second countdown. Let it run out and
+       the Colossus strikes, then a new problem comes. */
+    clock: { ms: 20000, line: "Tick-tock... too slow!" },
   },
   {
     name: "Crystal Queen",
@@ -2684,7 +2683,7 @@ function startBossClock() {
   stopBossClock();
   const boss = liveBoss("clock");
   if (!boss || S.screen !== "playing" || !S.problem) return;
-  const ms = Math.round(getBand(S.problem.band || S.mathBand).speedMs * boss.clock.pct);
+  const ms = boss.clock.ms || 20000;   // fights saved before the change carry the old spec
   S.bossClock = { ms, start: Date.now(), problem: S.problem };
   scheduleBossClock(ms);
 }
