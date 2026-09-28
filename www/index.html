@@ -1588,6 +1588,11 @@ html.reduce-motion .egg-emoji { animation: none; }
 .shop-item-emoji.egg-icon { width: 44px; height: 36px; font-size: 30px; display: flex; align-items: center; justify-content: center; }
 
 /* ---------- Dragon Book, badges, world map ---------- */
+.friend-bar { display: block; height: 5px; margin: 3px 6px 1px; border-radius: 3px; background: #2d2344; overflow: hidden; }
+.friend-bar i { display: block; height: 100%; background: #ff8ab8; }
+.book-sub small { display: block; font-size: 10px; color: var(--text-dim); }
+.buddy-btn { display: block; margin: 3px auto 0; padding: 3px 8px; border: none; border-radius: 999px; font: 900 11px var(--font-ui); color: #1a0f1e; background: #ff8ab8; cursor: pointer; }
+.buddy-tag { display: block; margin-top: 3px; color: #ffd76b; font-weight: 900; }
 .map-btn { border: none; background: none; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-shadow: inherit; cursor: pointer; white-space: nowrap; }
 .topbar-actions { gap: 3px; }
 .arena.fit .wave-chip { gap: 4px; }
@@ -3233,8 +3238,19 @@ const BADGES = [
   { id: "chests10", icon: "🎁", name: "Treasure Hunter", desc: "Open 10 treasure chests", coins: 15, test: (g) => g.chests >= 10 },
   { id: "dragons3", icon: "🐉", name: "Dragon Keeper", desc: "Own 3 dragons", coins: 15, test: (g) => g.dragons >= 3 },
   { id: "pet1", icon: "🐾", name: "Best Friends", desc: "Get a pet", coins: 10, test: (g) => g.pets >= 1 },
+  { id: "friend1", icon: "🤝", name: "Monster Whisperer", desc: "Befriend your first monster", coins: 15, test: (g) => g.friends >= 1 },
+  { id: "friend10", icon: "💞", name: "Friend of Beasts", desc: "Befriend 10 monsters", coins: 25, test: (g) => g.friends >= 10 },
 ];
 const NEW_STATS = () => ({ correct: 0, bestStreak: 0, chests: 0, bossesNoMiss: 0 });
+
+/* ================= FRIENDS & BUDDY =================
+   Beat the same kind of monster FRIEND_AT times and it becomes a friend
+   (a visible progress bar in the Dragon Book -- no hidden random catch
+   chance). One friend can be your Buddy: a small follower in battle and in
+   the Dragon Lair that finds +1 gold after every wave. */
+const FRIEND_AT = 5;
+function isFriend(name) { return (S.defeated[name] || 0) >= FRIEND_AT && ENEMIES.some((e) => e.name === name); }
+function friendCount() { return ENEMIES.filter((e) => isFriend(e.name)).length; }
 
 /* Blade/hilt colours for the rider's sword, keyed by how many DMG
    upgrades are owned (0 = starting sword, nothing bought yet). Index i
@@ -3497,6 +3513,7 @@ const S = {
   egg: null,
   lastDeath: null,
   hatchOpen: false,
+  buddy: null,
   // Mirror Knight: the last missed problem, thrown back next.
   mirrorProblem: null,
   // Fact review: missed facts come back a few problems later (this session)
@@ -3977,7 +3994,13 @@ function handleWaveClear() {
   S.coins += coinReward;
   if (meta.isChest) S.stats.chests += 1;
   else {
+    const wasFriend = isFriend(meta.name);
     S.defeated[meta.name] = (S.defeated[meta.name] || 0) + (meta.isBoss ? 1 : (meta.count || 1));
+    if (!wasFriend && isFriend(meta.name)) {
+      if (!S.buddy) S.buddy = meta.name;
+      celebrate({ icon: "🤝", kicker: "New friend!", title: `${meta.name} wants to be friends!`, sub: S.buddy === meta.name ? "It's your Buddy now. Change Buddies in the Dragon Book." : "Pick it as your Buddy in the Dragon Book." });
+    }
+    if (S.buddy && isFriend(S.buddy)) coinReward += 1;   // the Buddy finds a coin
     if (meta.isBoss && S.waveMisses === 0) S.stats.bossesNoMiss += 1;
   }
   if (!meta.isChest) Sound.play("coin");   // chests already jingle when they open
@@ -4084,6 +4107,7 @@ function selectSave(id) {
   S.badges = (d && d.badges) || {};
   S.egg = (d && d.egg) || null;
   S.tricky = (d && Array.isArray(d.tricky)) ? d.tricky : [];
+  S.buddy = (d && d.buddy) || null;
   S.retryQueue = [];
   S.warmup = 3;
   S.hint = null;
@@ -4162,6 +4186,7 @@ function saveActiveSlot() {
     badges: S.badges,
     egg: S.egg,
     tricky: S.tricky,
+    buddy: S.buddy,
     ownedCosmetics: S.ownedCosmetics,
     ownedUpgrades: S.ownedUpgrades,
     equippedAccessory: S.equippedAccessory,
@@ -5747,7 +5772,7 @@ function badgeFacts() {
   const owned = (type) => COSMETICS.filter((c) => c.type === type && S.ownedCosmetics[c.id]).length;
   return Object.assign({}, S.stats, {
     monsters, bosses, rank: S.mathBand, bestWave: Math.max(S.bestWave || 0, S.wave || 0),
-    dragons: owned("creature"), pets: owned("pet"),
+    dragons: owned("creature"), pets: owned("pet"), friends: friendCount(),
   });
 }
 
@@ -5797,11 +5822,17 @@ function bookHTML() {
     const all = ENEMIES.map((e) => ({ name: e.name, emoji: e.emoji, boss: false }))
       .concat(BOSSES.map((b) => ({ name: b.name, emoji: b.emoji, boss: true })));
     const found = all.filter((m) => S.defeated[m.name]).length;
-    body = `<p class="book-count">${found} of ${all.length} monsters found</p><div class="book-grid">${all.map((m) => {
+    body = `<p class="book-count">${found} of ${all.length} monsters found · 🤝 ${friendCount()} friends${S.buddy ? ` · Buddy: ${esc(S.buddy)}` : ""}</p><div class="book-grid">${all.map((m) => {
       const n = S.defeated[m.name] || 0;
       const art = PIX_ENEMY_ART[m.name];
       const pic = art ? `<canvas data-pix="enemy:${esc(m.name)}" width="${art.art.w * 2 + 4}" height="${art.art.h * 2 + 4}"></canvas>` : m.emoji;
-      return bookEntryHTML(pic, m.name, n > 0, n ? `Beaten ×${n}` : (m.boss ? "Boss" : ""), m.boss ? " boss" : "");
+      let sub = n ? `Beaten ×${n}` : (m.boss ? "Boss" : "");
+      if (!m.boss && n > 0) {
+        sub += isFriend(m.name)
+          ? (S.buddy === m.name ? `<span class="buddy-tag">⭐ Buddy</span>` : `<button class="buddy-btn" data-action="set-buddy" data-name="${esc(m.name)}">Make Buddy</button>`)
+          : `<span class="friend-bar"><i style="width:${Math.round(Math.min(n, FRIEND_AT) / FRIEND_AT * 100)}%"></i></span><small>${n}/${FRIEND_AT} to befriend</small>`;
+      }
+      return bookEntryHTML(pic, m.name, n > 0, sub, m.boss ? " boss" : "");
     }).join("")}</div>`;
   } else if (tab === "treasures") {
     const dragons = COSMETICS.filter((c) => c.type === "creature").map((c) => S.egg === c.id
@@ -6053,6 +6084,7 @@ document.body.addEventListener("click", (e) => {
   else if (action === "open-book") { S.bookOpen = true; render(); }
   else if (action === "close-book") { S.bookOpen = false; render(); }
   else if (action === "book-tab") { S.bookTab = btn.dataset.tab; render(); }
+  else if (action === "set-buddy") { if (isFriend(btn.dataset.name)) { S.buddy = btn.dataset.name; saveActiveSlot(); render(); } }
   else if (action === "open-map") { S.mapOpen = true; render(); }
   else if (action === "close-map") { S.mapOpen = false; render(); }
   else if (action === "answer") handleAnswer(Number(btn.dataset.value));
@@ -11313,6 +11345,8 @@ const BattleStage = {
     if (paletteKey !== this._cachedPaletteKey) { this._cachedPaletteKey = paletteKey; this.bakePlayer(); }
     const petKey = `${this._petId || ""}|${this.unit}`;
     if (petKey !== this._cachedPetKey) { this._cachedPetKey = petKey; this.bakePet(); }
+    const buddyKey = `${this._buddyName || ""}|${this.unit}|${this.dpr}`;
+    if (buddyKey !== this._cachedBuddyKey) { this._cachedBuddyKey = buddyKey; this.bakeBuddy(); }
     let wantKey = null, wantSprite = null;
     if (this._enemyKind === "chest") {
       wantKey = "__chest_" + this._chestMode;
@@ -11523,6 +11557,7 @@ const BattleStage = {
     this.drawBackground(ctx, now);
     this.drawParticles(ctx, now, false);
     this.drawQueue(ctx, now);
+    this.drawBuddy(ctx, now);
     this.drawPlayer(ctx, now);
     this.drawPet(ctx, now);
     this.drawShield(ctx, now);
@@ -11559,6 +11594,30 @@ const BattleStage = {
     const h = DRAGON_ART_GRID * u * 0.32, w = h * HD_PET_FIT.w / HD_PET_FIT.h;
     for (let f = 0; f < 4; f++) this.petStrips.push(hdRender((c) => drawHDPet(c, id, f / 4), HD_PET_FIT, w, h, this.dpr || 1, 1));
     this._petW = w; this._petH = h;
+  },
+  bakeBuddy() {
+    this.buddyStrips = [];
+    const name = this._buddyName, u = this.unit;
+    if (!name || !u || !isFinite(u)) return;
+    const sp = PIX_ENEMY_ART[name];
+    const h = DRAGON_ART_GRID * u * 0.34, w = h * (sp.art.w + 2) / (sp.art.h + 2), dpr = this.dpr || 1;
+    for (let f = 0; f < sp.art.frames.length; f++) {
+      this.buddyStrips.push(renderSmoothCached(`buddy|${name}|${f}`, () => spriteSource(sp.art, f, sp.palette), w * dpr, h * dpr));
+    }
+    this._buddyW = w; this._buddyH = h;
+  },
+  /* The Buddy trots behind the hero, a little higher up, facing the enemy. */
+  drawBuddy(ctx, now) {
+    if (!this.buddyStrips || !this.buddyStrips.length) return;
+    const w = this._buddyW, h = this._buddyH;
+    const left = this.playerBase.x + (this._stripBaseX || 0);
+    const x = Math.max(2, left - w * 0.35), y = this.playerBase.y - h - DRAGON_ART_GRID * this.unit * 0.42 - Math.max(0, Math.sin(now / 300)) * this.unit * 0.6;
+    const img = this.buddyStrips[Math.floor(now / 420) % this.buddyStrips.length];
+    ctx.save();
+    ctx.translate(x + w, y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(img, 0, 0, w, h);
+    ctx.restore();
   },
   petHome() {
     const w = this._petW, h = this._petH;
@@ -12074,6 +12133,7 @@ const BattleStage = {
     this._palette = creature && ELEMENT_PALETTES[creature.id]
       ? ELEMENT_PALETTES[creature.id] : hueRotatePalette(ELEMENT_PALETTES.starter, this._hue);
     this._petId = pet ? pet.id : null;
+    this._buddyName = S.buddy && isFriend(S.buddy) && PIX_ENEMY_ART[S.buddy] ? S.buddy : null;
     this._breath = getDragonBreath();
     this.setBiome(arenaBiomeForWave(S.wave));
     const activeEnemy = getActiveEnemy();
