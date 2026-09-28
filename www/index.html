@@ -1450,6 +1450,9 @@ html.reduce-motion .celebrate-overlay .fireworks { display: none; }
 .skill-row.current .skill-name { color: #fff; }
 .skill-status { font-weight: 900; white-space: nowrap; }
 .skill-acc { grid-column: 1 / -1; color: var(--text-dim); font-size: 12px; }
+.restore-confirm { margin: 12px 0; padding: 10px 12px; border-radius: 12px; background: #1a1230; box-shadow: 0 0 0 2px #c9a227; }
+.restore-confirm .btn { margin: 4px 0; }
+.info-card .backup-msg { font-weight: 800; color: #bff5d0; }
 
 /* ---------- battle fits the phone: no page scroll ----------
    The arena is a full-height column; the canvas stage takes whatever
@@ -1668,6 +1671,7 @@ html.reduce-motion .fireworks { display: none; }
    Celebrations ............ celebrate, dismissCelebration, celebrationHTML (queued full-screen moments)
    Worlds / growth / badges . WORLDS, DRAGON_GROWTH, BADGES, checkBadges, bookHTML, mapHTML
    Parents / prefs / voice .. openParentGate, parentsHTML, setSlotRank, Prefs, applyPrefs, Speech, buzz
+   Backup & restore ......... backupSaves, pickRestoreFile, applyRestore (Parents > Backup tab)
    Secret admin panel ....... ADMIN_CODE, openSecret, adminHTML (Settings > Secret)
    Save slots (localStorage). loadSaves, persistSaves, makeSlot, selectSave
    Game state object ........ const S = {  (single source of truth; read/written all over)
@@ -3432,6 +3436,8 @@ const S = {
   // Grown-up gate question and the parent screen's open tab.
   parentGate: null,
   parentTab: "progress",
+  backupMsg: null,
+  restorePending: null,
   // "boy" | "girl", chosen once when the slot is created.
   hero: null,
   problemShownAt: 0,
@@ -4804,6 +4810,7 @@ function privacyHTML() {
       <li>The app has no internet permission and never connects to the internet.</li>
       <li>Save files (hero choice, coins, progress, time played and any save-slot name your child types) are stored only on this device and are never sent anywhere.</li>
       <li>"Read aloud" uses your phone's own text-to-speech voice to speak the problem on screen. Nothing is recorded.</li>
+      <li>"Back up progress" (in this parent area) saves a file of the save slots to this phone's Documents folder. It is only created when you tap it and never leaves the phone unless you move it yourself.</li>
       <li>Deleting a save slot or uninstalling the app erases that data.</li>
     </ul>
     <h3>Contact</h3>
@@ -5026,17 +5033,114 @@ function setSlotRank(id, delta) {
   });
 }
 
+/* ================= BACKUP & RESTORE =================
+   Saves live only on this phone, so an uninstall (or a reinstall signed
+   with a different key) would wipe them. A backup writes every save slot
+   and the settings to a JSON file in the phone's Documents folder --
+   fully offline -- and Restore reads one back through the system file
+   picker. Nothing is ever sent anywhere. */
+const BACKUP_APP = "dragonsvsmath";
+
+async function backupSaves() {
+  saveActiveSlot();
+  flushSaves();
+  const data = JSON.stringify({ app: BACKUP_APP, version: 1, exportedAt: new Date().toISOString(), saves: SAVES, prefs: Prefs });
+  const name = `DragonsVsMath-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const files = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
+  try {
+    if (files) {
+      // Only Android 9 and older ask for this (see the manifest).
+      if (files.requestPermissions) { try { await files.requestPermissions(); } catch (e) {} }
+      await files.writeFile({ path: name, data, directory: "DOCUMENTS", encoding: "utf8", recursive: true });
+      S.backupMsg = `✅ Saved to the phone's Documents folder as ${name}`;
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+      a.download = name;
+      a.click();
+      S.backupMsg = `✅ Downloaded ${name}`;
+    }
+  } catch (e) {
+    S.backupMsg = "⚠️ Couldn't save the backup. Please try again.";
+  }
+  render();
+}
+
+/* Opens the system file picker; the chosen file is checked, then waits for
+   a grown-up to confirm before it replaces anything. */
+function pickRestoreFile() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,application/json,text/plain";
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || data.app !== BACKUP_APP || !data.saves || !Array.isArray(data.saves.slots)) throw new Error("not a backup");
+        S.restorePending = data;
+        S.backupMsg = null;
+      } catch (e) {
+        S.restorePending = null;
+        S.backupMsg = "⚠️ That file isn't a Dragons vs Math backup.";
+      }
+      render();
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function applyRestore() {
+  const data = S.restorePending;
+  if (!data) return;
+  SAVES = data.saves;
+  while (SAVES.slots.length < 3) SAVES.slots.push(makeSlot(SAVES.slots.length + 1));
+  persistSaves();
+  if (data.prefs && typeof data.prefs === "object") {
+    Object.assign(Prefs, data.prefs);
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(Prefs)); } catch (e) {}
+    applyPrefs();
+  }
+  S.activeSaveId = null;
+  S.restorePending = null;
+  S.backupMsg = `✅ Restored ${SAVES.slots.filter((s) => s.data).length} save(s).`;
+  render();
+}
+
+function backupTabHTML() {
+  const p = S.restorePending;
+  const when = p && p.exportedAt ? new Date(p.exportedAt).toLocaleDateString() : "";
+  const n = p ? p.saves.slots.filter((s) => s.data).length : 0;
+  return `
+    <p>Progress is stored only on this phone. Make a backup before uninstalling, switching phones, or installing a test version that won't update over this one.</p>
+    <button class="btn primary big" data-action="backup-saves">💾 Back up progress</button>
+    <p class="parent-note">The backup file goes to this phone's <b>Documents</b> folder. It stays on the phone and is never sent anywhere.</p>
+    <button class="btn ghost" data-action="restore-pick">📂 Restore from a backup file</button>
+    ${p ? `<div class="restore-confirm">
+      <p><b>Restore ${n} save(s)${when ? ` from ${esc(when)}` : ""}?</b> This replaces all the saves on this phone.</p>
+      <button class="btn primary big" data-action="restore-apply">Yes, restore</button>
+      <button class="btn ghost" data-action="restore-cancel">Cancel</button>
+    </div>` : ""}
+    ${S.backupMsg ? `<p class="backup-msg">${esc(S.backupMsg)}</p>` : ""}`;
+}
+
 function parentsHTML() {
   const slots = SAVES.slots.filter((s) => s.data);
   const tab = S.parentTab;
   const body = tab === "privacy"
     ? privacyHTML()
+    : tab === "backup"
+    ? backupTabHTML()
     : (slots.length ? slots.map(slotProgressHTML).join("") : `<p>No saves yet. Progress shows up here once your child starts playing.</p>`);
   return `
   <div class="card info-card parents-card">
     <h1>For Parents</h1>
     <div class="parent-tabs">
       <button class="pref-pill${tab === "progress" ? " on" : ""}" data-action="parent-tab" data-tab="progress">Progress</button>
+      <button class="pref-pill${tab === "backup" ? " on" : ""}" data-action="parent-tab" data-tab="backup">Backup</button>
       <button class="pref-pill${tab === "privacy" ? " on" : ""}" data-action="parent-tab" data-tab="privacy">Privacy</button>
     </div>
     ${body}
@@ -5803,7 +5907,11 @@ document.body.addEventListener("click", (e) => {
   else if (action === "open-info") openParentGate();
   else if (action === "close-info") { S.parentGate = null; S.screen = "saveselect"; render(); }
   else if (action === "gate-key") parentGateKey(btn.dataset.key);
-  else if (action === "parent-tab") { S.parentTab = btn.dataset.tab; render(); }
+  else if (action === "parent-tab") { S.parentTab = btn.dataset.tab; S.backupMsg = null; S.restorePending = null; render(); }
+  else if (action === "backup-saves") backupSaves();
+  else if (action === "restore-pick") pickRestoreFile();
+  else if (action === "restore-apply") applyRestore();
+  else if (action === "restore-cancel") { S.restorePending = null; render(); }
   else if (action === "parent-rank") setSlotRank(btn.dataset.id, Number(btn.dataset.delta));
 });
 

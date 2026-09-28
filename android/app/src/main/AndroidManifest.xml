@@ -38,4 +38,7 @@
          Read-aloud uses the phone's own text-to-speech engine, which the TTS plugin finds
          through a <queries> entry in its own manifest. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Only Android 9 and older need this to write the backup file to Documents
+         (Parents > Backup). Newer Android versions don't ask for it. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 </manifest>
