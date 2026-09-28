@@ -52,20 +52,3 @@ test("rank 17 mixes x and ÷", () => {
   assert.deepEqual([...ops].sort(), ["×", "÷"]);
 });
 
-test("problem formats keep the right answer and sane choices", () => {
-  for (let id = 1; id <= 17; id++) {
-    for (let i = 0; i < 2000; i++) {
-      const p = M.applyForm(M.generateProblem(id));
-      const f = p.fact;
-      assert.equal(calc({ a: f.a, op: f.op, b: f.b }), f.result, JSON.stringify(p));
-      if (p.form === "missing") assert.equal(p.answer, f.b);
-      else assert.equal(p.answer, f.result);
-      if (p.form === "story") assert.ok(p.story && p.storySpeech);
-      const ch = M.makeChoices(p);
-      assert.equal(ch.length, 4);
-      assert.equal(new Set(ch).size, 4);
-      assert.ok(ch.includes(p.answer), JSON.stringify(p) + " " + ch);
-      assert.ok(ch.every((v) => Number.isInteger(v) && v >= 0));
-    }
-  }
-});

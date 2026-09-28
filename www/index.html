@@ -1534,7 +1534,6 @@ html.battle-fit, html.battle-fit body { height: 100%; overflow: hidden; overscro
 .admin-lock { margin-top: 16px; }
 
 /* ---------- problem formats and picture hints ---------- */
-.problem.story { font-size: 20px !important; line-height: 1.35; padding: 0 44px 0 6px; text-align: left; font-family: var(--font-ui); }
 .gate-words { font-family: var(--font-ui); font-weight: 900; font-size: 20px; color: #fff3c4; margin: 6px 0; }
 .problem-card { position: relative; }
 .hint-card {
@@ -2098,7 +2097,7 @@ function makeChoices(problem) {
   const answer = problem.answer;
   const band = getBand(problem.band || S.mathBand);
   const set = new Set([answer]);
-  const candidates = (problem.form === "missing" ? missingErrors(problem) : band.errors ? band.errors(problem) : [])
+  const candidates = (band.errors ? band.errors(problem) : [])
     .filter((v) => Number.isInteger(v) && v >= 0 && v !== answer);
 
   for (const c of shuffle(candidates)) {
@@ -2117,15 +2116,9 @@ function makeChoices(problem) {
   return shuffle([...set]);
 }
 
-/* ================= PROBLEM FORMATS =================
-   Beyond "a + b = ?", some problems hide a different number: "3 + ? = 7"
-   (missing number) or "? = 9 + 8" (answer first) -- research ties both to
-   a better grasp of what "=" means -- and easier ranks get short picture
-   word problems. p.fact always keeps the plain underlying fact, which is
-   what picture hints, fact review and the Mirror Knight work from. */
-const FORM_CHANCE = { missing: 0.2, first: 0.08, story: 0.1 };
-const STORY_RANKS = [1, 2, 3, 4, 5, 6, 7, 12, 13, 14];
-
+/* ================= FACTS =================
+   p.fact keeps the plain underlying fact of a problem, which is what
+   picture hints, fact review and the Mirror Knight work from. */
 function factOf(p) {
   return p.fact || { a: p.a, op: p.op, b: p.b, result: p.answer };
 }
@@ -2133,41 +2126,6 @@ function factOf(p) {
 /* A plain "a op b = ?" problem for a fact (used to re-ask it). */
 function plainProblem(fact, band) {
   return { a: fact.a, op: fact.op, b: fact.b, answer: fact.result, band, fact: Object.assign({}, fact) };
-}
-
-function applyForm(p, r = Math.random()) {
-  const fact = factOf(p);
-  p.fact = fact;
-  if (r < FORM_CHANCE.missing) {
-    p.form = "missing";
-    p.display = [String(fact.a), fact.op, "?", "=", String(fact.result)];
-    p.answer = fact.b;
-  } else if (r < FORM_CHANCE.missing + FORM_CHANCE.first) {
-    p.form = "first";
-    p.display = ["?", "=", String(fact.a), fact.op, String(fact.b)];
-  } else if (r < FORM_CHANCE.missing + FORM_CHANCE.first + FORM_CHANCE.story && STORY_RANKS.includes(p.band)) {
-    const st = storyFor(fact);
-    if (st) { p.form = "story"; p.story = st.text; p.storySpeech = st.speech; }
-  }
-  return p;
-}
-
-const STORY_THINGS = [["🍎", "apples"], ["💎", "gems"], ["🪙", "coins"], ["🥚", "eggs"], ["⭐", "stars"], ["🍪", "cookies"]];
-function storyFor(fact) {
-  const [icon, word] = STORY_THINGS[(fact.a * 7 + fact.b * 3) % STORY_THINGS.length];
-  const { a, b } = fact;
-  if (fact.op === "+") return { text: `🐉 has ${a} ${icon} and finds ${b} more. How many ${icon} now?`, speech: `The dragon has ${a} ${word} and finds ${b} more. How many ${word} now?` };
-  if (fact.op === "-") return { text: `🐉 has ${a} ${icon} and gives away ${b}. How many ${icon} are left?`, speech: `The dragon has ${a} ${word} and gives away ${b}. How many are left?` };
-  if (fact.op === "×") return { text: `${a} bags each hold ${b} ${icon}. How many ${icon} in all?`, speech: `${a} bags each hold ${b} ${word}. How many ${word} in all?` };
-  if (fact.op === "÷") return { text: `${a} ${icon} are shared by ${b} dragons. How many does each get?`, speech: `${a} ${word} are shared by ${b} dragons. How many does each get?` };
-  return null;
-}
-
-/* Wrong choices for a missing-number problem: near misses, the total
-   itself, and adding when it should subtract (or vice versa). */
-function missingErrors(p) {
-  const f = p.fact, ans = p.answer;
-  return [ans + 1, ans - 1, ans + 2, ans - 2, f.result, Math.abs(f.a - f.result), f.a + f.result];
 }
 
 /* ================= MASTERY =================
@@ -4099,7 +4057,7 @@ function noteRight(p) {
 }
 
 /* The next problem: a due re-ask, then a warm-up tricky fact at the start
-   of a session, otherwise a fresh one (sometimes in a new format). */
+   of a session, otherwise a fresh one. */
 function nextProblem() {
   const due = S.retryQueue.findIndex((r) => r.due <= S.problemCount);
   if (due !== -1) { const r = S.retryQueue.splice(due, 1)[0]; return plainProblem(r.fact, r.band); }
@@ -4108,9 +4066,7 @@ function nextProblem() {
     const t = S.tricky[randInt(0, S.tricky.length - 1)];
     return plainProblem(t.fact, t.band);
   }
-  const p = generateProblem(pickProblemBand());
-  // Bosses with their own problem rules get plain problems.
-  return liveBoss("riddle") || liveBoss("storm") || liveBoss("mirror") ? p : applyForm(p);
+  return generateProblem(pickProblemBand());
 }
 
 function newProblem(lvl) {
@@ -4454,13 +4410,10 @@ function hintHTML(f) {
   return `<div class="hint-card" data-action="dismiss-hint">${pic}<div class="hint-say">${esc(say)}</div><div class="hint-tap">tap to continue</div></div>`;
 }
 
-/* The problem line: tokens for the new formats, story text for word problems. */
+/* The problem line: "a op b = ?" with a read-aloud button. */
 function problemLineHTML(p) {
-  const tok = (t) => t === "?" ? `<span class="q">?</span>` : ["+", "-", "×", "÷", "="].includes(t) ? `<span class="op">${t === "-" ? "−" : t}</span>` : t;
   const speak = Speech.available() ? `<button class="speak-btn" data-action="read-problem" aria-label="Read the problem aloud">🔊</button>` : "";
-  if (p.story) return `<div class="problem story">${esc(p.story)}${speak}</div>`;
-  const tokens = p.display || [String(p.a), p.op, String(p.b), "=", "?"];
-  return `<div class="problem">${tokens.map(tok).join(" ")}${speak}</div>`;
+  return `<div class="problem">${p.a} <span class="op">${p.op === "-" ? "−" : p.op}</span> ${p.b} <span class="op">=</span> <span class="q">?</span>${speak}</div>`;
 }
 
 function handleWaveClear() {
@@ -11426,11 +11379,7 @@ const Speech = {
     }
   },
 };
-function problemSpeech(p) {
-  if (p.storySpeech) return p.storySpeech;
-  const tokens = p.display || [String(p.a), p.op, String(p.b), "=", "?"];
-  return tokens.map((t) => t === "?" ? "what" : t === "=" ? "equals" : SPOKEN_OP[t] || t).join(" ") + "?";
-}
+function problemSpeech(p) { return `${p.a} ${SPOKEN_OP[p.op] || p.op} ${p.b} equals what?`; }
 function readProblem() { if (S.problem) Speech.say(problemSpeech(S.problem)); }
 
 const Sound = {

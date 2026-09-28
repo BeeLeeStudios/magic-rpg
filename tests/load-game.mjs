@@ -21,5 +21,5 @@ export function loadMath() {
   if (start < 0 || end < 0) throw new Error("math section markers not found in www/index.html");
   const code = html.slice(start, end);
   const ctx = vm.createContext({ S: { mathBand: 1, mastery: {} }, Math });
-  return vm.runInContext(`${code}\n;({ MATH_BANDS, MAX_BAND, getBand, generateProblem, makeChoices, applyForm, factOf })`, ctx);
+  return vm.runInContext(`${code}\n;({ MATH_BANDS, MAX_BAND, getBand, generateProblem, makeChoices, factOf })`, ctx);
 }
